@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name "IRF9510S")(type "KiCad")(uri "${KIPRJMOD}/libs/IRF9510SPBF.kicad_sym")(options "")(descr ""))
+  (lib (name "FDS6679")(type "KiCad")(uri "${KIPRJMOD}/libs/FDS6679AZ.kicad_sym")(options "")(descr ""))
+  (lib (name "10BQ060")(type "KiCad")(uri "${KIPRJMOD}/libs/10BQ060PBF.kicad_sym")(options "")(descr ""))
+)

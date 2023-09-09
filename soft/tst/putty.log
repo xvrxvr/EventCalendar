@@ -1,0 +1,242 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2023.05.13 21:26:55 =~=~=~=~=~=~=~=~=~=~=~=
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6940
+ho 0 tail 12 room 4
+load:0x40078000,len:15500
+load:0x40080400,len:3844
+entry 0x4008064c
+[0;32mI (29) boot: ESP-IDF v5.0.1 2nd stage bootloader[0m
+[0;32mI (29) boot: compile time 17:26:58[0m
+[0;32mI (29) boot: chip revision: v3.0[0m
+[0;32mI (32) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (37) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32: SPI Flash Size : 16MB[0m
+[0;32mI (46) boot: Enabling RNG early entropy source...[0m
+[0;32mI (51) boot: Partition Table:[0m
+[0;32mI (55) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (62) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (70) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (77) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (85) boot: End of partition table[0m
+[0;32mI (89) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=0bf9ch ( 49052) map[0m
+[0;32mI (115) esp_image: segment 1: paddr=0001bfc4 vaddr=3ffb0000 size=01f20h (  7968) load[0m
+[0;32mI (118) esp_image: segment 2: paddr=0001deec vaddr=40080000 size=0212ch (  8492) load[0m
+[0;32mI (124) esp_image: segment 3: paddr=00020020 vaddr=400d0020 size=1e3d8h (123864) map[0m
+[0;32mI (174) esp_image: segment 4: paddr=0003e400 vaddr=4008212c size=0c254h ( 49748) load[0m
+[0;32mI (202) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (202) boot: Disabling RNG early entropy source...[0m
+Run init
+Init: before delay
+Init: before init_screen
+Init: before DFlip
+Init: before DRect. _res_x=400, _res_y=240
+Init: on exit
+LCD Bench started
+Run Touch check. Touch screen to start
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x3 (DOWNLOAD_BOOT(UART0/UART1/SDIO_REI_REO_V2))
+waiting for download
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2023.05.13 21:28:49 =~=~=~=~=~=~=~=~=~=~=~=
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6940
+ho 0 tail 12 room 4
+load:0x40078000,len:15500
+load:0x40080400,len:3844
+entry 0x4008064c
+[0;32mI (29) boot: ESP-IDF v5.0.1 2nd stage bootloader[0m
+[0;32mI (29) boot: compile time 17:26:58[0m
+[0;32mI (29) boot: chip revision: v3.0[0m
+[0;32mI (32) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (37) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32: SPI Flash Size : 16MB[0m
+[0;32mI (46) boot: Enabling RNG early entropy source...[0m
+[0;32mI (51) boot: Partition Table:[0m
+[0;32mI (55) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (62) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (70) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (77) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (85) boot: End of partition table[0m
+[0;32mI (89) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=0bf9ch ( 49052) map[0m
+[0;32mI (115) esp_image: segment 1: paddr=0001bfc4 vaddr=3ffb0000 size=01f20h (  7968) load[0m
+[0;32mI (118) esp_image: segment 2: paddr=0001deec vaddr=40080000 size=0212ch (  8492) load[0m
+[0;32mI (124) esp_image: segment 3: paddr=00020020 vaddr=400d0020 size=1e3d8h (123864) map[0m
+[0;32mI (174) esp_image: segment 4: paddr=0003e400 vaddr=4008212c size=0c254h ( 49748) load[0m
+[0;32mI (202) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (202) boot: Disabling RNG early entropy source...[0m
+Run init
+Init: before delay
+Init: before init_screen
+Init: before DFlip
+Init: before DRect. _res_x=400, _res_y=240
+Init: on exit
+LCD Bench started
+Run Touch check. Touch screen to start
+X: 4095 4095 4001 4029 4059 3943 4089 3995 4031 4047 
+~X: 1008 1040 1222 996 993 1041 1008 1016 1040 1036 
+Y: 242 250 244 240 241 128 272 1255 464 1303 
+~Y: 803 1535 720 1363 624 1313 535 1288 496 1264 
+
+X: 4095 3954 4072 3905 4011 3942 3962 3947 3911 3952 
+~X: 889 915 915 894 912 894 912 876 778 876 
+Y: 1912 1918 1922 1919 1919 1921 1923 1911 1914 1922 
+~Y: 2007 2007 1987 2000 1643 2037 1424 1831 1175 1626 
+
+X: 3962 3921 3719 3668 3635 3673 3663 3658 3667 3670 
+~X: 736 758 738 739 759 741 723 752 755 739 
+Y: 3760 3760 3729 3739 3751 3757 3735 3755 3730 3759 
+~Y: 341 344 346 342 351 351 343 349 353 348 
+
+X: 2304 2306 2357 2274 2274 2286 2295 2256 2256 2256 
+~X: 2317 2185 2146 2193 2177 2177 2184 2160 2176 2169 
+Y: 3763 3802 3770 3765 3770 3770 3778 3763 3776 3782 
+~Y: 344 334 327 324 339 343 327 321 336 333 
+
+X: 796 795 753 755 751 770 759 768 768 768 
+~X: 3809 3799 3795 3793 3824 3777 3747 3807 3824 3809 
+Y: 3752 3742 3761 3736 3751 3773 3762 3739 3749 3792 
+~Y: 350 345 352 352 345 337 349 352 352 340 
+
+X: 879 867 882 863 859 872 871 699 863 849 
+~X: 4095 4095 4095 4095 4095 4095 4095 4095 4095 4095 
+Y: 1711 1710 1695 1715 1709 1699 1710 1691 1703 1709 
+~Y: 2224 2213 2211 2209 2203 2192 2217 2216 2208 2220 
+
+X: 1325 995 977 976 912 977 922 931 931 946 
+~X: 4095 4095 4095 4095 4095 4095 4095 4095 4095 4095 
+Y: 192 191 192 196 202 199 195 208 191 194 
+~Y: 3872 3916 3922 3886 3891 3920 3887 3902 3878 3888 
+
+X: 2433 2404 2384 2351 2384 2420 2351 2352 2352 2401 
+~X: 2543 2544 2565 2544 2508 2540 2527 2524 2523 2543 
+Y: 251 250 252 208 255 252 248 252 256 247 
+~Y: 3798 3792 3833 3792 3770 3818 3808 3777 3802 3771 
+
+X: 2230 2215 2245 2235 2219 2207 2175 2432 2195 2205 
+~X: 2429 2447 2440 2413 2422 2465 2446 2435 2439 2435 
+Y: 1944 1952 1954 1938 1959 1945 1955 1948 1959 1948 
+~Y: 1967 1966 1971 1975 1967 1968 1964 1974 1948 1970 
+
+X: 4095 4095 4095 4095 4095 4095 4095 4095 4095 4095 
+~X: 4095 4095 4095 4095 4095 4095 4095 4095 4095 4095 
+Y: 0 0 0 0 0 0 0 0 0 0 
+~Y: 0 0 0 0 0 0 0 0 0 0 
+
+X: 4095 4069 3911 3981 4073 3873 4034 3969 3882 3936 
+~X: 1388 1322 1291 1362 1351 1401 1316 1360 1251 1210 
+Y: 1878 1885 1874 1824 1858 1879 1843 1855 1867 1855 
+~Y: 2064 2027 2031 2032 2047 2043 2030 2027 2016 2019 
+
+X: 4095 4095 4095 4095 4095 4095 4095 4095 4095 4095 
+~X: 1428 1807 1943 1359 1611 1731 1777 1814 1818 1778 
+Y: 3511 3463 3507 3440 3480 3487 3482 3525 3484 3476 
+~Y: 520 528 525 550 508 504 483 494 491 478 
+
+X: 2779 2984 2928 2948 2916 2894 2885 3054 2787 2848 
+~X: 2632 2488 2576 2449 2459 2432 2357 2337 2291 2275 
+Y: 3355 3440 3440 3402 3407 3375 3408 3422 3468 3415 
+~Y: 544 565 583 583 592 587 564 589 580 575 
+
+X: 2714 2650 4095 4095 4095 4095 4095 4095 4095 4095 
+~X: 4095 4095 4095 4095 4095 4095 4095 4095 4095 4095 
+Y: 4095 2214 3842 1931 3376 1695 3120 1521 2899 1270 
+~Y: 3078 1455 2908 1198 2741 1089 2581 911 2367 784 
+
+X: 1136 1103 1199 1223 1411 1519 1799 1776 1698 1780 
+~X: 4095 4095 4095 4095 3946 3840 4095 4003 3959 3869 
+Y: 3487 3471 3445 3474 3455 3467 3456 3456 3442 3475 
+~Y: 547 535 546 543 539 540 546 543 539 543 
+
+X: 1431 1671 1411 1560 1492 1677 1354 1671 1546 1216 
+~X: 3622 3888 4095 4095 4095 4095 4095 4095 4095 4095 
+Y: 946 72 1440 257 1204 224 1115 206 1032 191 
+~Y: 1198 330 1040 303 866 174 867 159 771 188 
+
+X: 1715 1327 1268 1247 1261 1200 1116 1144 1120 1120 
+~X: 3551 3685 3587 3546 3606 3604 3568 3564 3676 3575 
+Y: 1813 1831 1834 1822 1816 1823 1824 1823 1793 1807 
+~Y: 2096 2089 2099 2108 2064 2088 2074 2084 2079 2068 
+
+X: 1428 1267 1361 1216 1216 1200 1220 1226 1191 1172 
+~X: 3863 3971 3887 3920 3952 3895 3859 3917 3169 3998 
+Y: 316 308 303 301 312 298 304 311 311 306 
+~Y: 3719 3701 3686 3709 3717 3696 3690 3715 3711 3690 
+
+X: 3138 3031 3289 3410 3092 2661 3111 3031 2992 2898 
+~X: 2893 2981 3187 3303 2964 3180 3163 3287 3090 2867 
+Y: 330 332 321 320 337 327 323 327 332 344 
+~Y: 3689 3669 3691 3659 3695 3665 3682 3677 3659 3688 
+
+X: 2080 2288 2032 2064 2008 2010 2064 2035 2137 2269 
+~X: 2299 3313 3431 4091 3042 2810 2839 2643 2605 2559 
+Y: 2303 2319 2294 2285 2318 2304 2307 2308 2279 2299 
+~Y: 1574 1639 1619 1632 1616 1627 1640 1621 1643 1635 
+
+ESP_ERROR_CHECK failed: esp_err_t 0x107 (ESP_ERR_TIMEOUT) at 0x400d6314
+file: "./main/test_main.cpp" line 709
+func: void app_main()
+expression: i2c_master_read_from_device(i2c_master_port, 0x90, (uint8_t *)&data, 2, I2C_MASTER_TIMEOUT)
+
+abort() was called at PC 0x4008794b on core 0
+
+
+Backtrace: 0x40081d42:0x3ffb45a0 0x40087955:0x3ffb45c0 0x4008cf3a:0x3ffb45e0 0x4008794b:0x3ffb4650 0x400d6314:0x3ffb4680 0x400edea5:0x3ffb4c00
+
+
+
+
+ELF file SHA256: a1a7b493dddc0c45
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6940
+ho 0 tail 12 room 4
+load:0x40078000,len:15500
+load:0x40080400,len:3844
+entry 0x4008064c
+[0;32mI (29) boot: ESP-IDF v5.0.1 2nd stage bootloader[0m
+[0;32mI (29) boot: compile time 17:26:58[0m
+[0;32mI (29) boot: chip revision: v3.0[0m
+[0;32mI (32) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (37) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32: SPI Flash Size : 16MB[0m
+[0;32mI (46) boot: Enabling RNG early entropy source...[0m
+[0;32mI (51) boot: Partition Table:[0m
+[0;32mI (55) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (62) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (70) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (77) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (85) boot: End of partition table[0m
+[0;32mI (89) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=0bf9ch ( 49052) map[0m
+[0;32mI (115) esp_image: segment 1: paddr=0001bfc4 vaddr=3ffb0000 size=01f20h (  7968) load[0m
+[0;32mI (118) esp_image: segment 2: paddr=0001deec vaddr=40080000 size=0212ch (  8492) load[0m
+[0;32mI (124) esp_image: segment 3: paddr=00020020 vaddr=400d0020 size=1e3d8h (123864) map[0m
+[0;32mI (174) esp_image: segment 4: paddr=0003e400 vaddr=4008212c size=0c254h ( 49748) load[0m
+[0;32mI (202) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (202) boot: Disabling RNG early entropy source...[0m
+Run init
+Init: before delay
+Init: before init_screen
+Init: before DFlip
+Init: before DRect. _res_x=400, _res_y=240
+Init: on exit
+LCD Bench started
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x3 (DOWNLOAD_BOOT(UART0/UART1/SDIO_REI_REO_V2))
+waiting for download
