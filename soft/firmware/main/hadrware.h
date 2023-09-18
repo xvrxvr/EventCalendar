@@ -1,6 +1,7 @@
 #pragma once
 
 #include <inttypes.h>
+#include <algorithm>
 
 #include "R503.h"
 
@@ -71,6 +72,7 @@ public:
     void set_fg(uint16_t color) {fc1 = color >> 8; fc2 = color & 0xFF;}
     void set_bg(uint16_t color) {bc1 = color >> 8; bc2 = color & 0xFF;}
 
+    // Emit text. Use -1 for x coordinate to emit in center of screen
     void text(const char* text, int16_t x, int16_t y);
     void text2(const char* text, int16_t x, int16_t y);
 };
@@ -85,22 +87,18 @@ void sol_hit(int index);
 //    _BGColour = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 //       <rrrrr> <ggg> | <ggg> <bbbbb>
 
-enum TouchType {
-    TT_LCD,
-    TT_X,
-    TT_XInv,
-    TT_Y,
-    TT_YInv,
-    TT_Sence
-};
-
 struct TouchConfig {
-    int value;
+    int x, y; // Raw X & Y of tounch (if any) or -1, -1 if no touch
 
-    TouchConfig(TouchType tt);
+    TouchConfig();
     ~TouchConfig();
+    
+    // Update current state and returns true if touched (x & y filled with data)
+    bool touched();
+    
+    void wait_press();
+    void wait_release();
 };
-
 
 int get_temperature();
 
@@ -122,9 +120,46 @@ struct RTC {
 
 
 struct EEPROM {
+    static constexpr int page_size = 32;
+
     // Page writes performed on page boundaries - page write will wrap around if address+size will cross 32 byte block
-    static void write(uint8_t address, const void* data, uint8_t size);
-    static void read(uint8_t address, void* data, uint8_t size);
+    static void write(uint16_t address, const void* data, uint8_t size);
+    static void read(uint16_t address, void* data, uint8_t size);
+    
+    static void write_pg(int page_addr, const void* data, uint16_t size)
+    {
+        uint16_t a = page_addr * page_size;
+        const uint8_t* p = (const uint8_t*)data;
+        while(size)
+        {
+            uint8_t len = std::min<uint16_t>(page_size, size);
+            write(a, p, len);
+            ++a;
+            p += len;
+            size -= len;
+        }
+    }
+    
+    static void read_pg(int page_addr, void* data, uint16_t size)
+    {
+        uint16_t a = page_addr * page_size;
+        uint8_t* p = (uint8_t*)data;
+        while(size)
+        {
+            uint8_t len = std::min<uint16_t>(page_size, size);
+            read(a, p, len);
+            ++a;
+            p += len;
+            size -= len;
+        }
+    }
+    
+    template<class Data>
+    static void write(int page_address, const Data& data) {write_pg(page_address, &data, sizeof(data));}
+    template<class Data>
+    static void read(int page_address, Data& data) {read_pg(page_address, &data, sizeof(data));}
+    
+    
 private:
     static void poll4ready();
 };

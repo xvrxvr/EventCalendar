@@ -1,6 +1,9 @@
 set(srcs
     hadrware.cpp
     R503.cpp
+    Touchscreen.cpp
+    wifi_module.cpp
+    setup_data.cpp
     main.cpp
 )
 

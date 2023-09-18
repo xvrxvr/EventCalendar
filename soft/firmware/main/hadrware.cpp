@@ -600,12 +600,18 @@ static const uint8_t font[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
 
+inline int16_t midx(int syms_len)
+{
+    return (RES_X - syms_len*8) / 2;
+}
+
 void LCD::text(const char* text, int16_t x, int16_t y)
 {
     LCDAccess lcd;
     CS_EN cs_en;
 
     uint8_t txt_len = strlen(text);
+    if (x == -1) x = midx(txt_len);
     _SetWriteAreaDelta(x, y, txt_len<<3, 16);
     _WriteCommand(REG_WRITEMEM); //Write to RAM
 
@@ -632,6 +638,7 @@ void LCD::text2(const char* text, int16_t x, int16_t y)
     CS_EN cs_en;
 
     uint8_t txt_len = strlen(text);
+    if (x == -1) x = midx(txt_len*2);
     _SetWriteAreaDelta(x, y, txt_len<<4, 32);
     _WriteCommand(REG_WRITEMEM); //Write to RAM
 
@@ -823,6 +830,15 @@ void sol_hit(int index)
     RS/X-   - 19          RS       0      1         ADC     ADC        PullUP/Sence      0              1       -> 39 (SENSOR_VN)
 */
 
+enum TouchType {
+    TT_LCD,
+    TT_X,
+    TT_XInv,
+    TT_Y,
+    TT_YInv,
+    TT_Sence
+};
+
 enum TTSetup {
     TTS_SW1     = 0x01,
     TTS_SW2     = 0x02,
@@ -882,8 +898,53 @@ int touch_config(TouchType tt)
     return 0;
 }
 
-TouchConfig::TouchConfig(TouchType tt) {value = touch_config(tt);}
+TouchConfig::TouchConfig() {x=y=-1; touched();}
 TouchConfig::~TouchConfig() {touch_config(TT_LCD);}
+
+constexpr int32_t mid_y = 2850;
+constexpr int32_t min_y = 300;
+
+
+bool TouchConfig::touched()
+{
+    int ts = 0;
+    x=y=-1;
+    for(int i=0; i<100; ++i)
+    {
+        ts <<= 2;
+        ts |= touch_config(TT_Sence) ? 1 : 2;
+        ts &= 0x3FF;
+        if (ts == 0x111) return false;
+        if (ts == 0x222)
+        {
+            x = touch_config(TT_X);
+//            y = touch_config(TT_Y);
+//            if (y < min_y) y = mid_y - touch_config(TT_YInv);
+            y = touch_config(TT_YInv); // Inverted part has higher minimum value (about threshold - 240-250). Not-inverted has minimum of 78
+            return true;
+        }
+    }
+    printf("TouchConfig: Can't get Touch status for 100 samples!\n");
+    return false;
+}
+
+void TouchConfig::wait_press()
+{
+    while(!touched())
+    {
+        touch_config(TT_LCD);
+        delay(10);
+    }
+}
+
+void TouchConfig::wait_release()
+{
+    while(touched())
+    {
+        touch_config(TT_LCD);
+        delay(10);
+    }
+}
 
 static void sol_task(void*)
 {
@@ -1013,18 +1074,20 @@ end:
 
 
 // Page writes performed on page boundaries - page write will wrap around if address+size will cross 32 byte block
-void EEPROM::write(uint8_t address, const void* data, uint8_t size)
+void EEPROM::write(uint16_t address, const void* data, uint8_t size)
 {
     assert(size <= 32);
     poll4ready();
-    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xA0>>1, &address, 1, I2C_MASTER_TIMEOUT));
+    uint8_t addr[2] = {uint8_t(address >> 8), uint8_t(address)}; 
+    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xA0>>1, addr, 2, I2C_MASTER_TIMEOUT));
     ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xA0>>1, (const uint8_t*)data, size, I2C_MASTER_TIMEOUT));        
 }
 
-void EEPROM::read(uint8_t address, void* data, uint8_t size)
+void EEPROM::read(uint16_t address, void* data, uint8_t size)
 {
     poll4ready();
-    ESP_ERROR_CHECK(i2c_master_write_read_device(i2c_master_port, 0xA0>>1, &address, 1, (uint8_t*)data, size, I2C_MASTER_TIMEOUT));
+    uint8_t addr[2] = {uint8_t(address >> 8), uint8_t(address)}; 
+    ESP_ERROR_CHECK(i2c_master_write_read_device(i2c_master_port, 0xA0>>1, addr, 2, (uint8_t*)data, size, I2C_MASTER_TIMEOUT));
 }
 
 void EEPROM::poll4ready()

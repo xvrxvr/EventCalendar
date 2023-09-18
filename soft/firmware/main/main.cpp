@@ -1,9 +1,13 @@
 #include "hadrware.h"
+#include "setup_data.h"
+#include "wifi_module.h"
 
 extern "C" void app_main(void)
 {
     hw_init();
-//    lcd.DRect(0, 0, 200, 100, 0xFFFF);
+    init_or_load_setup();
+    wifi_init();
+
     lcd.text("Hello!", 100, 100);
     for(;;);
 }
