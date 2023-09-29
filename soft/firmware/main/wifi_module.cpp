@@ -1,11 +1,13 @@
 #include "wifi_module.h"
 #include "setup_data.h"
+#include "hadrware.h"
 
 #include <string.h>
 
 #include <nvs_flash.h>
 #include <esp_netif.h>
 #include <esp_wifi.h>
+#include <lwip/inet.h>
 
 static bool sta_connected = false;
 static int s_retry_num = 0;
@@ -32,12 +34,19 @@ static void event_handler_wifi(void* arg, esp_event_base_t, int32_t event_id, vo
     }
 }
 
-
 static void event_handler_ip(void* arg, esp_event_base_t, int32_t event_id, void* event_data)
 {
     switch(event_id)
     {
-        case IP_EVENT_STA_GOT_IP: sta_connected=true; s_retry_num = 0; /* start client WEB server */ break;
+        case IP_EVENT_STA_GOT_IP: 
+        {
+            sta_connected=true; s_retry_num = 0;
+            
+            ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+            lcd.text2("STA IP: ", 10, 20);
+            lcd.text2(inet_ntoa(event->ip_info.ip.addr), 10, 20+16*8);
+            break;
+        }
     }
 }
 
@@ -54,8 +63,13 @@ void wifi_init()
     ESP_ERROR_CHECK(esp_netif_init());
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
-    if (ssid[0]) esp_netif_create_default_wifi_ap();
+    if (ssid[0]) 
+    {
+        esp_netif_create_default_wifi_sta();
+    }
+    esp_netif_create_default_wifi_ap();
+    lcd.text2("AP: http://192.168.4.1:8080", 30, 20);
+    
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
