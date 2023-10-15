@@ -30,8 +30,8 @@ REASON WHATSOEVER.
 #ifndef ILI9327_SHIELD_h
 #define ILI9327_SHIELD_h
 
-#define RES_X 240	//Screen X axis resolution
-#define RES_Y 432	//Screen Y axis resolution
+#define RES_Y 240	//Screen X axis resolution
+#define RES_X 400	//Screen Y axis resolution
 
 
 /* ILI9327 command registers used in this library */

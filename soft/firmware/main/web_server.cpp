@@ -16,11 +16,16 @@ static esp_err_t send_string(httpd_req_t *req)
     return httpd_resp_sendstr(req, (const char*)req->user_ctx);
 }
 
+static const char* data_root_page = R"___(<HTML><TITLE>Event Calendar</TITLE>
+<BODY>Hello!</HTML>
+)___";
+
 
 static esp_err_t start_http_data_server()
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.ctrl_port++;
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different
@@ -33,6 +38,14 @@ static esp_err_t start_http_data_server()
         ESP_LOGE(TAG, "Failed to start file server!");
         return ESP_FAIL;
     }
+
+    httpd_uri_t index = {
+        .uri       = "/",
+        .method    = HTTP_GET,
+        .handler   = send_string,
+        .user_ctx  = (void*)data_root_page
+    };
+    httpd_register_uri_handler(server, &index);
 
     return ESP_OK;
 }
@@ -64,21 +77,21 @@ static esp_err_t process_setup(httpd_req_t *req)
 
         if (httpd_query_key_value(buf, "ssid", param, sizeof(param)) != ESP_OK) break;
         example_uri_decode(param, param, 33); param[32] = 0;
-        EEPROM::write_pg(ES_SSID, param, strlen(param));
+        EEPROM::write_pg(ES_SSID, param, 32);
 
         if (httpd_query_key_value(buf, "password", param, sizeof(param)) != ESP_OK) break;        
         example_uri_decode(param, param, 64); param[63] = 0;
-        EEPROM::write_pg(ES_Passwd, param, strlen(param));
+        EEPROM::write_pg(ES_Passwd, param, 64);
         
         free(buf);
         httpd_resp_sendstr(req, setup_ans_page);
 
-        esp_task_wdt_config_t cfg = {
+        esp_task_wdt_config_t twdt_config = {
             .timeout_ms = 5000,
-            .idle_core_mask = 0xFFFF,
+            .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,    // Bitmask of all cores
             .trigger_panic = true
         };
-        esp_task_wdt_init(&cfg);
+        ESP_ERROR_CHECK(esp_task_wdt_init(&twdt_config));
         esp_task_wdt_add(NULL);
 
         return ESP_OK;

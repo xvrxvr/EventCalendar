@@ -1,4 +1,5 @@
 #include <limits>
+#include <stdio.h>
 
 #include "hadrware.h"
 #include "setup_data.h"
@@ -44,14 +45,14 @@ void TouchSetup::calibrate()
 
   lcd.DRect(0, 0, RES_X, RES_Y, 0);
   lcd.text2("Touchscreen calibration", -1, 0);
-  lcd.text2("Press all crosses in order", -1, 20);
+  lcd.text("Press all crosses in order", -1, 40);
   
   TouchConfig().wait_release();
   
   for(int i = 0; i < 5; i++)
   {
-    if(i > 0) lcd.DRect(xd[i - 1] - 1, yd[i - 1] - 1, 3, 3, -1);
-    lcd.DRect(xd[i] - 1, yd[i] - 1, 3, 3, 0);
+    if(i > 0) lcd.WRect(xd[i - 1] - 1, yd[i - 1] - 1, 3, 3, 0);
+    lcd.WRect(xd[i] - 1, yd[i] - 1, 3, 3, -1);
     
     TouchConfig touch;
     touch.wait_press();

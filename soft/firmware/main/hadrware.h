@@ -68,6 +68,7 @@ public:
         y2 is the y coordinate of the bottom right corner of the rectangle.
     */
     void DRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+    void WRect(int16_t x1, int16_t y1, int16_t w, int16_t h, uint16_t color) {DRect(x1, y1, x1+w-1, y1+h-1, color);}
 
     void set_fg(uint16_t color) {fc1 = color >> 8; fc2 = color & 0xFF;}
     void set_bg(uint16_t color) {bc1 = color >> 8; bc2 = color & 0xFF;}
@@ -134,7 +135,7 @@ struct EEPROM {
         {
             uint8_t len = std::min<uint16_t>(page_size, size);
             write(a, p, len);
-            ++a;
+            a+=page_size;
             p += len;
             size -= len;
         }
@@ -148,7 +149,7 @@ struct EEPROM {
         {
             uint8_t len = std::min<uint16_t>(page_size, size);
             read(a, p, len);
-            ++a;
+            a+=page_size;
             p += len;
             size -= len;
         }

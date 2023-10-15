@@ -239,8 +239,8 @@ void LCD::DScreen(bool mode)
 void LCD::DFlip(uint8_t mode)
 {
 	_FlipMode = mode;
-	_res_x = RES_X;
-	_res_y = RES_Y;
+	_res_x = RES_Y;
+	_res_y = RES_X;
     CS_EN cs_en;
 	switch(mode)
 	{
@@ -249,8 +249,8 @@ void LCD::DFlip(uint8_t mode)
 		case(SCREEN_R180):	 LCD_CtrlWrite_ILI9327(REG_ADDRMODE, 0b11001000); return;
 		case(SCREEN_R270):	 LCD_CtrlWrite_ILI9327(REG_ADDRMODE, 0b00101000); break;	
 	}
-   	_res_x = RES_Y;
-   	_res_y = RES_X;
+   	_res_x = RES_X;
+   	_res_y = RES_Y;
 }
 
 /* Draws a solid rectangle to the using the current foreground colour where:
@@ -602,7 +602,7 @@ static const uint8_t font[] = {
 
 inline int16_t midx(int syms_len)
 {
-    return (RES_X - syms_len*8) / 2;
+    return (RES_X - 20 - syms_len*8) / 2;
 }
 
 void LCD::text(const char* text, int16_t x, int16_t y)
@@ -862,7 +862,7 @@ static const int tts_setup [] = {
 
 #define NOP() __asm volatile("nop")
 
-static const int adc_reads = 10;
+static const int adc_reads = 255;
 
 int touch_config(TouchType tt)
 {
@@ -911,7 +911,7 @@ bool TouchConfig::touched()
     x=y=-1;
     for(int i=0; i<100; ++i)
     {
-        ts <<= 2;
+        ts <<= 4;
         ts |= touch_config(TT_Sence) ? 1 : 2;
         ts &= 0x3FF;
         if (ts == 0x111) return false;
@@ -1072,6 +1072,45 @@ end:
     return err;
 }
 
+static esp_err_t i2c_master_write2_to_device(i2c_port_t i2c_num, uint8_t device_address,
+                                     const uint8_t* write_buffer, size_t write_size,
+                                     const uint8_t* write_buffer2, size_t write_size2,
+                                     TickType_t ticks_to_wait)
+{
+    esp_err_t err = ESP_OK;
+    uint8_t buffer[I2C_TRANS_BUF_MINIMUM_SIZE] = { 0 };
+
+    i2c_cmd_handle_t handle = i2c_cmd_link_create_static(buffer, sizeof(buffer));
+    assert (handle != NULL);
+
+    err = i2c_master_start(handle);
+    if (err != ESP_OK) {
+        goto end;
+    }
+
+    err = i2c_master_write_byte(handle, device_address << 1 | I2C_MASTER_WRITE, true);
+    if (err != ESP_OK) {
+        goto end;
+    }
+
+    err = i2c_master_write(handle, write_buffer, write_size, true);
+    if (err != ESP_OK) {
+        goto end;
+    }
+
+    err = i2c_master_write(handle, write_buffer2, write_size2, true);
+    if (err != ESP_OK) {
+        goto end;
+    }
+
+    i2c_master_stop(handle);
+    err = i2c_master_cmd_begin(i2c_num, handle, ticks_to_wait);
+
+end:
+    i2c_cmd_link_delete_static(handle);
+    return err;
+}
+
 
 // Page writes performed on page boundaries - page write will wrap around if address+size will cross 32 byte block
 void EEPROM::write(uint16_t address, const void* data, uint8_t size)
@@ -1079,8 +1118,10 @@ void EEPROM::write(uint16_t address, const void* data, uint8_t size)
     assert(size <= 32);
     poll4ready();
     uint8_t addr[2] = {uint8_t(address >> 8), uint8_t(address)}; 
-    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xA0>>1, addr, 2, I2C_MASTER_TIMEOUT));
-    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xA0>>1, (const uint8_t*)data, size, I2C_MASTER_TIMEOUT));        
+    ESP_ERROR_CHECK(i2c_master_write2_to_device(i2c_master_port, 0xA0>>1, 
+        addr, 2, 
+        (const uint8_t*)data, size,
+        I2C_MASTER_TIMEOUT));
 }
 
 void EEPROM::read(uint16_t address, void* data, uint8_t size)
