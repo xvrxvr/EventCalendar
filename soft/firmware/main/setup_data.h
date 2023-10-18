@@ -11,21 +11,20 @@ enum UserOptions {
     UO_Admin                = 0x0001,   // This User is Admin
 
     UO_CanManageBG          = 0x0002,   // This Admin can add/delete/disable background images
-    UO_CanSyncTime          = 0x0004,   // This Admin can forcibly sync time (or enter it manually)
-    UO_CanSetup             = 0x0008,   // This Admin can change setup for timings (time sync intervals) and visibility (time, temperature), touch calibration, full system reset
+    UO_CanSetup             = 0x0004,   // This Admin can do system setup - touch calibration, full system reset
 
-    UO_CanStartRound        = 0x0010,   // This Admin can start/stop Play Round
-    UO_CanOpenDoors         = 0x0020,   // This Admin can forcibly open any door
-    UO_CanLoadGifts         = 0x0040,   // This Admin can load (and unload) gifts
-    UO_CanSetupRoundTime    = 0x0080,   // This Admin can change Round time
+    UO_CanStartRound        = 0x0008,   // This Admin can start/stop Play Round
+    UO_CanOpenDoors         = 0x0010,   // This Admin can forcibly open any door
+    UO_CanLoadGifts         = 0x0020,   // This Admin can load (and unload) gifts
+    UO_CanSetupRoundTime    = 0x0040,   // This Admin can change Round time
 
-    UO_CanEditUser          = 0x0100,   // This Admin can edit another User definition
-    UO_CanAddRemoveUser     = 0x0200,   // This Admin can add or remove Users
-    UO_CanAddRemoveAdmin    = 0x0400,   // This Admin can add or remove another Admint
-    UO_CanSelectRound       = 0x0800,   // This Admin can select/deselect Users for upcoming Play Round
-    UO_CanChangeUType       = 0x1000,   // This Admin can change User <-> Admin types
-    UO_CanDisableUser       = 0x2000,   // This Admin can temporary disable/enable user
-    UO_CanHelpUser          = 0x4000    // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
+    UO_CanEditUser          = 0x0080,   // This Admin can edit another User definition
+    UO_CanAddRemoveUser     = 0x0100,   // This Admin can add or remove Users
+    UO_CanAddRemoveAdmin    = 0x0200,   // This Admin can add or remove another Admint
+    UO_CanSelectRound       = 0x0400,   // This Admin can select/deselect Users for upcoming Play Round
+    UO_CanChangeUType       = 0x0800,   // This Admin can change User <-> Admin types
+    UO_CanDisableUser       = 0x1000,   // This Admin can temporary disable/enable user
+    UO_CanHelpUser          = 0x2000    // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
 };
 
 // Status of User
@@ -73,8 +72,8 @@ enum GlobalOptions {
     GO_HiteTemp     = 0x0002,   // Hide temperature
 };
 
-static constexpr const uint8_t EEPROM_LAYOUT_TAG = 1;
-static constexpr const uint8_t RTC_RAM_LAYOUT_TAG = 1;
+static constexpr const uint8_t EEPROM_LAYOUT_TAG = 2;
+static constexpr const uint8_t RTC_RAM_LAYOUT_TAG = 2;
 static constexpr const uint8_t USERS_LAYOUT_TAG = 1;
 
 // Global setup (placed at begining of EEPROM)
@@ -89,8 +88,6 @@ struct GolbalSetup {
     uint16_t round_time; // Time between Play Rounds (In minutes)
     uint16_t options;   // Bitset of GlobalOptions
     
-    uint8_t  time_sync; // Time between Time Sync (In hours)
-
     uint8_t  guard; // We writes here 0xFF - if we extand this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
     
     void sync() const; // Save me to EEPROM
@@ -105,6 +102,9 @@ enum EEPROMShifts {
     ES_SSID = ES_Global + 4,    // SSID
     ES_Passwd,                  // Password (2 blocks)
     ES_Touch  = ES_Passwd+2,    // TouchSetup
+
+    ES_UsedQ,                   // Used questions (1 block per user)
+    ES_UsedQNext = ES_UsedQ + 32, // Marker
     
     ES_TOP_MAX, // Marker, not a real block
     
@@ -124,7 +124,6 @@ enum WorkingStatus : uint8_t {
 
 struct WorkingState {
     uint32_t last_round_time; // Time of last Play Round or time of start of Play Round
-    uint32_t last_tsync_time; // Time of last TimeSync event
     uint32_t enabled_users; // Bitset of all users which can take Challenge right now
     WorkingStatus state; // Current status of Play Round
     uint8_t load_state[8]; // State of loading of all doors: <position-in-queue:3 bit><user-index:5 bit>. Value of FF means 'unloaded'

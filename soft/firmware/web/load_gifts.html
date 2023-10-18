@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html><title>Загрузить подарки ...</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="jslib.js"></script>
+</head>
+
+<body>
+
+<h1><center>Загруженные подарки</center></h1>
+
+<div id="downcounter"></div>
+
+<form>
+<center id ="doors"></center>
+Загрузить подарок для: <select id="users">
+${HTMLOptionsUserList}
+  <option value="0">Антон</option>
+  <option value="1">Vasya</option>
+  <option value="2">Roman</option>
+</select><br>
+<table><tr><td>
+<p><button type="button" onclick="location.href = 'admin.html'">Обратно в админку</button></p>
+<p><button type="button" onclick="location.href = '../action/start_game.html'">Начать игру</button></p>
+</td><tr></table>
+</form>
+
+<script>
+
+// let users = ${LoadedGiftDoors}};
+let users = ['Антон (1)', 'Антон (2)', null, null, 'Vasya', 'Roman', null, null];
+
+function load_gift(door_index)
+{
+    let sel = document.getElementById("users");
+    const idx = sel.selectedIndex;
+    if (idx == -1) return;
+    const opt = sel.options[idx];
+
+    send_gift_load_msg(door_index, opt.value - 0, function(new_user_name) {
+        users[door_index] = new_user_name;
+        activate_doors(users, loaded_gifts_to_disabled(users), "load_gift");
+    } );
+    users[door_index] = opt.text;
+    activate_doors(users, loaded_gifts_to_disabled(users), "load_gift", true);
+}
+
+activate_doors(users, loaded_gifts_to_disabled(users), "load_gift");
+
+</script>
+
+
+
+</html>

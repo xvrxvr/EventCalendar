@@ -18,7 +18,6 @@ static void init_rtc_data()
 {
     working_state = WorkingState{
         .last_round_time = 0,
-        .last_tsync_time = 0,
         .enabled_users = 0,
         .state = WS_NotActive,
         .load_state = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
@@ -38,8 +37,6 @@ static void init_eeprom_data()
         .round_time = 60, // Time between Play Rounds (In minutes)
         .options = 0,   // Bitset of GlobalOptions
         
-        .time_sync = 24, // Time between Time Sync (In hours)
-
         .guard = 0xFF
     };
     global_setup.sync();

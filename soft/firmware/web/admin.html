@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+
+<html><title>Admin</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<h1><center>Добро пожаловать ${user}</center></h1>
+<form>
+<center><table><tr><td>
+<p><button type="button" onclick="location.href='start_game.html'">Начать Игру</button></p>
+<p><button type="button" onclick="if (confirm('Завершить игру?\nВы уверены?')) location.href = '../action/end_game.html'">Закончить Игру</button></p>
+<p><button type="button" onclick="location.href='add_game_user.html'">Добавить Игрока</button></p>
+<p><button type="button" onclick="location.href='load_gifts.html'">Загрузить Подарки</button></p>
+<p><button type="button" onclick="location.href='open_door.html'">Открыть дверь</button></p>
+<p><button type="button" onclick="location.href='setup.html'" class="red-button">Настройка</button></p>
+</td></tr>
+</table></center>
+</form>
+<hr>
+${status}
+</html>
+
