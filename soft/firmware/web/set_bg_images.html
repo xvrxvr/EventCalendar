@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+
+<html><title>Фоновые картинки</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="jslib.js"></script>
+
+<style>
+
+.grid-box {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-start;
+
+}
+
+.img-box {
+    width: 200px;
+    height: 120px;
+    margin: 5px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.img-box:hover {
+  box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+
+.selected {
+    border: 5px solid #555;
+}
+
+.img-main {
+    width: 400px;
+    height: 240px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="grid-box">
+${HTMLBGImageList}
+<img id="i1" class="img-box" onclick="select(1)" src="../bg/1.gif">
+<img id="i2" class="img-box" onclick="select(2)" src="../bg/2.gif">
+<img id="i3" class="img-box" onclick="select(3)" src="../bg/3.gif">
+<img id="i4" class="img-box" onclick="select(4)" src="../bg/4.gif">
+<img id="i5" class="img-box" onclick="select(5)" src="../bg/5.gif">
+<img id="i6" class="img-box" onclick="select(6)" src="../bg/6.gif">
+</div>
+
+<table><tr><td><img id="main" class="img-main"></td>
+<td><form action="../action/bg_add.html" method="POST" enctype="multipart/form-data">
+<p><button type="button" class="red-button" onclick="bg_remove()">Удалить картинку</button></p>
+<p>&nbsp;</p>
+<p>Файл с картинкой: <input type="file" name="imgfile" accept=".png"><br>
+<button type="submit">Добавить картинку</button></p>
+<p><button type="button" onclick="location.href='setup.html'">Назад в setup</button></p>
+</form></td>
+</table>
+
+<script>
+
+let selected_idx = -1;
+
+function select(index)
+{
+    const tgt_id = `i${index}`;
+    selected_idx = index;
+    for(let x of document.getElementsByClassName("img-box"))
+    {
+        if (x.id == tgt_id) x.classList.add("selected");
+        else x.classList.remove("selected");
+    }
+    document.getElementById("main").src = `../bg/${index}.gif`;
+}
+
+function bg_remove()
+{
+    if (selected_idx == -1) return;
+    if (!confirm("Удалить картинку? Вы уверены?")) return;
+    location.href = "../action/bg_remove.html?index=" + selected_idx;
+}
+
+</script>
+
+</html>

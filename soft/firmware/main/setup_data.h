@@ -8,23 +8,22 @@ static constexpr int max_users = 32;
 
 // Options for User
 enum UserOptions {
-    UO_Admin                = 0x0001,   // This User is Admin
+//    UO_Admin                = 0x0001,   // This User is Admin - Usert is Admin if any bits here is set
 
-    UO_CanManageBG          = 0x0002,   // This Admin can add/delete/disable background images
-    UO_CanSetup             = 0x0004,   // This Admin can do system setup - touch calibration, full system reset
+    UO_CanManageBG          = 0x0001,   // This Admin can add/delete/disable background images
+    UO_CanSetup             = 0x0002,   // This Admin can do system setup - touch calibration, full system reset
 
-    UO_CanStartRound        = 0x0008,   // This Admin can start/stop Play Round
-    UO_CanOpenDoors         = 0x0010,   // This Admin can forcibly open any door
-    UO_CanLoadGifts         = 0x0020,   // This Admin can load (and unload) gifts
-    UO_CanSetupRoundTime    = 0x0040,   // This Admin can change Round time
+    UO_CanStartRound        = 0x0004,   // This Admin can start/stop Play Round
+    UO_CanOpenDoors         = 0x0008,   // This Admin can forcibly open any door
+    UO_CanLoadGifts         = 0x0010,   // This Admin can load gifts
+    UO_CanSetupRoundTime    = 0x0020,   // This Admin can change Round time
+    UO_CanManageChallenge   = 0x0040,   // This Admin can add/delete/edit quize questions
 
     UO_CanEditUser          = 0x0080,   // This Admin can edit another User definition
     UO_CanAddRemoveUser     = 0x0100,   // This Admin can add or remove Users
     UO_CanAddRemoveAdmin    = 0x0200,   // This Admin can add or remove another Admint
-    UO_CanSelectRound       = 0x0400,   // This Admin can select/deselect Users for upcoming Play Round
-    UO_CanChangeUType       = 0x0800,   // This Admin can change User <-> Admin types
-    UO_CanDisableUser       = 0x1000,   // This Admin can temporary disable/enable user
-    UO_CanHelpUser          = 0x2000    // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
+    UO_CanDisableUser       = 0x0400,   // This Admin can temporary disable/enable user
+    UO_CanHelpUser          = 0x0800    // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
 };
 
 // Status of User
@@ -88,6 +87,7 @@ struct GolbalSetup {
     uint16_t round_time; // Time between Play Rounds (In minutes)
     uint16_t options;   // Bitset of GlobalOptions
     
+    int8_t tz_shift; // Timezone shift (in 15 minutes quantities)
     uint8_t  guard; // We writes here 0xFF - if we extand this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
     
     void sync() const; // Save me to EEPROM
@@ -118,7 +118,7 @@ static_assert(ES_TOP_MAX < ES_User, "EEPROM overflow");
 //  RTC RAM data (up to 56 bytes)
 enum WorkingStatus : uint8_t {
     WS_NotActive,   // Play Round not started
-    WS_Pending,     // Play Round will be started an 'nest time'
+    WS_Pending,     // Play Round will be started an 'next time'
     WS_Active       // Play Round now running
 };
 

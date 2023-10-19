@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<html><title>Setup</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="jslib.js"></script>
+</head>
+
+<body>
+<form>
+<center><table><tr><td>
+<p><button type="button" onclick="location.href='set_bg_images.html'">Управление фоновыми картинками</button></p>
+<p><button type="button" onclick="location.href='set_challenge.html'">Управление заданиями</button></p>
+
+<p><button type="button" onclick="set_round_time()" id="interround_btn"></button></p>
+
+<p><button type="button" onclick="location.href='../action/add_user.html'">Добавить Пользователя</button></p>
+<p><button type="button" onclick="location.href='edit_user.html'">Редактировать Пользователей</button></p>
+<hr>
+<p><button type="button" onclick="location.href='../action/recalibrate_touch.html'" class="red-button">Рекалибровка Touch Panel</button></p>
+<p><button type="button" onclick="location.href='../action/reset.html'" class="red-button">Сброс системы</button></p>
+<p><button type="button" onclick="if (confirm('Обнулить всю систему?\nВсе настройки будут сброшены, все пользователи будут удалены!\nВы уверены?')) location.href='../action/zap.html'" class="red-button">ПОЛНАЯ ОЧИСТКА ВСЕГО!</button></p>
+<hr>
+<p><button type="button" onclick="location.href='admin.html'">Назад в админку</button></p>
+</td></tr>
+</table></center>
+</form>
+
+<script>
+
+// let inter_round_time = ${InterRoundTime};
+let inter_round_time = 24*60;
+
+function inter_round_time_str()
+{
+    const h = Math.trunc((inter_round_time/60)).toString();
+    const m = (inter_round_time%60).toString();
+    if (m == '0') return h;
+    return `${h.padStart(2,'0')}:${m.padStart(2,'0')}`;
+}
+
+function update_interrupd_btn()
+{
+    document.getElementById("interround_btn").innerHTML = `Установить время между раундами (${inter_round_time_str()})`;
+}
+
+update_interrupd_btn();
+
+function set_round_time()
+{
+    const new_round_time = prompt("Время между раундами", inter_round_time_str());
+    if (!new_round_time) return;
+    let val = 0;
+    if (/^\d+$/.test(new_round_time)) val = Number.parseInt(new_round_time) * 60; else
+    {
+        const match = /^(\d+):(\d+)$/.exec(new_round_time);
+        if (!match) 
+        {
+            alert(`Введённая строка '${new_round_time}' не является временем.\nОжидается время в часах или в формате HH:MM`);
+            return;
+        }
+        const h = Number.parseInt(match[1]);
+        const m = Number.parseInt(match[2]);
+        if (h < 0 || m >= 60)
+        {
+            alert(`Введённая строка '${new_round_time}' не является правильным временем.`);
+            return;
+        }
+        val = h*60 + m;
+    }
+    if (val > 0xFFFF)
+    {
+        alert(`Слишком большое время '${new_round_time}'. Поддерживается максимум 1092 часа.`);
+        return;
+    }
+    inter_round_time = val;
+    update_interrupd_btn();
+    send_set_interround_time(val);
+}
+
+</script>
+
+</html>
+

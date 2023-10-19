@@ -13,10 +13,14 @@
 
 <h1><center>Загруженные подарки</center></h1>
 
-<div id="downcounter"></div>
+<form action="../action/start_game.html">
 
-<form>
+<div>
+<div id="users_list_active" style="float:left">${ActiveUsersList}</div>
+<div id="users_list_done"  style="float:right">${DoneUsersList}</div>
 <center id ="doors"></center>
+</div>
+
 Загрузить подарок для: <select id="users">
 ${HTMLOptionsUserList}
   <option value="0">Антон</option>
@@ -24,8 +28,11 @@ ${HTMLOptionsUserList}
   <option value="2">Roman</option>
 </select><br>
 <table><tr><td>
+<p><button type="button" onclick="done_user()">Нет больше подарков для этого пользователя</button></p>
+<hr>
+<p>Время, когда начать игру: <input type="time" name="start_time"></p>
+<p><button type="submit">Начать игру</button></p>
 <p><button type="button" onclick="location.href = 'admin.html'">Обратно в админку</button></p>
-<p><button type="button" onclick="location.href = '../action/start_game.html'">Начать игру</button></p>
 </td><tr></table>
 </form>
 
@@ -47,6 +54,19 @@ function load_gift(door_index)
     } );
     users[door_index] = opt.text;
     activate_doors(users, loaded_gifts_to_disabled(users), "load_gift", true);
+}
+
+function done_user()
+{
+    let sel = document.getElementById("users");
+    const idx = sel.selectedIndex;
+    if (idx == -1) return;
+    const opt = sel.options[idx];
+
+    send_user_done(opt.value - 0, function (users_lists) {
+        document.getElementById("users_list_active").innerHTML = users_list[0];
+        document.getElementById("users_list_done").innerHTML = users_list[1];
+    });
 }
 
 activate_doors(users, loaded_gifts_to_disabled(users), "load_gift");

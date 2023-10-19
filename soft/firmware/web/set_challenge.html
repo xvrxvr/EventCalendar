@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html><title>Редактирование загадок</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="jslib.js"></script>
+</head>
+
+<body>
+
+<form action="../action/update_challenge.html" method="post" enctype="multipart/form-data">
+
+<table><tr><td>
+
+<table><tr><td>
+
+Загадки:<br>
+<select id="index" name="index" size="20" style="min-width:20em" onchange="upd_challenge()">
+${HTMLChallengeOptions}
+<option value="1">Задача 1</option>
+<option value="2">Задача 2</option>
+<option value="3">Задача 3</option>
+<option value="4">Задача 4</option>
+</select>
+
+
+</td><td>
+<p>Возраст: от <input type="number" id="min-age" name="min-age" min="1" max="255" value="18" style="width:3em">, до <input type="number" id="max-age" name="max-age" min="1" max="255" value="99" style="width:3em"></p>
+<p>Текст загадки:<br><textarea id="text" name="text" rows="10" cols="40">?</textarea></p>
+<p>Ответ (и неправильные ответы):<br><textarea id="answer" name="answer" rows="10" cols="40">?</textarea></p>
+
+</td></tr></table>
+<p><button type="submit">Обновить загадку</button></p>
+<p><button type="button" onclick="new_challenge()">Добавить новую загадку</button></p>
+<p><button type="button" onclick="del_challenge()" class="red-button">Удалить загадку</button></p>
+<p><button type="button" onclick="location.href='setup.html'">Назад в setup</button></p>
+</td></tr></table>
+
+</form>
+
+<script>
+
+function new_challenge()
+{
+    const name = prompt("Имя новой загадки");
+    if (!name) return;
+    let opts = document.getElementById("index").options;
+    for(let x = 0; x < opts.length; ++x)
+    {
+        if (opts[x].text == name) {alert(`Загадка '${name}' уже есть`); return;}
+    }
+    send_add_challenge(name, (new_idx) => {
+        let opt = document.createElement("option");
+        opt.value = new_idx.toString();
+        opt.text = name;
+        opts.add(opt);
+        opts.selectedIndex = opts.length - 1;
+        document.getElementById("text").value = "?";
+        document.getElementById("answer").value = "?";
+    });
+}
+
+function del_challenge()
+{
+    let opts = document.getElementById("index").options;
+    if (opts.selectedIndex == -1) return;
+    if (!confirm("Удалить загадку? Вы уверены?")) return;
+    send_del_challenge(opts.selectedIndex);
+    opts.remove(opts.selectedIndex);
+    upd_challenge();
+}
+
+function upd_challenge()
+{
+    let opts = document.getElementById("index").options;
+    if (opts.selectedIndex == -1)
+    {
+        document.getElementById("text").value = "";
+        document.getElementById("answer").value = "";        
+        document.getElementById("min-age").value = 1;
+        document.getElementById("max-age").value = 99;
+        return;
+    }
+    send_get_challenge(opts.selectedIndex, (json) => {
+        document.getElementById("text").value = json.text;
+        document.getElementById("answer").value = json.answer;        
+        document.getElementById("min-age").value = json.min_age;
+        document.getElementById("max-age").value = json.max_age;
+    });
+}
+
+
+</script>
+
+</html>
+

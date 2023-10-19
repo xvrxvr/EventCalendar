@@ -36,7 +36,9 @@ static void init_eeprom_data()
             
         .round_time = 60, // Time between Play Rounds (In minutes)
         .options = 0,   // Bitset of GlobalOptions
-        
+
+        .tz_shift = 0, // TZ is 0 (GMT)
+
         .guard = 0xFF
     };
     global_setup.sync();
