@@ -6,11 +6,15 @@ set(srcs
     wifi_module.cpp
     setup_data.cpp
     web_server.cpp
+    web_files_access.cpp
     main.cpp
 )
 
+file(GLOB web_srcs "web/*")
+
 idf_component_register(SRCS ${srcs}
                     INCLUDE_DIRS "."
+                    EMBED_FILES ${web_srcs}
                     )
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-missing-field-initializers)
