@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html><title>Редактирование пользователей</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="jslib.js"></script>
+
+<body>
+
+<table><tr><td>
+
+Польэователи:<br>
+<select id="index" name="index" size="20" style="min-width:20em" onchange="upd_users()">
+$[HTMLUserList]
+<option value="1">Пользователь 1</option>
+<option value="2">Пользователь 2</option>
+<option value="3">Пользователь 3</option>
+<option value="4">Пользователь 4</option>
+</select>
+</td><td>
+
+<table>
+<tr><td>Имя:<td><input type="text" id="name" onchange="upd('name', this.value)"></tr>
+<tr><td>Возраст:<td><input type="number" id="age" min="1" max="99" value="18" onchange="upd('age', this.value)"></tr>
+<tr><td>Приоритет:<td><input type="number" id="prio" min="0" max="255" value="255" onchange="upd('prio', this.value)"></tr>  <!-- max & value is $[CurUserPrio] -->
+<tr><td>Выключить:<td><input type="checkbox" id="disable" onchange="upd('disable', this.checked)"></tr>
+<tr><td>&nbsp;</td>
+<tr><td colspan=2><center><b>Что может делать:</b></center></tr>
+<tr><td colspan=2><input type="checkbox" id="r0" onchange="upd_rights()">&nbsp;Управление фоновыми картинками</tr>
+<tr><td colspan=2><input type="checkbox" id="r1" onchange="upd_rights()">&nbsp;Системные настройки</tr>
+<tr><td colspan=2><input type="checkbox" id="r2" onchange="upd_rights()">&nbsp;Начинать и заканчивать игру</tr>
+<tr><td colspan=2><input type="checkbox" id="r3" onchange="upd_rights()">&nbsp;Открывать дверки</tr>
+<tr><td colspan=2><input type="checkbox" id="r4" onchange="upd_rights()">&nbsp;Загружать подарки</tr>
+<tr><td colspan=2><input type="checkbox" id="r5" onchange="upd_rights()">&nbsp;Устанавливать время раунда</tr>
+<tr><td colspan=2><input type="checkbox" id="r6" onchange="upd_rights()">&nbsp;Редактировать загадки</tr>
+<tr><td colspan=2><input type="checkbox" id="r7" onchange="upd_rights()">&nbsp;Редактировать пользователей</tr>
+<tr><td colspan=2><input type="checkbox" id="r8" onchange="upd_rights()">&nbsp;Добавлять и удалять пользователей</tr>
+<tr><td colspan=2><input type="checkbox" id="r9" onchange="upd_rights()">&nbsp;Добавлять и удалять админов</tr>
+<tr><td colspan=2><input type="checkbox" id="r10" onchange="upd_rights()">&nbsp;Временно отключать пользователя</tr>
+<tr><td colspan=2><input type="checkbox" id="r11" onchange="upd_rights()">&nbsp;Помогать открыть дверцу другим пользователям</tr>
+</table>
+</td></tr></table>
+<table><tr><td>
+<button type="button" onclick="location.href='../action/add_user.html'" style="width:auto">Добавить пользователя</button>
+<button type="button" onclick="del_user()" class="red-button" style="width:auto">Удалить пользователя</button>
+</tr><tr><td>
+<p><button type="button" onclick="location.href='setup.html'">Назад в настройки</button></p>
+</tr></table>
+
+<script>
+
+let current_usr_index = -1;
+
+function upd_users()
+{
+    let opts = I("index").options;
+    current_usr_index = opts.selectedIndex;
+    if (current_usr_index == -1)
+    {
+        for(const x of document.getElementsByTagName("input"))
+        {
+            x.value = "";
+        }
+        return;
+    }
+    send_get_user_opts(opts[current_usr_index].value, (usr) => {
+        I("name").value = usr.name;
+        I("age").value  = usr.age;
+        I("prio").value = usr.prio;
+        I("disable").checked = usr.disable;
+        const rights = usr.rights;
+        for(let x of document.getElementsByTagName("input"))
+        {
+            if (x.id[0] != 'r') continue;
+            const idx = Number.parseInt(x.id.substring(1));
+            x.checked = ((rights >> idx) & 1) != 0;
+        }
+    });
+}
+
+function upd(fld_name, value)
+{
+    if (current_usr_index == -1) return;
+    const list_idx = current_usr_index;
+    send_set_user_option(I("index").options[current_usr_index].value, fld_name, value, (name) => {
+        opts.options[list_idx].text = name;
+    });
+}
+
+function upd_rights()
+{
+    let val = 0;
+
+    for(let x of document.getElementsByTagName("input"))
+    {
+        if (x.id[0] != 'r') continue;
+        const idx = Number.parseInt(x.id.substring(1));
+        if (x.checked) val |= 1 << idx;
+    }
+    upd("rights", val);
+}
+
+function del_user()
+{
+    let opts = I("index");
+    if (current_usr_index == -1) return;
+    if (!confirm("Вы уверен, что хотите удалить пользователя?")) return;
+    send_del_user(opts.options[current_usr_index].value);
+    opts.remove(current_usr_index);
+    upd_users();
+}
+
+
+</script>
+
+
+</html>

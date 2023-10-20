@@ -47,7 +47,7 @@
 <body>
 
 <div class="grid-box">
-${HTMLBGImageList}
+$[HTMLBGImageList]
 <img id="i1" class="img-box" onclick="select(1)" src="../bg/1.gif">
 <img id="i2" class="img-box" onclick="select(2)" src="../bg/2.gif">
 <img id="i3" class="img-box" onclick="select(3)" src="../bg/3.gif">
@@ -57,14 +57,18 @@ ${HTMLBGImageList}
 </div>
 
 <table><tr><td><img id="main" class="img-main"></td>
-<td><form action="../action/bg_add.html" method="POST" enctype="multipart/form-data">
+<td><form>
 <p><button type="button" class="red-button" onclick="bg_remove()">Удалить картинку</button></p>
 <p>&nbsp;</p>
-<p>Файл с картинкой: <input type="file" name="imgfile" accept=".png"><br>
-<button type="submit">Добавить картинку</button></p>
+<p>Файл с картинкой: <input type="file" id="image-file" accept="image/*" onchange="load_new_file()"><br>
+<button type="button" onclick="send_picture()">Добавить картинку</button></p>
 <p><button type="button" onclick="location.href='setup.html'">Назад в setup</button></p>
 </form></td>
 </table>
+
+<form id="submit-form" action="../action/bg_add.html" method="POST" enctype="multipart/form-data">
+<input type="hidden" id="submit-data" name="file"></input>
+</form>
 
 <script>
 
@@ -79,7 +83,8 @@ function select(index)
         if (x.id == tgt_id) x.classList.add("selected");
         else x.classList.remove("selected");
     }
-    document.getElementById("main").src = `../bg/${index}.gif`;
+    I("main").src = `../bg/${index}.gif`;
+    if (index != -1) I("image-file").value = "";
 }
 
 function bg_remove()
@@ -88,6 +93,37 @@ function bg_remove()
     if (!confirm("Удалить картинку? Вы уверены?")) return;
     location.href = "../action/bg_remove.html?index=" + selected_idx;
 }
+
+function load_new_file()
+{
+    const input = I("image-file");
+    const curFiles = input.files;
+    if (curFiles.length === 0) return;
+    select(-1);
+    I("main").src = URL.createObjectURL(curFiles[0]);
+}
+
+function send_picture()
+{
+    const image = I("main");
+    if (selected_idx != -1 || !image.src) {alert("Картинка не загружена"); return;}
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.height = 240;
+    canvas.width = 400;
+
+    ctx.drawImage(image, 0, 0);
+    const image_url = canvas.toDataURL();
+
+    const pref = "data:image/png;base64,";
+
+    if (!image_url.startsWith(pref)) {alert(`Internal error: dataURL starts with invalid pattern : '${image_url.substr(0, 30)}', extected '${pref}'`); return;}
+    I("submit-data").value = image_url.substring(pref.length);
+    I("submit-form").submit();
+}
+
 
 </script>
 

@@ -1,5 +1,7 @@
 "use strict";
 
+function I(name) {return document.getElementById(name);}
+
 function _door_button(index, second_names, width, disabled_scale, usr_callback)
 {
     let result = '<button type="button" class="door-p' + width;
@@ -46,23 +48,23 @@ function loaded_gifts_to_disabled(second_names)
     return result;
 }
 
-// let time_to_doors_enable = ${TimeToDoorsEnable};
+// let time_to_doors_enable = $[TimeToDoorsEnable];
 let _time_to_doors_enable = 10;
 
 function _msg_time_to_doors()
 {
-    document.getElementById("downcounter").innerHTML = _time_to_doors_enable ? "Вы сможете открыть дверцу через " + _time_to_doors_enable + " секунд" : "";
+    I("downcounter").innerHTML = _time_to_doors_enable ? "Вы сможете открыть дверцу через " + _time_to_doors_enable + " секунд" : "";
 }
 
 function activate_doors(second_names, disabled_scale, usr_callback, reset_timeout = false)
 {
     if (reset_timeout) _time_to_doors_enable = 10;
-    let doors = document.getElementById("doors");
+    let doors = I("doors");
     if (_time_to_doors_enable)
     {
         doors.innerHTML = door_table(second_names, 255, "");
         _msg_time_to_doors();
-        let cb = function()
+        let cb = () =>
         {
             --_time_to_doors_enable;
             _msg_time_to_doors();
@@ -86,6 +88,7 @@ function send_ajax_request(url, callback = null, as_json = false)
     req.open("GET", "../action/" + url);
     req.send();
 */
+    console.log('AJAX: ' + url);
     if (callback) callback(as_json ? {} : "");
 }
 
@@ -109,27 +112,44 @@ function send_door_open_message(door_index)
 // callback argument - array [HTML string with list of active Users, HTML string with list of done users]
 function send_user_done(user_index, callback)
 {
-    send_ajax_request('done-user&user=' + user_index, callback, true);
+    send_ajax_request('done-user.html?user=' + user_index, callback, true);
 }
 
 function send_set_interround_time(time)
 {
-    send_ajax_request('set-interround-time&value=' + time);
+    send_ajax_request('set-interround-time.html?value=' + time);
 }
 
 // Callback called with new challenge index
 function send_add_challenge(text, callback)
 {
-    send_ajax_request('add-challenge&value=' + encodeURIComponent(text), callback);
+    send_ajax_request('add-challenge.html?value=' + encodeURIComponent(text), callback);
 }
 
 function send_del_challenge(index)
 {
-    send_ajax_request('del-challenge&index=' + index);
+    send_ajax_request('del-challenge.html?index=' + index);
 }
 
-// Callback called with JSOn object with challenge data
+// Callback called with JSON object with challenge data
 function send_get_challenge(index, callback)
 {
-    send_ajax_request('get-challenge&index=' + index, callback, true);
+    send_ajax_request('get-challenge.html?index=' + index, callback, true);
+}
+
+// Callback called with JSON data with User options
+function send_get_user_opts(index, callback)
+{
+    send_ajax_request('get-user-opts.html?index=' + index, callback, true);
+}
+
+// Callback called with new user name (to show in list nox)
+function send_set_user_option(index, opt_name, opt_value, callback)
+{
+    send_ajax_request('set-user-opt.html?index=' + index + '&name=' + opt_name + '&value=' + encodeURIComponent(opt_value));
+}
+
+function send_del_user(index)
+{
+    send_ajax_request('del-user.html?index=' + index);
 }

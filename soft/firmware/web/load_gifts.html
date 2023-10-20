@@ -16,13 +16,13 @@
 <form action="../action/start_game.html">
 
 <div>
-<div id="users_list_active" style="float:left">${ActiveUsersList}</div>
-<div id="users_list_done"  style="float:right">${DoneUsersList}</div>
+<div id="users_list_active" style="float:left">$[ActiveUsersList]</div>
+<div id="users_list_done"  style="float:right">$[DoneUsersList]</div>
 <center id ="doors"></center>
 </div>
 
 Загрузить подарок для: <select id="users">
-${HTMLOptionsUserList}
+$[HTMLOptionsUserList]
   <option value="0">Антон</option>
   <option value="1">Vasya</option>
   <option value="2">Roman</option>
@@ -38,17 +38,17 @@ ${HTMLOptionsUserList}
 
 <script>
 
-// let users = ${LoadedGiftDoors}};
+// let users = $[LoadedGiftDoors];
 let users = ['Антон (1)', 'Антон (2)', null, null, 'Vasya', 'Roman', null, null];
 
 function load_gift(door_index)
 {
-    let sel = document.getElementById("users");
+    let sel = I("users");
     const idx = sel.selectedIndex;
     if (idx == -1) return;
     const opt = sel.options[idx];
 
-    send_gift_load_msg(door_index, opt.value - 0, function(new_user_name) {
+    send_gift_load_msg(door_index, opt.value - 0, (new_user_name) => {
         users[door_index] = new_user_name;
         activate_doors(users, loaded_gifts_to_disabled(users), "load_gift");
     } );
@@ -58,14 +58,14 @@ function load_gift(door_index)
 
 function done_user()
 {
-    let sel = document.getElementById("users");
+    let sel = I("users");
     const idx = sel.selectedIndex;
     if (idx == -1) return;
     const opt = sel.options[idx];
 
-    send_user_done(opt.value - 0, function (users_lists) {
-        document.getElementById("users_list_active").innerHTML = users_list[0];
-        document.getElementById("users_list_done").innerHTML = users_list[1];
+    send_user_done(opt.value - 0, (users_lists) => {
+        I("users_list_active").innerHTML = users_list[0];
+        I("users_list_done").innerHTML = users_list[1];
     });
 }
 

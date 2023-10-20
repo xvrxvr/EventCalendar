@@ -31,7 +31,7 @@
 
 <script>
 
-// let inter_round_time = ${InterRoundTime};
+// let inter_round_time = $[InterRoundTime];
 let inter_round_time = 24*60;
 
 function inter_round_time_str()
@@ -44,7 +44,7 @@ function inter_round_time_str()
 
 function update_interrupd_btn()
 {
-    document.getElementById("interround_btn").innerHTML = `Установить время между раундами (${inter_round_time_str()})`;
+    I("interround_btn").innerHTML = `Установить время между раундами (${inter_round_time_str()})`;
 }
 
 update_interrupd_btn();

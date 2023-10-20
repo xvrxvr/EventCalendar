@@ -9,7 +9,7 @@
 </head>
 
 <body>
-<h1><center>Добро пожаловать ${user}</center></h1>
+<h1><center>Добро пожаловать $[CurrentUser]</center></h1>
 <form>
 <center><table><tr><td>
 <p><button type="button" onclick="location.href='start_game.html'">Начать Игру</button></p>
@@ -22,6 +22,6 @@
 </table></center>
 </form>
 <hr>
-${status}
+$[MainStatus]
 </html>
 

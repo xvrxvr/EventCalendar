@@ -1,0 +1,198 @@
+All actions called by path /action/<id>...
+
+List of actions called through AJAX: (Parameters passed as GET requests, results expected as plain text or JSON)
+-----------------------
+
+gift_load.html - Load gift to user + door
+
+Params: 
+    door - Door index (0 based)
+    user - User index (0 based)
+Return (text):
+    User name to put on Door (with serial number)
+-----------------------
+
+unload_gift - Remove gift from specified door
+
+Params:
+    door - Door index (0 based)
+Return (JSON):
+    Array of 8 text (or null) elements with titles for Doors
+-----------------------
+
+open-door.html - Open Door
+
+Params:
+    door - Door index (0 based)
+-----------------------
+
+done-user.html - Mark user as Done
+
+Param:
+    user - User index
+Return (JSON):
+    Aray of 2 items: HTML text with list of still Active users, HTML text with list of Done users
+-----------------------
+
+set-interround-time.html - Set interr round time (in minutes)
+
+Param:
+    value - Time
+-----------------------
+
+add-challenge.html - Add new empty challenge
+
+Param:
+    value - Name of challenge
+Return (int):
+    Index of new challenge
+-----------------------
+
+del-challenge.html - Delete challenge
+
+Param:
+    index - Index of challenge
+-----------------------
+
+get-challenge.html - Load challenge contents
+
+Param:
+    index - Index of challenge
+Result (JSON):
+    Object with challenge contents:
+        text   : str - Text of challenge (multiline text)
+        answer : str - Answers (multiline text)
+        min_age: int - Minimum age
+        max_age: int - Maximum age
+-----------------------
+
+get-user-opts.html - get User definition
+
+Param:
+    index - user index
+Result (JSON):
+    Object with definition:
+        name   : str - Name of User
+        age    : int - Age os User
+        prio   : int - Priority of User
+        disable: bool - 'disabled' status of user
+        rights : int - Scale of user rights
+-----------------------
+
+set-user-opt.html - Set User definition field
+
+Params:
+    index - User Index
+    name  - Name of field (see get-user-opts.html result JSON)
+    value - Value for this field
+Return (string):
+    User name for User List
+-----------------------
+
+del-user.html - Delete user
+
+Params:
+    index - User Index
+================================================================================
+
+List of Actions called directly from WEB Pages (parameters post by default by GET):
+-----------------------
+
+update_users.html - Update list of Users which participated in Game.
+-> load_gifts.html or admin.html
+
+Params:
+    u<N> - Flag 'User take a part in game'
+    load_gifts [opt] - Jump to load_gifts.html after processing (otherwise jump to admin.html)
+-----------------------
+
+end_game.html - End game
+-> admin.html
+-----------------------
+
+start_game.html - Start game
+-> admin.html
+
+Optional params (if not exists - do not change current selection):
+    u<N> - Flag 'User take a part in game'
+-----------------------
+
+add_user.html - Add new user (no name). Pass through fingerprint addition, that jump to edit_user.html
+-> <fingerprint>, edit_user.html
+-----------------------
+
+bg_add.html (POST) - Add new background image
+-> set_bg_images.html
+
+Param:
+    file - base64 encoded PNG image
+-----------------------
+
+bg_remove.html - Remove BG image
+-> set_bg_images.html
+
+Param:
+    index - BG image index
+-----------------------
+
+update_challenge.html (POST) - Update challenge
+-> set_challenge.html
+
+Param:
+    index - Challenge index
+    min-age - Min age
+    max-age - Max age
+    text - Text of challenge
+    answer - Answers for challenge
+-----------------------
+
+recalibrate_touch.html - Recalibrate touch pannel
+-> setup.html
+-----------------------
+
+reset.html - Restart system
+-----------------------
+
+zap.html - Erase whole EEPROM, Fingerprints and restart
+-----------------------
+===================================================================================================
+
+Vars substitution:
+
+$[CurrentUser] - Currently logged on user
+$[MainStatus] - HTML block with current status of system
+$[HTMLUserList] - HTML block with all Users available to edit by current
+   <option value="1">Пользователь 1</option>
+   <option value="2">Пользователь 2</option>
+   <option value="3">Пользователь 3</option>
+   <option value="4">Пользователь 4</option>
+$[CurUserPrio] - Priority value of Current User
+$[TimeToDoorsEnable] - Time to reenargizing Door system
+$[ActiveUsersList] - HTML block with list of still Active Users (as in done-user.html AJAX)
+$[DoneUsersList] - HTML block with list of Done Users (as in done-user.html AJAX)
+$[HTMLOptionsUserList] - HTML block with list of Users taken part in Game
+  <option value="0">Антон</option>
+  <option value="1">Vasya</option>
+  <option value="2">Roman</option>
+$[LoadedGiftDoors] - JSON list of titles on Doors
+  ['Антон (1)', 'Антон (2)', null, null, 'Vasya', 'Roman', null, null]
+$[MsgTitle] - Title of Message page
+$[Message] - Message in Message page
+$[HTMLBGImageList] - HTML block for background Images list
+  <img id="i1" class="img-box" onclick="select(1)" src="../bg/1.png">
+  <img id="i2" class="img-box" onclick="select(2)" src="../bg/2.png">
+  <img id="i3" class="img-box" onclick="select(3)" src="../bg/3.png">
+  <img id="i4" class="img-box" onclick="select(4)" src="../bg/4.png">
+  <img id="i5" class="img-box" onclick="select(5)" src="../bg/5.png">
+  <img id="i6" class="img-box" onclick="select(6)" src="../bg/6.png">
+$[HTMLChallengeOptions] - HTML block with challenges list
+  <option value="1">Задача 1</option>
+  <option value="2">Задача 2</option>
+  <option value="3">Задача 3</option>
+  <option value="4">Задача 4</option>
+$[InterRoundTime] - Tome between Game rounds
+$[HTMLUserListWithSelection] - HTML block with list of enabled users
+  <p><input type="checkbox" name="u1" checked="true">&nbsp;Пользователь 1</p>
+  <p><input type="checkbox" name="u2" checked="true">&nbsp;Пользователь 2</p>
+  <p><input type="checkbox" name="u3" checked="true">&nbsp;Пользователь 3</p>
+

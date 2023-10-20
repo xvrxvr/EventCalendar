@@ -19,7 +19,7 @@
 
 Загадки:<br>
 <select id="index" name="index" size="20" style="min-width:20em" onchange="upd_challenge()">
-${HTMLChallengeOptions}
+$[HTMLChallengeOptions]
 <option value="1">Задача 1</option>
 <option value="2">Задача 2</option>
 <option value="3">Задача 3</option>
@@ -47,7 +47,7 @@ function new_challenge()
 {
     const name = prompt("Имя новой загадки");
     if (!name) return;
-    let opts = document.getElementById("index").options;
+    let opts = I("index").options;
     for(let x = 0; x < opts.length; ++x)
     {
         if (opts[x].text == name) {alert(`Загадка '${name}' уже есть`); return;}
@@ -58,37 +58,37 @@ function new_challenge()
         opt.text = name;
         opts.add(opt);
         opts.selectedIndex = opts.length - 1;
-        document.getElementById("text").value = "?";
-        document.getElementById("answer").value = "?";
+        I("text").value = "?";
+        I("answer").value = "?";
     });
 }
 
 function del_challenge()
 {
-    let opts = document.getElementById("index").options;
+    let opts = I("index").options;
     if (opts.selectedIndex == -1) return;
     if (!confirm("Удалить загадку? Вы уверены?")) return;
-    send_del_challenge(opts.selectedIndex);
+    send_del_challenge(opts.options[opts.selectedIndex].value);
     opts.remove(opts.selectedIndex);
     upd_challenge();
 }
 
 function upd_challenge()
 {
-    let opts = document.getElementById("index").options;
+    let opts = I("index").options;
     if (opts.selectedIndex == -1)
     {
-        document.getElementById("text").value = "";
-        document.getElementById("answer").value = "";        
-        document.getElementById("min-age").value = 1;
-        document.getElementById("max-age").value = 99;
+        I("text").value = "";
+        I("answer").value = "";        
+        I("min-age").value = 1;
+        I("max-age").value = 99;
         return;
     }
-    send_get_challenge(opts.selectedIndex, (json) => {
-        document.getElementById("text").value = json.text;
-        document.getElementById("answer").value = json.answer;        
-        document.getElementById("min-age").value = json.min_age;
-        document.getElementById("max-age").value = json.max_age;
+    send_get_challenge(opts[opts.selectedIndex].value, (json) => {
+        I("text").value = json.text;
+        I("answer").value = json.answer;        
+        I("min-age").value = json.min_age;
+        I("max-age").value = json.max_age;
     });
 }
 
