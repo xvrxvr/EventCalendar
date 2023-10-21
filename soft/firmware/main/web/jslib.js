@@ -80,6 +80,56 @@ function activate_doors(second_names, disabled_scale, usr_callback, reset_timeou
     }
 }
 
+function call_later(cmd, cb)
+{
+    const timeout  = cmd.timeout ?? 5;
+    if (timeout) setTimeout(cb, timeout * 1000); 
+}
+
+function set_html_with_timeout(cmd, element_name, msg = undefined)
+{
+    const element = I(element_name);
+    if (!element) return;
+    const m = msg ?? cmd.msg ?? '';
+    element.innerHTML = m;
+    if (m) call_later(cmd, () => {element.innerHTML="";});
+}
+
+let websock = null;
+
+// Setup callback handler for WebSocket. Callback got Array of Objects with comands
+// Generic commands processed right here, but it still be included in callback argument
+function set_async_handler(callback = null)
+{
+    let port = document.port;
+    if (port) port = ':' + port;
+
+    if (websock) {alert("set_async_handler called twice!"); return;}
+    websock = new WebSocket(`ws://${document.location.host}${port}/notify`);
+
+    websock.onmessage = ({data}) => 
+    {
+        let command = JSON.parse(data);
+
+        if (!(command instanceof Array)) command = [ command ];
+
+        if (callback) callback(command);
+
+        for(let cmd of command)
+        {
+            switch(cmd.cmd)
+            {
+                case "goto":  websock.close(); websock = null; document.location.href = cmd.href; break;
+                case "popup": alert(cmd.msg); break;
+                case "alert": set_html_with_timeout(cmd, cmd.dst ?? 'alert-target'); break;
+            }
+        }
+    };
+}
+
+window.onload = () => {if (!websock) set_async_handler();};
+window.onunload = () => {if (websock) {websock.close(); websock = null;}};
+
 function send_ajax_request(url, callback = null, as_json = false)
 {
 /*
@@ -152,4 +202,9 @@ function send_set_user_option(index, opt_name, opt_value, callback)
 function send_del_user(index)
 {
     send_ajax_request('del-user.html?index=' + index);
+}
+
+function send_del_fg_user(user_index, fg_index)
+{
+    send_ajax_request(`del-user-fg.html?usr_index=${user_index}&fg_index=${fg_index}`);
 }

@@ -41,18 +41,27 @@ $[HTMLUserList]
 <tr><td colspan=2><input type="checkbox" id="r9" onchange="upd_rights()">&nbsp;Добавлять и удалять админов</tr>
 <tr><td colspan=2><input type="checkbox" id="r10" onchange="upd_rights()">&nbsp;Временно отключать пользователя</tr>
 <tr><td colspan=2><input type="checkbox" id="r11" onchange="upd_rights()">&nbsp;Помогать открыть дверцу другим пользователям</tr>
+<tr><td colspan=2><input type="checkbox" id="r12" onchange="upd_rights()">&nbsp;Смотреть статус Отпечатков Пальцев</tr>
+<tr><td colspan=2><input type="checkbox" id="r13" onchange="upd_rights()">&nbsp;Редактировать Отпечатки Пальцев</tr>
 </table>
 </td></tr></table>
 <table><tr><td>
 <button type="button" onclick="location.href='../action/add_user.html'" style="width:auto">Добавить пользователя</button>
 <button type="button" onclick="del_user()" class="red-button" style="width:auto">Удалить пользователя</button>
 </tr><tr><td>
+<p><button type="button" onclick="edit_fg()">Редактировать Отпечатки Пальцев</button></p>
 <p><button type="button" onclick="location.href='setup.html'">Назад в настройки</button></p>
 </tr></table>
 
 <script>
 
 let current_usr_index = -1;
+
+function edit_fg()
+{
+    if (current_usr_index == -1) return;
+    location.href='../action/fg_edit.html?index=' + I("index").options[current_usr_index].value;
+}
 
 function upd_users()
 {

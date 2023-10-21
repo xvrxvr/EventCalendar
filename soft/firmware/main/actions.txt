@@ -93,6 +93,14 @@ del-user.html - Delete user
 
 Params:
     index - User Index
+-----------------------
+
+del-user-fg.html - Delete user fingerprint from library
+
+Params:
+    usr_index - User index
+    fg_index - FG index
+
 ================================================================================
 
 List of Actions called directly from WEB Pages (parameters post by default by GET):
@@ -118,7 +126,7 @@ Optional params (if not exists - do not change current selection):
 -----------------------
 
 add_user.html - Add new user (no name). Pass through fingerprint addition, that jump to edit_user.html
--> <fingerprint>, edit_user.html
+-> /action/fg_edit.html (no params) -> edit_user.html
 -----------------------
 
 bg_add.html (POST) - Add new background image
@@ -155,6 +163,18 @@ reset.html - Restart system
 
 zap.html - Erase whole EEPROM, Fingerprints and restart
 -----------------------
+
+fg_view.html - Viewer FingerPrints library
+-> ???
+
+-----------------------
+
+fg_edit.html -> Editor FingerPrints library for user
+-> ???
+
+Param:
+    index [opt] - User to edit. If ommited - reserve new User
+
 ===================================================================================================
 
 Vars substitution:
@@ -195,4 +215,97 @@ $[HTMLUserListWithSelection] - HTML block with list of enabled users
   <p><input type="checkbox" name="u1" checked="true">&nbsp;Пользователь 1</p>
   <p><input type="checkbox" name="u2" checked="true">&nbsp;Пользователь 2</p>
   <p><input type="checkbox" name="u3" checked="true">&nbsp;Пользователь 3</p>
+$[HTMLFGLibrary] - FingerPrints Library Viewer HTML block with users and FG items. onclick handlers depends on priority of user/current user and fill state of FG cell
+  <tr><th class="fgl-ptr" onclick="edit_user(this, 1, 'Антон')">Антон<td><div id="u1-0" class="fgl-box fgl-box-filled fgl-ptr" onclick="del_fg(this, 1,0, 'Антон')"></div><td><div id="u1-1" class="fgl-box"></div><td><div id="u1-2" class="fgl-box"></div><td><div id="u1-3" class="fgl-box"></div></tr>
+  <tr><th>Сергей<td><div id="u2-0" class="fgl-box fgl-box-filled"></div><td><div id="u2-1" class="fgl-box fgl-box-filled"></div><td><div id="u2-2" class="fgl-box  fgl-box-filled"></div><td><div id="u2-3" class="fgl-box fgl-box-filled"></div></tr>
 
+====================================================================================================
+
+WebSocket:  ws://.../notify
+
+Push async notifications in JSON format.
+Expected format: Object (one action), or Array of Objects (many actions)
+Object field 'cmd' contains commnand. Rest of fields depends of command.
+
+** Generic commands (can be issued on any page): **
+---------------------------------------------
+
+goto - Redirect to WEB page
+
+Fields:
+
+href: "page" - URL to redirect
+---------------------------------------------
+
+popup - Call JS 'alert' function (popup alert)
+
+Fields:
+
+msg: "alert text" - Message to show
+---------------------------------------------
+
+alert - Emit temporary alert message (to WEB element with id 'alert-target'). Message emited via innerHTML property.
+
+Fields:
+
+msg: "html text of alert message" - Message to show
+dst: "id of alert target" [optional] - Redefine ID of WEB element to show message
+timeout: <timeout in seconds> [optional] - Time to show message. 0 to show permanent (by default - 5 sec)
+---------------------------------------------
+
+** Fingerprint View command: **
+---------------------------------------------
+
+fgview-box-msg - Set temporary text in box, representing FG Library item
+
+Fields:
+
+msg: "html text to emit" - Message to emit
+dst: "part of id of box" - ID of WEB element to emit (<user-number>-<FG-Entry-Entry>, both numbers zero based)
+hlt: Value to highlight in box (floating point value [0-1]) [optional] - Highlight box
+timeout: <timeout in seconds> [optional] - Time to show message. 0 to show permanent (by default - 5 sec)
+---------------------------------------------
+
+** Fingerprint Editor: **
+---------------------------------------------
+
+fgedit-switch - Prompt to switch to another user
+
+Fields:
+
+usr: "User-name" - name of User
+percent: Percent of match of FG for this user (floating point value 0-1)
+---------------------------------------------
+
+fgedit-box-msg - Emit temporary message for box
+
+Fields:
+
+msg: "html text to emit" - Message to emit
+dst: box index - Target to emit (zero base index)
+hlt: Value to highlight in box (floating point value [0-1]) [optional] - Highlight box
+timeout: <timeout in seconds> [optional] - Time to show message. 0 to show permanent (by default - 5 sec)
+---------------------------------------------
+
+fgedit-box-state - Set box state
+
+Fields:
+
+dst: box index - Target to set (zero base index)
+state: "state" - State to set:
+    empty - Box not filled
+    filled - Box is filled
+    filling - Box now is filling
+---------------------------------------------
+
+fgedit-circle-state - Set circle state (each Box contains 2 circles)
+
+Fields:
+
+dst: "circle index" - Target to set (<box-index>-<circle-index> both indexes are zero base index)
+state: "state" - State to set:
+    empty - Circle not filled
+    filled - Circle is filled
+    filling - Circlenow is filling
+    bad - Trying to enter invaid data (duplicate, finger lost, etc)
+    quality - Data is eneterd have bad quality

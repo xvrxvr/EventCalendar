@@ -23,7 +23,10 @@ enum UserOptions {
     UO_CanAddRemoveUser     = 0x0100,   // This Admin can add or remove Users
     UO_CanAddRemoveAdmin    = 0x0200,   // This Admin can add or remove another Admint
     UO_CanDisableUser       = 0x0400,   // This Admin can temporary disable/enable user
-    UO_CanHelpUser          = 0x0800    // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
+    UO_CanHelpUser          = 0x0800,   // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
+
+    uo_CanViewFG            = 0x1000,   // This Admin can view FingerPrint status
+    UO_CanEditFG            = 0x2000    // This Admin can edit FingerPrints
 };
 
 // Status of User
