@@ -46,11 +46,11 @@ $[HTMLUserList]
 </table>
 </td></tr></table>
 <table><tr><td>
-<button type="button" onclick="location.href='../action/add_user.html'" style="width:auto">Добавить пользователя</button>
+<button type="button" onclick="A('add_user')" style="width:auto">Добавить пользователя</button>
 <button type="button" onclick="del_user()" class="red-button" style="width:auto">Удалить пользователя</button>
 </tr><tr><td>
 <p><button type="button" onclick="edit_fg()">Редактировать Отпечатки Пальцев</button></p>
-<p><button type="button" onclick="location.href='setup.html'">Назад в настройки</button></p>
+<p><button type="button" onclick="G('setup')">Назад в настройки</button></p>
 </tr></table>
 
 <script>
@@ -60,7 +60,7 @@ let current_usr_index = -1;
 function edit_fg()
 {
     if (current_usr_index == -1) return;
-    location.href='../action/fg_edit.html?index=' + I("index").options[current_usr_index].value;
+    A('fg_edit', 'index=' + I("index").options[current_usr_index].value);
 }
 
 function upd_users()

@@ -21,7 +21,9 @@ $[HTMLFGLibrary]
 
 <div class="fgl-popuptext" id="popup-text" onclick="popup_clicked()"></div>
 
-<!-- <p><button type="button" onclick="test()">Test</button></p> -->
+<!-- <p><button type="button" onclick="test()">Test</button></p>  -->
+
+<p><button type="button" onclick="A('fg_viewer_done')" style="width:auto">Назад в настройки</button></p>
 
 <script>
 
@@ -29,82 +31,45 @@ function highlight(cmds)
 {
     for(const cmd of cmds)
     {
-        if (cmd.cmd != 'fgview-box-msg') continue;
-        const id = `u${cmd.dst}`;
-        if ('hlt' in cmd)
+        switch(cmd.cmd)
         {
-            const elem = I(id);
-            const old_color = elem.style.backgroundColor;
-            elem.style.backgroundColor = `rgb(0, ${Math.round(80+176*cmd.hlt)}, 0)`;
-            call_later(cmd, () => {elem.style.backgroundColor = old_color;});
+            case 'ping-fgview': send_ping(cmd); break;
+            case 'fgview-box-msg':
+            {      
+                const id = `u${cmd.dst}`;
+                if ('hlt' in cmd)
+                {
+                    const elem = I(id);
+                    const old_color = elem.style.backgroundColor;
+                    elem.style.backgroundColor = `rgb(0, ${Math.round(80+176*cmd.hlt)}, 0)`;
+                    call_later(cmd, () => {elem.style.backgroundColor = old_color;});
+                }
+                set_html_with_timeout(cmd, id);
+                break;
+            }
         }
-        set_html_with_timeout(cmd, id);
     }
-}
-
-function show_popup(parent, msg)
-{
-    const elem = I("popup-text");
-    elem.innerHTML = msg;
-    const rect = parent.getBoundingClientRect();
-    const p_top = rect.top - 10;
-    const p_mid = rect.left + (rect.width >> 1);
-    elem.classList.add("fgl-show");
-    const float_rect = elem.getBoundingClientRect();
-    elem.style.top = `${p_top - float_rect.height}px`;
-    let left = p_mid - (float_rect.width >> 1);
-    if (left < 0) left = 0;
-    elem.style.left = `${left}px`;
-
-    window.onclick = ({target}) => {
-        if (target != elem && target != parent) 
-        {
-            elem.classList.remove("fgl-show");
-            window.onclick = null;
-            document.onkeydown = null;
-        }
-    };
-    document.onkeydown = () => {
-        elem.classList.remove("fgl-show");
-        window.onclick = null;
-        document.onkeydown = null;
-    };
-}
-
-let popup_data = null;
-
-function popup_clicked()
-{
-    const elem = I("popup-text");
-    elem.classList.remove("fgl-show");
-    window.onclick = null;
-    document.onkeydown = null;
-    if (popup_data) popup_data();
-    popup_data = null;
 }
 
 function edit_user(self, user_idx, usr_name)
 {
-    show_popup(self, `Редактировать отпечатки пользователя '${usr_name}'?`);
-    popup_data = () => {
-        location.href = '../action/fg_edit.html?index=' + user_idx;
-    };
+    show_popup(self, `Редактировать отпечатки пользователя '${usr_name}'?`,  () => {
+        A('fg_edit', 'index=' + user_idx);
+    });
 }
 
 function del_fg(self, user_idx, fg_idx, usr_name)
 {
-    show_popup(self, `Удалить отпечаток №${fg_idx+1} пользователя '${usr_name}'?`);
-    popup_data = () => {
+    show_popup(self, `Удалить отпечаток №${fg_idx+1} пользователя '${usr_name}'?`, () => {
         send_del_fg_user(user_idx, fg_idx);
         const elem = I(`u${user_idx}-${fg_idx}`);
         elem.classList.remove("fgl-box-filled");
         elem.onclick = null;
-    };
+    });
 }
 
 set_async_handler(highlight);
 
-/*
 function test()
 {
     highlight([
@@ -114,7 +79,7 @@ function test()
         {cmd: 'fgview-box-msg', dst: '2-3', msg: '10%',  hlt: 0.1}
     ]);
 }
-*/
+
 
 </script>
 

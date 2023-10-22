@@ -2,6 +2,17 @@
 
 function I(name) {return document.getElementById(name);}
 
+function A(action, args='') 
+{
+    if (args) args = '?' + args;
+    location.href =  `../action/${action}.html${args}`;
+}
+
+function G(pos) 
+{
+    location.href =  `${pos}.html`;
+}
+
 function _door_button(index, second_names, width, disabled_scale, usr_callback)
 {
     let result = '<button type="button" class="door-p' + width;
@@ -130,6 +141,54 @@ function set_async_handler(callback = null)
 window.onload = () => {if (!websock) set_async_handler();};
 window.onunload = () => {if (websock) {websock.close(); websock = null;}};
 
+
+let _popup_data = null;
+
+function show_popup(parent, msg, popup_data)
+{
+    _popup_data = popup_data;
+    const elem = I("popup-text");
+    elem.innerHTML = msg;
+    const rect = parent.getBoundingClientRect();
+    const p_top = rect.top - 10;
+    const p_mid = rect.left + (rect.width >> 1);
+    elem.classList.add("fgl-show");
+    const float_rect = elem.getBoundingClientRect();
+    elem.style.top = `${p_top - float_rect.height}px`;
+    let left = p_mid - (float_rect.width >> 1);
+    if (left < 0) left = 0;
+    elem.style.left = `${left}px`;
+
+    window.onclick = ({target}) => {
+        if (target != elem && target != parent) 
+        {
+            elem.classList.remove("fgl-show");
+            window.onclick = null;
+            document.onkeydown = null;
+        }
+    };
+    document.onkeydown = ({key}) => {
+        elem.classList.remove("fgl-show");
+        window.onclick = null;
+        document.onkeydown = null;
+        if (key == 'y' || key == 'Y' || key == 'Enter')
+        {
+            if (_popup_data) _popup_data();
+            _popup_data = null;            
+        }
+    };
+}
+
+function popup_clicked()
+{
+    const elem = I("popup-text");
+    elem.classList.remove("fgl-show");
+    window.onclick = null;
+    document.onkeydown = null;
+    if (_popup_data) _popup_data();
+    _popup_data = null;
+}
+
 function send_ajax_request(url, callback = null, as_json = false)
 {
 /*
@@ -207,4 +266,9 @@ function send_del_user(index)
 function send_del_fg_user(user_index, fg_index)
 {
     send_ajax_request(`del-user-fg.html?usr_index=${user_index}&fg_index=${fg_index}`);
+}
+
+function send_ping({cmd, cnt})
+{
+    send_ajax_request(`ping.html?id=${cmd}&cnt=${cnt}`);
 }

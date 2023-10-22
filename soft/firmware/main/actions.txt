@@ -98,8 +98,15 @@ Params:
 del-user-fg.html - Delete user fingerprint from library
 
 Params:
-    usr_index - User index
+    usr_index - User index (or -1 for user currently on edit)
     fg_index - FG index
+-----------------------
+
+ping.html - Answer for ping command
+
+Params:
+    id  - Ping command (ping-fgview or ping-fgedit)
+    cnt - Counter from command
 
 ================================================================================
 
@@ -165,15 +172,23 @@ zap.html - Erase whole EEPROM, Fingerprints and restart
 -----------------------
 
 fg_view.html - Viewer FingerPrints library
--> ???
+-> fg_viewer.html
 
 -----------------------
 
 fg_edit.html -> Editor FingerPrints library for user
--> ???
+-> fg_editor.html
 
 Param:
     index [opt] - User to edit. If ommited - reserve new User
+-----------------------
+
+fg_viewer_done.html - Exit from Viewer FingerPrints library
+-> setup.html
+
+-----------------------
+fg_editor_done.html - Exit from Editor FingerPrints
+-> edit_user.html
 
 ===================================================================================================
 
@@ -218,6 +233,11 @@ $[HTMLUserListWithSelection] - HTML block with list of enabled users
 $[HTMLFGLibrary] - FingerPrints Library Viewer HTML block with users and FG items. onclick handlers depends on priority of user/current user and fill state of FG cell
   <tr><th class="fgl-ptr" onclick="edit_user(this, 1, 'Антон')">Антон<td><div id="u1-0" class="fgl-box fgl-box-filled fgl-ptr" onclick="del_fg(this, 1,0, 'Антон')"></div><td><div id="u1-1" class="fgl-box"></div><td><div id="u1-2" class="fgl-box"></div><td><div id="u1-3" class="fgl-box"></div></tr>
   <tr><th>Сергей<td><div id="u2-0" class="fgl-box fgl-box-filled"></div><td><div id="u2-1" class="fgl-box fgl-box-filled"></div><td><div id="u2-2" class="fgl-box  fgl-box-filled"></div><td><div id="u2-3" class="fgl-box fgl-box-filled"></div></tr>
+$[FGEditorUser] - User for new FG ('нового пользователя' or 'пользователя XXXX')
+$[FGEditorFilledBoxes] - Bitscale of filled boxes for current user in FG editor
+$[FGEditorFillingBox] - Index of filling now box (or -1)
+$[FGEditorFilledCircs] - Bitscale of filled circles  (index is <block-number>*2 + <circle-number>)
+$[FGEditorFillingCirc] - Index of circle filled rigth now
 
 ====================================================================================================
 
@@ -253,6 +273,11 @@ dst: "id of alert target" [optional] - Redefine ID of WEB element to show messag
 timeout: <timeout in seconds> [optional] - Time to show message. 0 to show permanent (by default - 5 sec)
 ---------------------------------------------
 
+ping-<id> - Ping command. WEB should answer with 'ping' AJAX request. id is 'fgview' or 'fgedit' (for now)
+
+Fields:
+    cnt: <int> - Rolling counter
+
 ** Fingerprint View command: **
 ---------------------------------------------
 
@@ -274,6 +299,7 @@ fgedit-switch - Prompt to switch to another user
 Fields:
 
 usr: "User-name" - name of User
+usrindex: Index of User
 percent: Percent of match of FG for this user (floating point value 0-1)
 ---------------------------------------------
 
@@ -306,6 +332,6 @@ dst: "circle index" - Target to set (<box-index>-<circle-index> both indexes are
 state: "state" - State to set:
     empty - Circle not filled
     filled - Circle is filled
-    filling - Circlenow is filling
+    filling - Circle now is filling
     bad - Trying to enter invaid data (duplicate, finger lost, etc)
     quality - Data is eneterd have bad quality

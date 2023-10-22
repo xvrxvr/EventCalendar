@@ -62,7 +62,7 @@ $[HTMLBGImageList]
 <p>&nbsp;</p>
 <p>Файл с картинкой: <input type="file" id="image-file" accept="image/*" onchange="load_new_file()"><br>
 <button type="button" onclick="send_picture()">Добавить картинку</button></p>
-<p><button type="button" onclick="location.href='setup.html'">Назад в setup</button></p>
+<p><button type="button" onclick="G('setup')">Назад в setup</button></p>
 </form></td>
 </table>
 
@@ -91,7 +91,7 @@ function bg_remove()
 {
     if (selected_idx == -1) return;
     if (!confirm("Удалить картинку? Вы уверены?")) return;
-    location.href = "../action/bg_remove.html?index=" + selected_idx;
+    A('bg_remove', 'index=' + selected_idx);
 }
 
 function load_new_file()

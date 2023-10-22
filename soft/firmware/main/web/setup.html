@@ -12,18 +12,18 @@
 <body>
 <form>
 <center><table><tr><td>
-<p><button type="button" onclick="location.href='set_bg_images.html'">Управление фоновыми картинками</button></p>
-<p><button type="button" onclick="location.href='set_challenge.html'">Управление заданиями</button></p>
+<p><button type="button" onclick="G('set_bg_images')">Управление фоновыми картинками</button></p>
+<p><button type="button" onclick="G('set_challenge)'">Управление заданиями</button></p>
 
 <p><button type="button" onclick="set_round_time()" id="interround_btn"></button></p>
 
-<p><button type="button" onclick="location.href='../action/add_user.html'">Добавить Пользователя</button></p>
-<p><button type="button" onclick="location.href='edit_user.html'">Редактировать Пользователей</button></p>
-<p><button type="button" onclick="location.href='../action/fg_view.html'">Смотреть статус Отпечатков Пальцев</button></p>
+<p><button type="button" onclick="A('add_user')">Добавить Пользователя</button></p>
+<p><button type="button" onclick="G('edit_user')">Редактировать Пользователей</button></p>
+<p><button type="button" onclick="A('fg_view')">Смотреть статус Отпечатков Пальцев</button></p>
 <hr>
-<p><button type="button" onclick="location.href='../action/recalibrate_touch.html'" class="red-button">Рекалибровка Touch Panel</button></p>
-<p><button type="button" onclick="location.href='../action/reset.html'" class="red-button">Сброс системы</button></p>
-<p><button type="button" onclick="if (confirm('Обнулить всю систему?\nВсе настройки будут сброшены, все пользователи будут удалены!\nВы уверены?')) location.href='../action/zap.html'" class="red-button">ПОЛНАЯ ОЧИСТКА ВСЕГО!</button></p>
+<p><button type="button" onclick="A('recalibrate_touch')" class="red-button">Рекалибровка Touch Panel</button></p>
+<p><button type="button" onclick="A('reset')" class="red-button">Сброс системы</button></p>
+<p><button type="button" onclick="if (confirm('Обнулить всю систему?\nВсе настройки будут сброшены, все пользователи будут удалены!\nВы уверены?')) A('zap')" class="red-button">ПОЛНАЯ ОЧИСТКА ВСЕГО!</button></p>
 <hr>
 <p><button type="button" onclick="location.href='admin.html'">Назад в админку</button></p>
 </td></tr>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html><title>Ввод Отпечатков Пальцев</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="jslib.js"></script>
+</head>
+
+<style>
+
+.fgl-ebox {
+  display: inline-block;
+  padding: 3px;
+  text-align: center;
+  font-size: 35px;
+  outline: none;
+  color: #fff;
+  background-color: inherit;
+  border: 2px solid black;
+  border-radius: 7px;
+  box-shadow: 3px 3px #999;
+  width: 100px;
+  height: 40px;
+  transition: background-color 1s;
+  white-space: nowrap;
+}
+
+.fgl-circle {
+  border: 2px solid black;
+  color: white;
+  padding: 3px;
+  display: inline-block;
+  margin: 5px 5px;
+  border-radius: 50%;
+  width: 19px;
+  height: 19px;
+}
+
+.fgl-c-filled {
+  background-color: #04AA6D;
+}
+
+.fgl-c-bad {
+  background-color: red;
+  transition: background-color 1s;
+}
+
+.fgl-c-quality {
+  background-color: GoldenRod;
+  transition: background-color 1s;
+}
+
+.fgl-b-filled {
+  background-color: SlateBlue;
+}
+
+.fgl-b-filling {
+  animation: 1s linear 1s infinite alternate borderColor;
+}
+
+.fgl-b-filled > .fgl-circle {
+  display: none;
+}
+
+@keyframes borderColor {
+  from {border-color: black;}
+  to {border-color: #00FF00;}
+}
+
+.fgl-c-filling {
+  animation: 1s linear 1s infinite alternate bgColor;
+}
+
+@keyframes bgColor {
+  from {background-color: inherit;}
+  to {background-color: #00FF00;}
+}
+
+
+</style>
+
+<body>
+
+<h1><center>Ввод Отпечатка Пальцев $[FGEditorUser]</center></h1>
+
+<div id='alert-target'><div>
+
+<table><tr>
+<td><div id="b0" class="fgl-ebox" onclick="del_fg(this, 0)"><span id="t0"></span><span id='c0' class="fgl-circle"></span><span id='c1' class="fgl-circle"></span></div>
+<td><div id="b1" class="fgl-ebox" onclick="del_fg(this, 1)"><span id="t1"></span><span id='c2' class="fgl-circle"></span><span id='c3' class="fgl-circle"></span></div>
+<td><div id="b2" class="fgl-ebox" onclick="del_fg(this, 2)"><span id="t2"></span><span id='c4' class="fgl-circle"></span><span id='c5' class="fgl-circle"></span></div>
+<td><div id="b3" class="fgl-ebox" onclick="del_fg(this, 3)"><span id="t3"></span><span id='c6' class="fgl-circle"></span><span id='c7' class="fgl-circle"></span></div>
+</tr></table>
+
+<div class="fgl-popuptext" id="popup-text" onclick="popup_clicked()"></div>
+
+<p><button type="button" onclick="test()">Test</button></p>
+
+<p><button type="button" id="done_button" onclick="A('fg_editor_done')" class="red-button" style="width:auto; white-space: nowrap">Прервать ввод отпечатков</button></p>
+
+
+<script>
+
+// let filled_boxes = $[FGEditorFilledBoxes];
+// let filling_box = $[FGEditorFillingBox];
+// let filled_circs = $[FGEditorFilledCircs];
+// let filling_circ = $[FGEditorFillingCirc];
+
+let filled_boxes = 9;
+let filling_box = 1;
+let filled_circ = 0;
+let special_circ = 2;
+let spc_circ_type = 'filling';
+
+function mark_can_finish()
+{
+    const elem = I("done_button");
+    elem.innerHTML = "Завершить ввод отпечатков";
+    elem.classList.remove("red-button");
+}
+
+function update_all_state()
+{
+    const can_delete = (filled_boxes & (filled_boxes-1));
+    for(let i=0; i<4; ++i)
+    {
+        const box = I(`b${i}`);
+        box.classList.remove('fgl-b-filling', 'fgl-b-filled', 'fgl-ptr');
+        if (i == filling_box) box.classList.add('fgl-b-filling'); else
+        if ((filled_boxes >> i) & 1) 
+        {
+            box.classList.add('fgl-b-filled');
+            if (can_delete) box.classList.add('fgl-ptr');
+        }
+    }
+
+    for(let i=0; i<8; ++i)
+    {
+        const circ = I(`c${i}`);
+        circ.classList.remove('fgl-c-filled', 'fgl-c-bad', 'fgl-c-quality', 'fgl-c-filling');
+        if (i == special_circ) circ.classList.add(`fgl-c-${spc_circ_type}`); else
+        if ((filled_circ >> i) & 1) circ.classList.add('fgl-c-filled');
+    }
+}
+if (filled_boxes) mark_can_finish();
+update_all_state();
+
+function highlight(cmds)
+{
+    for(const cmd of cmds)
+    {
+        switch(cmd.cmd)
+        {
+            case 'ping-fgedit': send_ping(cmd); break;
+            case 'fgedit-switch': 
+                if (confirm(`Похоже вы пытаетесь взять отпечатки пользователя '${cmd.usr}' (совпадение ${cmd.percent*100}%).\nПереключиться на него?`))
+                {
+                    A("fg_edit", `index=${cmd.usrindex}`);
+                }
+                break;
+            case 'fgedit-box-msg':
+            {      
+                if ('hlt' in cmd)
+                {
+                    const elem = I(`b${cmd.dst}`);
+                    const old_color = elem.style.backgroundColor;
+                    elem.style.backgroundColor = `rgb(0, ${Math.round(80+176*cmd.hlt)}, 0)`;
+                    call_later(cmd, () => {elem.style.backgroundColor = old_color;});
+                }
+                set_html_with_timeout(cmd, `t${cmd.dst}`);
+                break;
+            }
+            case 'fgedit-box-state':
+            {
+                if (cmd.dst == filling_box) filling_box = -1;
+                switch(cmd.state)
+                {
+                    case 'empty': filled_boxes &= ~(1<<cmd.dst); break;
+                    case 'filled': 
+                        if (!filled_boxes) mark_can_finish();
+                        filled_boxes |= 1<<cmd.dst; 
+                        break;
+                    case 'filling': filling_box = cmd.dst; break;
+                }
+                update_all_state();
+                break;
+            }
+            case 'fgedit-circle-state':
+            {
+                if (cms.dst == special_circ) special_circ = -1;
+                switch(cmd.state)
+                {
+                    case 'empty': filled_circ&= ~(1<<cmd.dst); break;
+                    case 'filled': filled_circ |= 1<<cmd.dst; break;
+                    default: special_circ = cmd.dst; spc_circ_type = cmd.state; break;
+                }
+                update_all_state();
+                break;
+            }
+        }
+    }
+}
+
+function del_fg(self, box_index)
+{
+    if (!((filled_boxes >> box_index) & 1)) return;
+    if (!(filled_boxes & (filled_boxes-1))) return; // Only one filled box - can't delete
+    show_popup(self, `Удалить отпечаток №${box_index+1} пользователя'?`, () => {
+        send_del_fg_user(-1, box_index);
+        filled_boxes &= ~(1<<box_index);
+        update_all_state();
+    });
+}
+
+set_async_handler(highlight);
+
+
+function test()
+{
+    highlight([
+        {cmd: 'fgedit-box-msg', dst: '0', msg: '100%', hlt: 1},
+        {cmd: 'fgedit-box-msg', dst: '1', msg: '80%',  hlt: 0.8},
+        {cmd: 'fgedit-box-msg', dst: '2', msg: '50%',  hlt: 0.5},
+        {cmd: 'fgedit-box-msg', dst: '3', msg: '10%',  hlt: 0.1}
+    ]);
+}
+
+
+</script>
+
+</html>
