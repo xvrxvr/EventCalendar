@@ -133,6 +133,7 @@ function set_async_handler(callback = null)
                 case "goto":  websock.close(); websock = null; document.location.href = cmd.href; break;
                 case "popup": alert(cmd.msg); break;
                 case "alert": set_html_with_timeout(cmd, cmd.dst ?? 'alert-target'); break;
+                case 'ping': send_ping(cmd); break;
             }
         }
     };
@@ -193,7 +194,7 @@ function send_ajax_request(url, callback = null, as_json = false)
 {
 /*
     let req = new XMLHttpRequest();
-    if (callback) req.onload = function() {callback(as_json ? JSON.parse(this.responseText) : this.responseText);};
+    if (callback) req.onload = () => {callback(as_json ? JSON.parse(this.responseText) : this.responseText);};
     req.open("GET", "../action/" + url);
     req.send();
 */

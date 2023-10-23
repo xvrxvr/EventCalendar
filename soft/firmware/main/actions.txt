@@ -190,6 +190,10 @@ fg_viewer_done.html - Exit from Viewer FingerPrints library
 fg_editor_done.html - Exit from Editor FingerPrints
 -> edit_user.html
 
+Param:
+    name [opt] - Name for new User
+    age [opt] - Age of new user
+
 ===================================================================================================
 
 Vars substitution:

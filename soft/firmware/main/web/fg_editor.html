@@ -99,7 +99,7 @@
 
 <p><button type="button" onclick="test()">Test</button></p>
 
-<p><button type="button" id="done_button" onclick="A('fg_editor_done')" class="red-button" style="width:auto; white-space: nowrap">Прервать ввод отпечатков</button></p>
+<p><button type="button" id="done_button" onclick="done_editor()" class="red-button" style="width:auto; white-space: nowrap">Прервать ввод отпечатков</button></p>
 
 
 <script>
@@ -108,12 +108,15 @@
 // let filling_box = $[FGEditorFillingBox];
 // let filled_circs = $[FGEditorFilledCircs];
 // let filling_circ = $[FGEditorFillingCirc];
+// const user_idx = $[FGEditorUserIndex];
 
 let filled_boxes = 9;
 let filling_box = 1;
 let filled_circ = 0;
 let special_circ = 2;
 let spc_circ_type = 'filling';
+
+const new_user = (filled_boxes == 0);
 
 function mark_can_finish()
 {
@@ -145,7 +148,7 @@ function update_all_state()
         if ((filled_circ >> i) & 1) circ.classList.add('fgl-c-filled');
     }
 }
-if (filled_boxes) mark_can_finish();
+if (!new_user) mark_can_finish();
 update_all_state();
 
 function highlight(cmds)
@@ -217,6 +220,22 @@ function del_fg(self, box_index)
 
 set_async_handler(highlight);
 
+
+function done_editor()
+{
+    if (filled_boxes && new_user) // Ask for User name and age
+    {
+        const name = prompt("Введите имя пользователя");
+        if (!name) return;
+        const age = Number.parseInt(prompt("Введите возраст пользователя", "1"));
+        if (Number.isNaN(age)) return;
+        A('fg_editor_done', `name=${encodeURIComponent(name)}&age=${age}`);
+    }
+    else
+    {
+        A('fg_editor_done');
+    }
+}
 
 function test()
 {

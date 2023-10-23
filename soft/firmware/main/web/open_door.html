@@ -33,7 +33,7 @@ function open_door(door_index)
     {
         if (confirm("Вы хотите выгрузить подарок для " + users[door_index] + "?"))
         {
-            send_gift_unload_message(door_index,  function(new_users) {
+            send_gift_unload_message(door_index,  (new_users) => {
                 users = new_users;
                 activate_doors(users, 0, "open_door");
             });
