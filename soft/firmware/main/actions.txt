@@ -198,7 +198,7 @@ Param:
 
 Vars substitution:
 
-$[CurrentUser] - Currently logged on user
+$[CurrentUser] - Name of currently logged on user
 $[MainStatus] - HTML block with current status of system
 $[HTMLUserList] - HTML block with all Users available to edit by current
    <option value="1">Пользователь 1</option>
@@ -206,6 +206,7 @@ $[HTMLUserList] - HTML block with all Users available to edit by current
    <option value="3">Пользователь 3</option>
    <option value="4">Пользователь 4</option>
 $[CurUserPrio] - Priority value of Current User
+? UserRights - Rights of currently logged-in user
 $[TimeToDoorsEnable] - Time to reenargizing Door system
 $[ActiveUsersList] - HTML block with list of still Active Users (as in done-user.html AJAX)
 $[DoneUsersList] - HTML block with list of Done Users (as in done-user.html AJAX)

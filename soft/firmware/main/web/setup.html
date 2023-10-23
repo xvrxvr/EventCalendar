@@ -12,23 +12,39 @@
 <body>
 <form>
 <center><table><tr><td>
+$? UserRights,1
 <p><button type="button" onclick="G('set_bg_images')">Управление фоновыми картинками</button></p>
+$-
+$? UserRights,40
 <p><button type="button" onclick="G('set_challenge)'">Управление заданиями</button></p>
+$-
 
+$? UserRights,20
 <p><button type="button" onclick="set_round_time()" id="interround_btn"></button></p>
+$-
 
+$? UserRights,300
 <p><button type="button" onclick="A('add_user')">Добавить Пользователя</button></p>
+$-
+$? UserRights,80
 <p><button type="button" onclick="G('edit_user')">Редактировать Пользователей</button></p>
+$-
+$? UserRights,1000
 <p><button type="button" onclick="A('fg_view')">Смотреть статус Отпечатков Пальцев</button></p>
+$-
+$? UserRights,2
 <hr>
 <p><button type="button" onclick="A('recalibrate_touch')" class="red-button">Рекалибровка Touch Panel</button></p>
 <p><button type="button" onclick="A('reset')" class="red-button">Сброс системы</button></p>
 <p><button type="button" onclick="if (confirm('Обнулить всю систему?\nВсе настройки будут сброшены, все пользователи будут удалены!\nВы уверены?')) A('zap')" class="red-button">ПОЛНАЯ ОЧИСТКА ВСЕГО!</button></p>
+$-
 <hr>
 <p><button type="button" onclick="location.href='admin.html'">Назад в админку</button></p>
 </td></tr>
 </table></center>
 </form>
+
+$? UserRights,20
 
 <script>
 
@@ -83,6 +99,7 @@ function set_round_time()
 }
 
 </script>
+$-
 
 </html>
 

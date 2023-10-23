@@ -26,30 +26,66 @@ $[HTMLUserList]
 <tr><td>Имя:<td><input type="text" id="name" onchange="upd('name', this.value)"></tr>
 <tr><td>Возраст:<td><input type="number" id="age" min="1" max="99" value="18" onchange="upd('age', this.value)"></tr>
 <tr><td>Приоритет:<td><input type="number" id="prio" min="0" max="255" value="255" onchange="upd('prio', this.value)"></tr>  <!-- max & value is $[CurUserPrio] -->
+$? UserRights,400
 <tr><td>Выключить:<td><input type="checkbox" id="disable" onchange="upd('disable', this.checked)"></tr>
+$-
 <tr><td>&nbsp;</td>
 <tr><td colspan=2><center><b>Что может делать:</b></center></tr>
+$? UserRights,1
 <tr><td colspan=2><input type="checkbox" id="r0" onchange="upd_rights()">&nbsp;Управление фоновыми картинками</tr>
+$-
+$? UserRights,2
 <tr><td colspan=2><input type="checkbox" id="r1" onchange="upd_rights()">&nbsp;Системные настройки</tr>
+$-
+$? UserRights,4
 <tr><td colspan=2><input type="checkbox" id="r2" onchange="upd_rights()">&nbsp;Начинать и заканчивать игру</tr>
+$-
+$? UserRights,8
 <tr><td colspan=2><input type="checkbox" id="r3" onchange="upd_rights()">&nbsp;Открывать дверки</tr>
+$-
+$? UserRights,10
 <tr><td colspan=2><input type="checkbox" id="r4" onchange="upd_rights()">&nbsp;Загружать подарки</tr>
+$-
+$? UserRights,20
 <tr><td colspan=2><input type="checkbox" id="r5" onchange="upd_rights()">&nbsp;Устанавливать время раунда</tr>
+$-
+$? UserRights,40
 <tr><td colspan=2><input type="checkbox" id="r6" onchange="upd_rights()">&nbsp;Редактировать загадки</tr>
+$-
+$? UserRights,80
 <tr><td colspan=2><input type="checkbox" id="r7" onchange="upd_rights()">&nbsp;Редактировать пользователей</tr>
+$-
+$? UserRights,100
 <tr><td colspan=2><input type="checkbox" id="r8" onchange="upd_rights()">&nbsp;Добавлять и удалять пользователей</tr>
+$-
+$? UserRights,200
 <tr><td colspan=2><input type="checkbox" id="r9" onchange="upd_rights()">&nbsp;Добавлять и удалять админов</tr>
+$-
+$? UserRights,400
 <tr><td colspan=2><input type="checkbox" id="r10" onchange="upd_rights()">&nbsp;Временно отключать пользователя</tr>
+$-
+$? UserRights,800
 <tr><td colspan=2><input type="checkbox" id="r11" onchange="upd_rights()">&nbsp;Помогать открыть дверцу другим пользователям</tr>
+$-
+$? UserRights,1000
 <tr><td colspan=2><input type="checkbox" id="r12" onchange="upd_rights()">&nbsp;Смотреть статус Отпечатков Пальцев</tr>
+$-
+$? UserRights,2000
 <tr><td colspan=2><input type="checkbox" id="r13" onchange="upd_rights()">&nbsp;Редактировать Отпечатки Пальцев</tr>
+$-
 </table>
 </td></tr></table>
 <table><tr><td>
+$? UserRights,100
 <button type="button" onclick="A('add_user')" style="width:auto">Добавить пользователя</button>
+$-
+$? UserRights,200
 <button type="button" onclick="del_user()" class="red-button" style="width:auto">Удалить пользователя</button>
+$-
 </tr><tr><td>
+$? UserRights,2000
 <p><button type="button" onclick="edit_fg()">Редактировать Отпечатки Пальцев</button></p>
+$-
 <p><button type="button" onclick="G('setup')">Назад в настройки</button></p>
 </tr></table>
 

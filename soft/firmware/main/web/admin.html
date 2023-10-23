@@ -13,12 +13,20 @@
 <h1><center>Добро пожаловать $[CurrentUser]</center></h1>
 <form>
 <center><table><tr><td>
+$? UserRights,4
 <p><button type="button" onclick="A('start_game')">Начать Игру</button></p>
 <p><button type="button" onclick="if (confirm('Завершить игру?\nВы уверены?')) A('end_game')">Закончить Игру</button></p>
 <p><button type="button" onclick="location.href='add_game_user.html'">Добавить Игрока</button></p>
+$-
+$? UserRights,10
 <p><button type="button" onclick="location.href='load_gifts.html'">Загрузить Подарки</button></p>
+$-
+$? UserRights,8
 <p><button type="button" onclick="location.href='open_door.html'">Открыть дверь</button></p>
+$-
+$? UserRights,37e2
 <p><button type="button" onclick="location.href='setup.html'" class="red-button">Настройка</button></p>
+$-
 </td></tr>
 </table></center>
 </form>

@@ -65,10 +65,6 @@ button:active {
   transition: background-color 1s;
 }
 
-.fgl-box-filled {
-  background-color: SlateBlue;
-}
-
 .fgl-ptr {
   cursor: pointer;
   position: relative;
