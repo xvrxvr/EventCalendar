@@ -104,6 +104,7 @@ void Ans::write_cdn(const char* fname)
         httpd_resp_send(req, cdn.start, cdn.end - cdn.start);
         return;
     }
+    set_hdr("Cache-Control", "no-store, no-cache, max-age=0, must-revalidate, proxy-revalidate");
     ++cdn.start;
     auto cdn_org = cdn.start;
     while(cdn.start < cdn.end)
