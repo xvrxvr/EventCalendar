@@ -2,7 +2,10 @@
 
 #include <stdint.h>
 
-class Ans;
+class Ans {
+public:
+    void write_int(uint32_t) {}
+};
 
 struct WebOptions {
     void CurrentUser(Ans&);         // Name of currently logged on user
@@ -67,8 +70,12 @@ struct WebOptions {
     uint8_t FGEditorFilledCircs; // Bitscale of filled circles  (index is <block-number>*2 + <circle-number>)
     int8_t FGEditorFillingCirc; // Index of circle filled rigth now
 
-    void decode_inline(const unsigned char* &ptr, const unsigned char* end, Ans&);
-    uint32_t get_condition(const unsigned char* &ptr, const unsigned char* end, Ans&);
+    void decode_inline(const char* ptr, Ans&);
+    uint32_t get_condition(const char* ptr, Ans&);
+
+private:
+    void err_novar(const char*) {}
+    void err_type_wrong(const char*) {}
 };
 
 extern WebOptions web_options;
