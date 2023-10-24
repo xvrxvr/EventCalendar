@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+$<!DOCTYPE html>
 
 <html><title>Редактирование пользователей</title>
 
@@ -15,17 +15,13 @@
 Польэователи:<br>
 <select id="index" name="index" size="20" style="min-width:20em" onchange="upd_users()">
 $[HTMLUserList]
-<option value="1">Пользователь 1</option>
-<option value="2">Пользователь 2</option>
-<option value="3">Пользователь 3</option>
-<option value="4">Пользователь 4</option>
 </select>
 </td><td>
 
 <table>
 <tr><td>Имя:<td><input type="text" id="name" onchange="upd('name', this.value)"></tr>
 <tr><td>Возраст:<td><input type="number" id="age" min="1" max="99" value="18" onchange="upd('age', this.value)"></tr>
-<tr><td>Приоритет:<td><input type="number" id="prio" min="0" max="255" value="255" onchange="upd('prio', this.value)"></tr>  <!-- max & value is $[CurUserPrio] -->
+<tr><td>Приоритет:<td><input type="number" id="prio" min="0" max="$[CurUserPrio]" value="$[CurUserPrio]" onchange="upd('prio', this.value)"></tr>
 $? UserRights,400
 <tr><td>Выключить:<td><input type="checkbox" id="disable" onchange="upd('disable', this.checked)"></tr>
 $-

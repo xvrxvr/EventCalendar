@@ -71,7 +71,6 @@ button:active {
   display: inline-block;
 }
 
-/* The actual popup (appears on top) */
 .fgl-popuptext {
   visibility: hidden;
   background-color: #555;
@@ -84,7 +83,6 @@ button:active {
   cursor: pointer;
 }
 
-/* Toggle this class when clicking on the popup container (hide and show the popup) */
 .fgl-show {
   visibility: visible;
   animation: fadeIn 1s

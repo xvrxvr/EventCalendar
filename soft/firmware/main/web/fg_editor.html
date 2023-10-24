@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+$<!DOCTYPE html>
 
 <html><title>Ввод Отпечатков Пальцев</title>
 
@@ -97,23 +97,15 @@
 
 <div class="fgl-popuptext" id="popup-text" onclick="popup_clicked()"></div>
 
-<p><button type="button" onclick="test()">Test</button></p>
-
 <p><button type="button" id="done_button" onclick="done_editor()" class="red-button" style="width:auto; white-space: nowrap">Прервать ввод отпечатков</button></p>
 
 
 <script>
 
-// let filled_boxes = $[FGEditorFilledBoxes];
-// let filling_box = $[FGEditorFillingBox];
-// let filled_circs = $[FGEditorFilledCircs];
-// let filling_circ = $[FGEditorFillingCirc];
-// const user_idx = $[FGEditorUserIndex];
-
-let filled_boxes = 9;
-let filling_box = 1;
-let filled_circ = 0;
-let special_circ = 2;
+let filled_boxes = $[FGEditorFilledBoxes];
+let filling_box = $[FGEditorFillingBox];
+let filled_circs = $[FGEditorFilledCircs];
+let special_circ = $[FGEditorFillingCirc];
 let spc_circ_type = 'filling';
 
 const new_user = (filled_boxes == 0);
@@ -236,17 +228,6 @@ function done_editor()
         A('fg_editor_done');
     }
 }
-
-function test()
-{
-    highlight([
-        {cmd: 'fgedit-box-msg', dst: '0', msg: '100%', hlt: 1},
-        {cmd: 'fgedit-box-msg', dst: '1', msg: '80%',  hlt: 0.8},
-        {cmd: 'fgedit-box-msg', dst: '2', msg: '50%',  hlt: 0.5},
-        {cmd: 'fgedit-box-msg', dst: '3', msg: '10%',  hlt: 0.1}
-    ]);
-}
-
 
 </script>
 

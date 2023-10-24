@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+$<!DOCTYPE html>
 
 <html><title>Просмотр Отпечатков Пальцев</title>
 
@@ -22,13 +22,9 @@
 
 <table>
 $[HTMLFGLibrary]
-<tr><th class="fgl-ptr" onclick="edit_user(this, 1, 'Антон')">Антон<td><div id="u1-0" class="fgl-box fgl-box-filled fgl-ptr" onclick="del_fg(this, 1,0, 'Антон')"></div><td><div id="u1-1" class="fgl-box"></div><td><div id="u1-2" class="fgl-box"></div><td><div id="u1-3" class="fgl-box"></div></tr>
-<tr><th>Сергей<td><div id="u2-0" class="fgl-box fgl-box-filled"></div><td><div id="u2-1" class="fgl-box fgl-box-filled"></div><td><div id="u2-2" class="fgl-box  fgl-box-filled"></div><td><div id="u2-3" class="fgl-box fgl-box-filled"></div></tr>
 </table>
 
 <div class="fgl-popuptext" id="popup-text" onclick="popup_clicked()"></div>
-
-<!-- <p><button type="button" onclick="test()">Test</button></p>  -->
 
 <p><button type="button" onclick="A('fg_viewer_done')" style="width:auto">Назад в настройки</button></p>
 
@@ -70,23 +66,12 @@ function del_fg(self, user_idx, fg_idx, usr_name)
     show_popup(self, `Удалить отпечаток №${fg_idx+1} пользователя '${usr_name}'?`, () => {
         send_del_fg_user(user_idx, fg_idx);
         const elem = I(`u${user_idx}-${fg_idx}`);
-        elem.classList.remove("fgl-box-filled");
+        elem.classList.remove("fgl-box-filled fgl-ptr");
         elem.onclick = null;
     });
 }
 
 set_async_handler(highlight);
-
-function test()
-{
-    highlight([
-        {cmd: 'fgview-box-msg', dst: '2-0', msg: '100%', hlt: 1},
-        {cmd: 'fgview-box-msg', dst: '2-1', msg: '80%',  hlt: 0.8},
-        {cmd: 'fgview-box-msg', dst: '2-2', msg: '50%',  hlt: 0.5},
-        {cmd: 'fgview-box-msg', dst: '2-3', msg: '10%',  hlt: 0.1}
-    ]);
-}
-
 
 </script>
 

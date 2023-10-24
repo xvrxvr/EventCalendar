@@ -2,10 +2,7 @@
 
 #include <stdint.h>
 
-class Ans {
-public:
-    void write_int(uint32_t) {}
-};
+#include "web_gadgets.h"
 
 struct WebOptions {
     void CurrentUser(Ans&);         // Name of currently logged on user

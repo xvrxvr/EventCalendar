@@ -8,6 +8,7 @@ set(srcs
     web_server.cpp
     web_files_access.cpp
     web_vars_inc.cpp
+    web_gadgets.cpp
     main.cpp
 )
 

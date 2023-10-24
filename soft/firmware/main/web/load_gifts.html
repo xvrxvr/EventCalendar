@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+$<!DOCTYPE html>
 
 <html><title>Загрузить подарки ...</title>
 
@@ -23,9 +23,6 @@
 
 Загрузить подарок для: <select id="users">
 $[HTMLOptionsUserList]
-  <option value="0">Антон</option>
-  <option value="1">Vasya</option>
-  <option value="2">Roman</option>
 </select><br>
 <table><tr><td>
 <p><button type="button" onclick="done_user()">Нет больше подарков для этого пользователя</button></p>
@@ -38,8 +35,7 @@ $[HTMLOptionsUserList]
 
 <script>
 
-// let users = $[LoadedGiftDoors];
-let users = ['Антон (1)', 'Антон (2)', null, null, 'Vasya', 'Roman', null, null];
+let users = $[LoadedGiftDoors];
 
 function load_gift(door_index)
 {
@@ -72,7 +68,5 @@ function done_user()
 activate_doors(users, loaded_gifts_to_disabled(users), "load_gift");
 
 </script>
-
-
 
 </html>

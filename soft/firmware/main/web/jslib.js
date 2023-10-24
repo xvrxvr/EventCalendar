@@ -1,4 +1,4 @@
-"use strict";
+$"use strict";
 
 function I(name) {return document.getElementById(name);}
 
@@ -59,8 +59,7 @@ function loaded_gifts_to_disabled(second_names)
     return result;
 }
 
-// let time_to_doors_enable = $[TimeToDoorsEnable];
-let _time_to_doors_enable = 10;
+let _time_to_doors_enable = $[TimeToDoorsEnable];
 
 function _msg_time_to_doors()
 {
@@ -192,14 +191,11 @@ function popup_clicked()
 
 function send_ajax_request(url, callback = null, as_json = false)
 {
-/*
     let req = new XMLHttpRequest();
     if (callback) req.onload = () => {callback(as_json ? JSON.parse(this.responseText) : this.responseText);};
     req.open("GET", "../action/" + url);
     req.send();
-*/
-    console.log('AJAX: ' + url);
-    if (callback) callback(as_json ? {} : "");
+//    console.log('AJAX: ' + url);
 }
 
 // callback argument - new user name to put on door
