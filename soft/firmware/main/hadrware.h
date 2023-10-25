@@ -80,6 +80,7 @@ public:
 
 extern R503 fp_sensor;
 extern LCD lcd;
+extern volatile uint8_t time_to_reengage_sol;
 
 void hw_init();
 

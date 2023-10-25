@@ -6,8 +6,11 @@
 #include "esp_task_wdt.h"
 #include "esp_log.h"
 
+#include <assert.h>
+
 #include "hadrware.h"
 #include "setup_data.h"
+#include "web_gadgets.h"
 
 static const char *TAG = "web_server";
 
@@ -20,6 +23,23 @@ static const char* data_root_page = R"___(<HTML><TITLE>Event Calendar</TITLE>
 <BODY>Hello!</HTML>
 )___";
 
+static esp_err_t send_cdn(httpd_req_t *req)
+{
+    char fname[64];
+
+    const char* uri = req->uri;
+    const char* end = strpbrk(uri, "?#");
+    assert(memcmp(uri, "/web/", 5)==0);
+    uri += 5;
+    if (end)
+    {
+        size_t len = std::min<size_t>(sizeof(fname)-1, end - uri);
+        memcpy(fname, uri, len); fname[len]=0;
+        uri = fname;
+    }
+    Ans(req).write_cdn(uri);
+    return ESP_OK;
+}
 
 static esp_err_t start_http_data_server()
 {
@@ -39,13 +59,24 @@ static esp_err_t start_http_data_server()
         return ESP_FAIL;
     }
 
-    httpd_uri_t index = {
-        .uri       = "/",
-        .method    = HTTP_GET,
-        .handler   = send_string,
-        .user_ctx  = (void*)data_root_page
-    };
-    httpd_register_uri_handler(server, &index);
+    {
+        httpd_uri_t index = {
+            .uri       = "/",
+            .method    = HTTP_GET,
+            .handler   = send_string,
+            .user_ctx  = (void*)data_root_page
+        };
+        httpd_register_uri_handler(server, &index);
+    }
+
+    {
+        httpd_uri_t index = {
+            .uri       = "/web/*",
+            .method    = HTTP_GET,
+            .handler   = send_cdn,
+        };
+        httpd_register_uri_handler(server, &index);
+    }
 
     return ESP_OK;
 }

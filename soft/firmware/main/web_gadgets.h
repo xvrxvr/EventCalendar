@@ -14,12 +14,13 @@ struct CDNDef {
 };
 
 class Ans {
-    static constexpr int BufSize = 1024;
+    static constexpr size_t BufSize = 1024;
+    static constexpr size_t VarNameSize = 64;
     httpd_req_t *req;
     std::unique_ptr<char> buffer; // Chunk of data to send to httpd client. Allocated on heap, because it quite large to be allocated on stack
     int buf_filled = 0;
     bool chunked_active = false;
-    char var_name[64]; // Temporary buffer for storing Variable name from WEB template (mey be move it to heap also?)
+    char* var_name; // We reuse 'buffer' for temporary storage of VarName (in WEB substitution)
 
     void flush();
 
@@ -32,10 +33,11 @@ class Ans {
 
     void cpy2var(const char* ptr, size_t length)
     {
-        size_t len = std::min(sizeof(var_name)-1, length);
+        if (BufSize - buf_filled < VarNameSize) flush();
+        var_name = buffer.get() + buf_filled;
+        size_t len = std::min(VarNameSize-1, length);
         memcpy(var_name, ptr, len); var_name[len] = 0;
     }
-
 
 public:
     Ans(httpd_req_t *);

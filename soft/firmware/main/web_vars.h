@@ -15,8 +15,8 @@ struct WebOptions {
    <option value="4">Пользователь 4</option>
 */
 
-    uint16_t UserRights;            // Rights of currently logged-in user
-    uint8_t  CurUserPrio;           // Priority value of Current User
+    uint16_t UserRights();          // Rights of currently logged-in user
+    uint8_t  CurUserPrio();         // Priority value of Current User
     uint8_t  TimeToDoorsEnable();   // Time to reenargizing Door system
 
     void ActiveUsersList(Ans&);     // HTML block with list of still Active Users (as in done-user.html AJAX)
@@ -71,8 +71,8 @@ struct WebOptions {
     uint32_t get_condition(const char* ptr, Ans&);
 
 private:
-    void err_novar(const char*) {}
-    void err_type_wrong(const char*) {}
+    void err_novar(const char*);
+    void err_type_wrong(const char*);
 };
 
 extern WebOptions web_options;

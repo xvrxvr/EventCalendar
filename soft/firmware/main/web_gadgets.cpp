@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "estring.h"
 
 #include <esp_log.h>
@@ -21,13 +22,29 @@ void Ans::write_int(uint32_t val) {char b[11]; sprintf(b, "%ld", val); write_str
 void Ans::write_string_utf8(const char* ptr, int length)
 {
     if (length == -1) length = strlen(ptr);
-    while(length)
+    if (buf_filled) // Try to append to buffer
     {
-        int to_send = std::min(length, BufSize - buf_filled);
-        if (!to_send) {flush(); continue;}
-        memcpy(buffer.get() + buf_filled, ptr, to_send);
-        length -= to_send;
-        ptr += to_send;
+        int to_send = std::min<int>(length, BufSize - buf_filled);
+        if (to_send)
+        {
+            memcpy(buffer.get() + buf_filled, ptr, to_send);
+            length -= to_send;
+            ptr += to_send;
+            buf_filled += to_send;
+        }
+    }
+    if (!length) return; // All fit in one buffer
+    flush();
+    // Do the rest fit in buffer ?
+    if (length <= BufSize) // Yes - push to buffer
+    {
+        memcpy(buffer.get(), ptr, length);
+        buf_filled += length;
+    }
+    else // Do not fit - send it directly as one chunk
+    {
+        chunked_active = true;
+        httpd_resp_send_chunk(req, ptr, length);        
     }
 }
 

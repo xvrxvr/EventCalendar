@@ -75,7 +75,7 @@ def scan_dir(dir_name, outf):
     trie = TrieDir()
 
     for f in files:
-        fname = re.sub(r'\W', '_', f'{dir_name}/{f}')
+        fname = re.sub(r'\W', '_', f)
         trie.add(f, fname)
         print(f'    extern const char {fname}_start[] asm("_binary_{fname}_start");', file=outf)
         print(f'    extern const char {fname}_end[] asm("_binary_{fname}_end");', file=outf)

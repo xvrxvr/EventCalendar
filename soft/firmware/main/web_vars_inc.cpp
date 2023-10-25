@@ -9,7 +9,7 @@ void WebOptions::decode_inline(const char* key, Ans& ans)
         case 'C': if (memcmp(key+1, "ur", 2) != 0) {err_novar(key); return;}
                   switch(key[3])
                   {
-                      case 'U': if (strcmp(key+4, "serPrio") == 0) {ans.write_int(CurUserPrio); return;} else {err_novar(key); return;}
+                      case 'U': if (strcmp(key+4, "serPrio") == 0) {ans.write_int(CurUserPrio()); return;} else {err_novar(key); return;}
                       case 'r': if (strcmp(key+4, "entUser") == 0) {CurrentUser(ans); return;} else {err_novar(key); return;}
                       default: err_novar(key); return;
                   }
@@ -71,7 +71,7 @@ void WebOptions::decode_inline(const char* key, Ans& ans)
                 default: err_novar(key); return;
             }
         case 'T': if (strcmp(key+1, "imeToDoorsEnable") == 0) {ans.write_int(TimeToDoorsEnable()); return;} else {err_novar(key); return;}
-        case 'U': if (strcmp(key+1, "serRights") == 0) {ans.write_int(UserRights); return;} else {err_novar(key); return;}
+        case 'U': if (strcmp(key+1, "serRights") == 0) {ans.write_int(UserRights()); return;} else {err_novar(key); return;}
         default: err_novar(key); return;
     }
 }
@@ -84,7 +84,7 @@ uint32_t WebOptions::get_condition(const char* key, Ans& ans)
         case 'C': if (memcmp(key+1, "ur", 2) != 0) {err_novar(key); return 0;}
                   switch(key[3])
                   {
-                      case 'U': if (strcmp(key+4, "serPrio") == 0) {return CurUserPrio;} else {err_novar(key); return 0;}
+                      case 'U': if (strcmp(key+4, "serPrio") == 0) {return CurUserPrio();} else {err_novar(key); return 0;}
                       case 'r': if (strcmp(key+4, "entUser") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
                       default: err_novar(key); return 0;
                   }
@@ -146,7 +146,7 @@ uint32_t WebOptions::get_condition(const char* key, Ans& ans)
                 default: err_novar(key); return 0;
             }
         case 'T': if (strcmp(key+1, "imeToDoorsEnable") == 0) {return TimeToDoorsEnable();} else {err_novar(key); return 0;}
-        case 'U': if (strcmp(key+1, "serRights") == 0) {return UserRights;} else {err_novar(key); return 0;}
+        case 'U': if (strcmp(key+1, "serRights") == 0) {return UserRights();} else {err_novar(key); return 0;}
         default: err_novar(key); return 0;
     }
 }

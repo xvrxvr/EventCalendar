@@ -946,9 +946,18 @@ void TouchConfig::wait_release()
     }
 }
 
+volatile uint8_t time_to_reengage_sol = 10;
+
+static void reengage_sol()
+{
+    uint8_t cnt = 10;
+    time_to_reengage_sol = cnt;
+    do {delay(1000); time_to_reengage_sol = --cnt;} while(cnt);
+}
+
 static void sol_task(void*)
 {
-    delay(10000);
+    reengage_sol();
     for(;;)
     {
         uint32_t index = ulTaskNotifyTake(pdTRUE, portMAX_DELAY); 
@@ -959,7 +968,7 @@ static void sol_task(void*)
             write_sol(1<<index);
             delay(1000);
             write_sol(0);
-            delay(10000);
+            reengage_sol();
         }
     }
 }
