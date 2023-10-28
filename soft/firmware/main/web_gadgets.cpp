@@ -116,6 +116,7 @@ void Ans::write_cdn(const char* fname)
         send_error(HTTPD_404_NOT_FOUND, "File not found");
         return;
     }
+    set_ans_type(fname);
     if (cdn.start[0] != '$') // Send it directly
     {
         httpd_resp_send(req, cdn.start, cdn.end - cdn.start);
@@ -144,7 +145,7 @@ void Ans::write_cdn(const char* fname)
             cdn.start+=2;
             continue;
         }
-        if (cdn.start[1] == '?' && (cdn.start == cdn_org || cdn.start[-2] == '\n')) // Conditional block
+        if (cdn.start[1] == '?' && (cdn.start == cdn_org || cdn.start[-1] == '\n')) // Conditional block
         {
             bool is_active = test_cond(cdn);
             if (!is_active)
@@ -156,7 +157,7 @@ void Ans::write_cdn(const char* fname)
                 continue;
             }
         }
-        if (cdn.start[1] == '-')  // Termination line of conditional block. We can went here only if condition was evaluated to true. Skip this line.
+        if (cdn.start[1] == '-' && (cdn.start == cdn_org || cdn.start[-1] == '\n'))  // Termination line of conditional block. We can went here only if condition was evaluated to true. Skip this line.
         {
             bump_to_eol(cdn); 
             continue;

@@ -112,7 +112,7 @@ let websock = null;
 function set_async_handler(callback = null)
 {
     let port = document.port;
-    if (port) port = ':' + port;
+    if (port) port = ':' + port; else port = "";
 
     if (websock) {alert("set_async_handler called twice!"); return;}
     websock = new WebSocket(`ws://${document.location.host}${port}/notify`);

@@ -1568,6 +1568,12 @@ CONFIG_WIFI_PROV_STA_ALL_CHANNEL_SCAN=y
 # end of Wi-Fi Provisioning Manager
 
 #
+# JPEG Decoder
+#
+CONFIG_JD_USE_ROM=y
+# end of JPEG Decoder
+
+#
 # mDNS
 #
 CONFIG_MDNS_MAX_INTERFACES=3
