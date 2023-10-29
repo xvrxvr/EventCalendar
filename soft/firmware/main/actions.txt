@@ -12,7 +12,7 @@ Return (text):
     User name to put on Door (with serial number)
 -----------------------
 
-unload_gift - Remove gift from specified door
+unload_gift.html - Remove gift from specified door
 
 Params:
     door - Door index (0 based)
@@ -34,7 +34,7 @@ Return (JSON):
     Aray of 2 items: HTML text with list of still Active users, HTML text with list of Done users
 -----------------------
 
-set-interround-time.html - Set interr round time (in minutes)
+set-interround-time.html - Set interround time (in minutes)
 
 Param:
     value - Time
