@@ -1,29 +1,33 @@
 #pragma once
 
+#include <stdint.h>
+
+#include "hadrware.h"
+
 enum ActionType {
-    AT_Fingerprint     = 0x0001,   // fingerprint with normal color feedback
+    AT_Fingerprint     = 0x0001,   // fingerprint with normal color feedback (and FP bit)
     AT_Fingerprint0    = 0x0003,   // fingerprint without color feedback
     AT_Fingerprint1    = 0x0005,   // fingerprint with OOB color feedback
     AT_Fingerprint2    = 0x0007,   // fingerprint with special color feedback
-    AT_Alarm           = 0x0008,
-    AT_TouchDown       = 0x0010,
-    AT_TouchUp         = 0x0020,
-    AT_TouchTrack      = 0x0040,
-    AT_Touch           = TouchDown | TouchUp | TouchTrack,
+    AT_TouchBit        = 0x0008,   // This event can be checked for any touch
+    AT_TouchDown       = 0x0018,
+    AT_TouchUp         = 0x0028,
+    AT_TouchTrack      = 0x0048,
     AT_Timeout         = 0x0080,
     AT_WEBEvent        = 0x0100,
+    AT_Alarm           = 0x0200,
 
     ATLast
 };
 
 enum ActionFlags {
     AF_CanFail          = 0x80000000,   // Constructor can fail - not all required ActionTypes available
-    AF_Override         = 0x40000000    // Suspend current Action for duration of new one
+    AF_Override         = 0x40000000,   // Suspend current Action for duration of new one
 
     AFLast
 };
 
-static_assert(AFLast > ATLast, "ActionFlags and ActionType overlaped!");
+static_assert(uint32_t(AFLast) > uint32_t(ATLast), "ActionFlags and ActionType overlaped!");
 
 
 enum WebEvents {
@@ -61,16 +65,16 @@ public:
 
     // Required Activity setup. Appropriate members must be called BEFORE call to get_action()
     // Multiple calls to these methods possible - later call will override setup from former.
-    bool setup_alarm_action(uint32_t time_to_hit);
-    bool setup_timeout(uint32_t timeout);
-    bool setup_web_ping_type(const char* tag);
+    void setup_alarm_action(uint32_t time_to_hit);
+    void setup_timeout(uint32_t timeout);
+    void setup_web_ping_type(const char* tag);
     void set_special_color_feedback_code(int);
 
     // You SHOULD call this method if AF_CanFail was specified in Activity::Activity(). Otherwise get_action will fail with abort()
     // Method returns true if this Activity successfully lock all required Actions.
     bool is_ok() const;
 
-    Action get_action();
+    Action get_action(); //Return input action. Blocks until action will be available.
 
     // These callbacks will be called on Action borrow/return
     virtual void on_action_borrow(ActionType) {}
@@ -79,6 +83,10 @@ public:
     // These callbacks will be called on Override (by other Action)
     virtual void on_suspend() {}
     virtual void on_resume(LCD&); // You should restore LCD screen in this callback
+
+    // Initialize all Activity system, starts background tasks which handles Touch/LCD and FG
+    // After this call all access to LCD/Touch/FG only through LCDAccess/FPAccess
+    static void start();
 };
 
 
@@ -88,4 +96,12 @@ public:
     ~LCDAccess();
 
     LCD& access();
+};
+
+class FPAccess {
+public:
+    FPAccess(Activity*);
+    ~FPAccess();
+
+    R503& access();
 };

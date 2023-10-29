@@ -10,6 +10,7 @@ set(srcs
     web_vars_inc.cpp
     web_gadgets.cpp
     web_vars.cpp
+    activity.cpp
     main.cpp
 )
 
