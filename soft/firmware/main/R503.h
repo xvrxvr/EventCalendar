@@ -351,6 +351,8 @@ public:
      */
     int searchFinger(uint8_t characterBuffer, uint16_t &location, uint16_t &score);
     
+    int setAuraLED(uint32_t code);
+
     // methods to print information about sensor with Serial.print to Serial Monitor
     #if R503_DEBUG & 0x04
     int printProductInfo();
@@ -358,5 +360,25 @@ public:
     #endif
     
 };
+
+enum AuraLEDControl {
+    ALC_Breathing = 1,
+    ALC_Flashing,
+    ALC_On,
+    ALC_Off,
+    ALC_TurnOn,
+    ALC_TurnOff
+};
+
+enum AuraLEDColor {
+    ALC_Red = 1,
+    ALC_Blue,
+    ALC_Purpule
+};
+
+inline constexpr uint32_t auraLEDCode(AuraLEDControl ctrl, AuraLEDColor color, uint8_t speed = 0, uint8_t count = 0)
+{
+    return speed | (count <<8) | (color<<16) | (ctrl << 18);
+}
 
 #endif

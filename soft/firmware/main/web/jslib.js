@@ -201,68 +201,68 @@ function send_ajax_request(url, callback = null, as_json = false)
 // callback argument - new user name to put on door
 function send_gift_load_msg(door_index, user_index, callback)
 {
-    send_ajax_request('gift_load.html?door=' + door_index +'&user=' + user_index, callback);
+    send_ajax_request(`gift_load.html?door=${door_index}&user=${user_index}`, callback);
 }
 
 // callback argument - array of users (to put on doors)
 function send_gift_unload_message(door_index, callback)
 {
-    send_ajax_request('unload_gift.html?door=' + door_index, callback, true);
+    send_ajax_request(`unload_gift.html?door=${door_index}`, callback, true);
 }
 
 function send_door_open_message(door_index)
 {
-    send_ajax_request('open-door.html?door=' + door_index);
+    send_ajax_request(`open_door.html?door=${door_index}`);
 }
 
 // callback argument - array [HTML string with list of active Users, HTML string with list of done users]
 function send_user_done(user_index, callback)
 {
-    send_ajax_request('done-user.html?user=' + user_index, callback, true);
+    send_ajax_request(`done_user.html?user=${user_index}`, callback, true);
 }
 
 function send_set_interround_time(time)
 {
-    send_ajax_request('set-interround-time.html?value=' + time);
+    send_ajax_request(`set_interround_time.html?value=${time}`);
 }
 
 // Callback called with new challenge index
 function send_add_challenge(text, callback)
 {
-    send_ajax_request('add-challenge.html?value=' + encodeURIComponent(text), callback);
+    send_ajax_request(`add_challenge.html?value=${encodeURIComponent(text)}`, callback);
 }
 
 function send_del_challenge(index)
 {
-    send_ajax_request('del-challenge.html?index=' + index);
+    send_ajax_request(`del_challenge.html?index=${index}`);
 }
 
 // Callback called with JSON object with challenge data
 function send_get_challenge(index, callback)
 {
-    send_ajax_request('get-challenge.html?index=' + index, callback, true);
+    send_ajax_request(`get_challenge.html?index=${index}`, callback, true);
 }
 
 // Callback called with JSON data with User options
 function send_get_user_opts(index, callback)
 {
-    send_ajax_request('get-user-opts.html?index=' + index, callback, true);
+    send_ajax_request(`get_user_opts.html?index=${index}`, callback, true);
 }
 
 // Callback called with new user name (to show in list nox)
 function send_set_user_option(index, opt_name, opt_value, callback)
 {
-    send_ajax_request('set-user-opt.html?index=' + index + '&name=' + opt_name + '&value=' + encodeURIComponent(opt_value));
+    send_ajax_request(`set_user_opt.html?index=${index}&name=${opt_name}&value=${encodeURIComponent(opt_value)}`);
 }
 
 function send_del_user(index)
 {
-    send_ajax_request('del-user.html?index=' + index);
+    send_ajax_request(`del_user.html?index=${index}`);
 }
 
 function send_del_fg_user(user_index, fg_index)
 {
-    send_ajax_request(`del-user-fg.html?usr_index=${user_index}&fg_index=${fg_index}`);
+    send_ajax_request(`del_user_fg.html?usr_index=${user_index}&fg_index=${fg_index}`);
 }
 
 function send_ping({cmd, cnt})

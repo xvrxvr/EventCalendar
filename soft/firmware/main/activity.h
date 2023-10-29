@@ -9,18 +9,6 @@
 
 #include "hadrware.h"
 
-// !!!
-enum {
-    FP_NORMAL_COLOR = 0x1234,
-    FP_NO_COLOR = 0x3456,
-    FP_OOB_COLOR = 0x3333
-};
-
-static constexpr int MAX_WEB_PINGS = 2;
-static constexpr int WEB_PING_INTERVAL_MS = 500;
-static constexpr int WEB_PING_TASK_STACK = 1024;
-static constexpr int WEB_PING_TASK_PRIO = 1;
-
 enum ActionType {
     AT_Internal        = 0, // Internal
     AT_Fingerprint     = 0x0001,   // fingerprint with normal color feedback (and FP bit)

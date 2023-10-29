@@ -442,6 +442,16 @@ int R503::searchFinger(uint8_t characterBuffer, uint16_t &location, uint16_t &sc
     return confirmationCode;
 }
 
+int R503::setAuraLED(uint32_t code)
+{
+    //     return speed | (count <<8) | (color<<16) | (ctrl << 18);
+    uint8_t speed = uint8_t(code & 0xFF);
+    uint8_t count = uint8_t((code >> 8) & 0xFF);
+    uint8_t color = uint8_t((code >> 16) & 3);
+    uint8_t ctrl =  uint8_t((code >> 18) & 7);
+    SEND_CMD(0x35, ctrl, speed, color, count);
+}
+
 #if R503_DEBUG & 0x04
 int R503::printProductInfo() {
     ProductInfo info;

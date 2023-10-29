@@ -20,13 +20,13 @@ Return (JSON):
     Array of 8 text (or null) elements with titles for Doors
 -----------------------
 
-open-door.html - Open Door
+open_door.html - Open Door
 
 Params:
     door - Door index (0 based)
 -----------------------
 
-done-user.html - Mark user as Done
+done_user.html - Mark user as Done
 
 Param:
     user - User index
@@ -34,13 +34,13 @@ Return (JSON):
     Aray of 2 items: HTML text with list of still Active users, HTML text with list of Done users
 -----------------------
 
-set-interround-time.html - Set interround time (in minutes)
+set_interround_time.html - Set interround time (in minutes)
 
 Param:
     value - Time
 -----------------------
 
-add-challenge.html - Add new empty challenge
+add_challenge.html - Add new empty challenge
 
 Param:
     value - Name of challenge
@@ -48,13 +48,13 @@ Return (int):
     Index of new challenge
 -----------------------
 
-del-challenge.html - Delete challenge
+del_challenge.html - Delete challenge
 
 Param:
     index - Index of challenge
 -----------------------
 
-get-challenge.html - Load challenge contents
+get_challenge.html - Load challenge contents
 
 Param:
     index - Index of challenge
@@ -66,7 +66,7 @@ Result (JSON):
         max_age: int - Maximum age
 -----------------------
 
-get-user-opts.html - get User definition
+get_user_opts.html - get User definition
 
 Param:
     index - user index
@@ -79,7 +79,7 @@ Result (JSON):
         rights : int - Scale of user rights
 -----------------------
 
-set-user-opt.html - Set User definition field
+set_user_opt.html - Set User definition field
 
 Params:
     index - User Index
@@ -89,13 +89,13 @@ Return (string):
     User name for User List
 -----------------------
 
-del-user.html - Delete user
+del_user.html - Delete user
 
 Params:
     index - User Index
 -----------------------
 
-del-user-fg.html - Delete user fingerprint from library
+del_user_fg.html - Delete user fingerprint from library
 
 Params:
     usr_index - User index (or -1 for user currently on edit)
@@ -155,8 +155,8 @@ update_challenge.html (POST) - Update challenge
 
 Param:
     index - Challenge index
-    min-age - Min age
-    max-age - Max age
+    min_age - Min age
+    max_age - Max age
     text - Text of challenge
     answer - Answers for challenge
 -----------------------

@@ -145,9 +145,9 @@ Action Activity::get_action() //Return input action. Blocks until action will be
             switch(actions & AT_Fingerprint2)
             {
 
-                case AT_Fingerprint: col = FP_NORMAL_COLOR; break;
-                case AT_Fingerprint0: col = FP_NO_COLOR; break;
-                case AT_Fingerprint1: col = FP_OOB_COLOR; break;
+                case AT_Fingerprint: col = auraLEDCode(FINGERPRINT_SENSOR_NORMAL_COLOR); break;
+                case AT_Fingerprint0: col = auraLEDCode(FINGERPRINT_SENSOR_HIDDEN); break;
+                case AT_Fingerprint1: col = auraLEDCode(FINGERPRINT_SENSOR_OOB_COLOR); break;
                 case AT_Fingerprint2: col = custom_fg_color; break;
             }
             fg_input.cmd(col);
@@ -203,7 +203,7 @@ void Activity::send_web_ping() // Internal function - called by WEB ping thread 
         if (!a || !a->web_ping_tag || a->locked_out) continue;
         send_web_ping_to_ws(a->web_ping_tag);
         ++a->web_ping_counter;
-        if (a->web_ping_counter > MAX_WEB_PINGS)
+        if (a->web_ping_counter > SC_WEBPing_Pings)
         {
             a->push_action_local({.type = AT_WEBEvent, .web = {.event = WE_Logout, .logout_tag = a->web_ping_tag}});
             a->web_ping_counter = 0;
@@ -216,7 +216,7 @@ static void web_ping_task(void*)
     for(;;)
     {
         Activity::send_web_ping();
-        vTaskDelay(WEB_PING_INTERVAL_MS / portTICK_PERIOD_MS);
+        vTaskDelay(SC_WEBPing_Time / portTICK_PERIOD_MS);
     }
 }
 
@@ -225,7 +225,7 @@ void Activity::start()
     activity_lock = xSemaphoreCreateMutex();
     touch_input.start();
     fg_input.start();
-    xTaskCreate(web_ping_task, "WEB-Ping", WEB_PING_TASK_STACK, NULL, WEB_PING_TASK_PRIO, NULL);
+    xTaskCreate(web_ping_task, "WEB-Ping", TSS_WEBPing, NULL, TP_WEBPing, NULL);
 }
 
 LCDAccess::LCDAccess(Activity* a)
