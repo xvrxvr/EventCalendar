@@ -11,6 +11,7 @@ set(srcs
     web_vars_inc.cpp
     web_gadgets.cpp
     web_vars.cpp
+    web_ajax_bodies.cpp
     activity.cpp
     main.cpp
 )
