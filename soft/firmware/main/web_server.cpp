@@ -12,7 +12,12 @@
 #include "setup_data.h"
 #include "web_gadgets.h"
 
+#include "web_ajax_classes.h"
+
 static const char *TAG = "web_server";
+
+#define G(id, args) static esp_err_t send_ajax_##id(httpd_req_t *req) {AJAXDecoder_##id(req).run(); return ESP_OK;}
+#include "web_actions.inc"
 
 static esp_err_t send_string(httpd_req_t *req)
 {
@@ -77,6 +82,28 @@ static esp_err_t start_http_data_server()
         };
         httpd_register_uri_handler(server, &index);
     }
+
+#define G(id, args)                                 \
+    {                                               \
+        httpd_uri_t index = {                       \
+            .uri       = "/action/" #id ".html",    \
+            .method    = HTTP_GET,                  \
+            .handler   = send_ajax_##id,            \
+        };                                          \
+        httpd_register_uri_handler(server, &index); \
+    }
+
+#define P(id, args)                                 \
+    {                                               \
+        httpd_uri_t index = {                       \
+            .uri       = "/action/" #id ".html",    \
+            .method    = HTTP_POST,                 \
+            .handler   = send_ajax_##id,            \
+        };                                          \
+        httpd_register_uri_handler(server, &index); \
+    }
+
+#include "web_actions.inc"
 
     return ESP_OK;
 }

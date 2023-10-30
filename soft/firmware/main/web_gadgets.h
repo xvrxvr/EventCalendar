@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <algorithm>
+#include <optional>
+
 #include <string.h>
 
 #include <esp_http_server.h>
@@ -52,4 +54,43 @@ public:
     esp_err_t set_ans_type(const char* file_name);
     void send_error(httpd_err_code_t, const char*);
     void set_hdr(const char* tag, const char* value);
+
+// Members for AJAX handlers
+    using ArgI = uint32_t;
+    using ArgOI = std::optional<uint32_t>;
+    using ArgSU = const char*;
+    using ArgSD = const char*;
+    using ArgOSU = const char*;
+    using ArgOSD = const char*;
+    using ArgTU = std::unique_ptr<char>;
+    using ArgTD = std::unique_ptr<char>;
+    using ArgU = uint32_t;
+    using ArgOV = bool;
+};
+
+// GET request
+class AnsGet : public Ans {
+public:    
+    AnsGet(httpd_req_t *req) : Ans(req) {}
+
+    ArgI    decode_I(const char* tag);
+    ArgOI   decode_OI(const char* tag);
+    ArgSU   decode_SU(const char* tag);
+    ArgSD   decode_SD(const char* tag);
+    ArgOSU  decode_OSU(const char* tag);
+    ArgOSU  decode_OSD(const char* tag);
+    ArgTU   decode_TU(const char* tag);
+    ArgTD   decode_TD(const char* tag);
+    ArgU    decode_U(const char* tag);
+    ArgOV   decode_OV(const char* tag);
+};
+
+class AnsPost : public Ans {
+public:
+    AnsPost(httpd_req_t *req) : Ans(req) {}
+
+// Overrdie decoding methods for POST request
+    ArgTU   decode_TU(const char* tag);
+    ArgI    decode_I(const char* tag);
+    ArgTD   decode_TD(const char* tag);
 };

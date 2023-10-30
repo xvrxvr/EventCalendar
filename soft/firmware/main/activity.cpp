@@ -57,6 +57,7 @@ Activity::Activity(uint32_t /* bitset of ActionType and ActionFlags*/ actions, u
 
 void Activity::lock_out()
 {
+    if (suspended) return;
     suspended = true;
     push_spc_code(IA_Suspend);
     if (alarm_timer) xTimerStop(alarm_timer, portMAX_DELAY);
@@ -65,6 +66,7 @@ void Activity::lock_out()
 
 void Activity::unlock_out()
 {
+    if (!suspended) return;
     suspended = false;
     push_spc_code(IA_Resume);
     if (alarm_timer) setup_alarm_action(setup_alarm_time);
@@ -73,9 +75,6 @@ void Activity::unlock_out()
 
 Activity::~Activity() 
 {
-    if (alarm_timer) xTimerDelete(alarm_timer, portMAX_DELAY);
-    if (watchdog_timer) xTimerDelete(watchdog_timer, portMAX_DELAY);
-    vQueueDelete(actions_queue);
     {
         L lock;
         all_activities[my_index] = NULL;
@@ -84,6 +83,8 @@ Activity::~Activity()
             for(int i=0; i<MAX_ACTIVITIES; ++i)
             {
                 auto a = all_activities[i];
+                if (!a) continue;
+                // Situation when locked out Activity was removed during lock and some new was created in that place is not handled - it's almost impossible to ocure
                 if ((locked_out >> i) & 1) a->lock_out(); else
                 if (a && (actions & a->can_be_borrowed_actions)) // borrow something
                 {
@@ -93,6 +94,9 @@ Activity::~Activity()
             }
         }
     }
+    if (alarm_timer) xTimerDelete(alarm_timer, portMAX_DELAY);
+    if (watchdog_timer) xTimerDelete(watchdog_timer, portMAX_DELAY);
+    vQueueDelete(actions_queue);
 }
 
 TickType_t hit_to_ticks(uint32_t);
