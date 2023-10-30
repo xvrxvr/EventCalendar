@@ -1,5 +1,7 @@
 #include <ctype.h>
+#include "common.h"
 #include "estring.h"
+#include "protocol_examples_utils.h"
 
 #include <esp_log.h>
 
@@ -9,7 +11,7 @@
 
 static const char* TAG = "web_gadgets";
 
-Ans::Ans(httpd_req_t *r) :req(r), buffer(new char[BufSize]) {}
+Ans::Ans(httpd_req_t *r) :buffer(new char[BufSize]), req(r) {}
 
 Ans::~Ans() 
 {
@@ -59,21 +61,8 @@ void Ans::write_string_dos(const char* ptr, int length)
         write_string_utf8(b, ptr-b);
         if (ptr < end) // We have DOS symbol
         {
-            uint8_t s = *ptr++;
-            char buf[2];
-            if (s <= 0xAF) {buf[0] = 0xD0; buf[1] = s+0x10;} else
-            if (s <= 0xEF) {buf[0] = 0xD1; buf[1] = s-0x60;} else
-            if (s == 0xF0) {buf[0] = 0xD0; buf[1] = 0x81;}
-            else {buf[0] = 0xD1, buf[1] = 0x91;}
-            write_string_utf8(buf, 2);
+            write_string_utf8(dos_to_utf8(*ptr++).b);
         }
-// 80-AF -> 0410-043F                | D0 90 - D0 BF
-// B0-BF -> 2591 2592 2593 2502 2524 2561 2562 2556 2555 2563 2551 2557 255D 255C 255B 2510   X    
-// C0-CF -> 2514 2534 252C 251C 2500 253C 255E 255F 255A 2554 2569 2566 2560 2550 256C 2567   X
-// D0-DF -> 2568 2564 2565 2559 2558 2552 2553 256B 256A 2518 250C 2588 2584 258C 2590 2580   X
-// E0-EF -> 0440-044F                | D1 80 - D1 8F
-// F0 F1 -> 0401 0451                | D0 81,  D1 91
-// F0-FF -> 0401 0451 0404 0454 0407 0457 040E 045E 00B0 2219 00B7 221A 2116 00A4 25A0 0020   X
     }    
 }
 
@@ -105,6 +94,12 @@ void Ans::send_error(httpd_err_code_t err_code, const char* message)
 void Ans::set_hdr(const char* tag, const char* value)
 {
     httpd_resp_set_hdr(req, tag, value);
+}
+
+void Ans::redirect(const char* path)
+{
+    httpd_resp_set_status(req, "303 See Other");
+    httpd_resp_set_hdr(req, "Location", path);
 }
 
 
@@ -208,4 +203,329 @@ bool Ans::test_cond(CDNDef& pos)
     auto cond = web_options.get_condition(var_name, *this);
     if (*p == ',') cond &= strtol(p+1, NULL, 16);
     return (cond != 0);
+}
+//////////////////////////////////////////
+void Ans::load_request_string()
+{
+    int buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len <= 1) return;
+    request_string.reset(new char[buf_len]);
+    ESP_ERROR_CHECK(httpd_req_get_url_query_str(req, request_string.get(), buf_len));
+    ESP_LOGI(TAG, "Setup: URL query => %s", request_string.get());
+}
+
+Ans::ArgI    AnsGet::decode_I(const char* tag)
+{
+    char b[32];
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, b, sizeof(b)) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Expected tag '%s'", tag);
+        return 0;
+    }
+    return strtoul(b, NULL, 10);
+}
+
+Ans::ArgOI AnsGet::decode_OI(const char* tag)
+{
+    char b[32];
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, b, sizeof(b)) != ESP_OK) return {};
+    return strtoul(b, NULL, 10);
+}
+
+Ans::ArgSU AnsGet::decode_SU(const char* tag)
+{
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, alloc_buf(), available_buf()) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Expected tag '%s'", tag);
+        return "";
+    }
+    return adjust_buf();
+}
+
+Ans::ArgSD AnsGet::decode_SD(const char* tag)
+{
+    char* dst = alloc_buf();
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, dst, available_buf()) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Expected tag '%s'", tag);
+        return "";
+    }
+    example_uri_decode(dst, dst, available_buf());
+    utf8_to_dos(dst);
+    return adjust_buf();
+}
+
+Ans::ArgOSU AnsGet::decode_OSU(const char* tag)
+{
+    char* dst = alloc_buf();
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, dst, available_buf()) != ESP_OK) return NULL;
+    example_uri_decode(dst, dst, available_buf());
+    return adjust_buf();
+
+}
+
+Ans::ArgOSU AnsGet::decode_OSD(const char* tag)
+{
+    char* dst = alloc_buf();
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, dst, available_buf()) != ESP_OK) return NULL;
+    example_uri_decode(dst, dst, available_buf());
+    utf8_to_dos(dst);
+    return adjust_buf();
+}
+
+Ans::ArgU AnsGet::decode_U(const char*)
+{
+    char* dst = alloc_buf();
+    if (!request_string) return 0;
+    uint32_t result = 0;
+    for(int i=0; i<32; ++i)
+    {
+        char tag[3] = {'u', char('0'+i), 0};
+        if (httpd_query_key_value(request_string.get(), tag, dst, available_buf()) == ESP_OK) result |= 1 << i;
+    }
+    return result;
+}
+
+Ans::ArgOV AnsGet::decode_OV(const char* tag)
+{
+    if (!request_string || httpd_query_key_value(request_string.get(), tag, alloc_buf(), available_buf()) != ESP_OK) return false;
+    return true;
+}
+/////////
+void AnsPost::read_body()
+{
+    int remaining = req->content_len;
+    assert(remaining >= 0);
+    if (!remaining) return;
+    char* buf = ensure_size(remaining+1);
+    int total;
+    do {total = httpd_req_recv(req, buf, remaining);} while (total ==  HTTPD_SOCK_ERR_TIMEOUT);
+    assert(total >= 0 && total <= remaining);
+    buf[total] = 0;
+    decode_body();
+
+/*
+-----------------------------175182572837905947281560249645
+Content-Disposition: form-data; name="min-age"
+
+18
+-----------------------------175182572837905947281560249645
+Content-Disposition: form-data; name="max-age"
+
+99
+-----------------------------175182572837905947281560249645
+Content-Disposition: form-data; name="text"
+
+sasasasa
+-----------------------------175182572837905947281560249645
+Content-Disposition: form-data; name="answer"
+
+;ldasldsald
+
+-----------------------------175182572837905947281560249645--
+*/    
+
+/*
+-----------------------------128025039635182347591461528223
+Content-Disposition: form-data; name="file"
+
+iVBORw0KGgoAAAANSUhEUgAAAZAAAADwCAYAAAAuPDIiAAAgAElEQVR4Xpy995dd2XXfeQEUC.....
+-----------------------------128025039635182347591461528223--
+*/
+
+}
+
+void AnsPost::decode_body()
+{
+    char* ptr = alloc_buf();
+
+    auto nxt_line = [&ptr]() -> char* {
+        char* ret = ptr;
+        ptr = strchr(ptr, '\n');
+        if (!ptr) return NULL;
+        *ptr++ = 0;
+        return ret;
+    };
+
+    char* dlm = nxt_line();
+    size_t dlm_len = strlen(dlm);
+
+    assert(dlm);
+
+    while(ptr && *ptr)
+    {
+        assert(total_fields<MAX_FLDS);
+        FldDef& fld = flds[total_fields++];
+        fld.name = NULL;
+        fld.body = NULL;
+        fld.body_size = 0;
+        while(char* hdr = nxt_line())
+        {
+            if (!*hdr) break; // Start of body
+#define CDISP "Content-Disposition:"
+#define NAME "name=\""
+            if (memcmp(hdr, CDISP, sizeof(CDISP)-1)==0)
+            {
+                char* fname = strstr(hdr, NAME);
+                assert(fname);
+                fname += sizeof(NAME) - 1;
+                fld.name = fname;
+                strchr(fname, '"')[0] = 0;
+            }
+        }
+#undef NAME
+#undef CDISP        
+        fld.body = ptr;
+        while(char* nxt = strchr(ptr, '\n'))
+        {
+            if (memcmp(nxt+1, dlm, dlm_len) == 0)
+            {
+                *nxt = 0;
+                fld.body_size = nxt - fld.body;
+                ptr = nxt + 1;
+                break;
+            }
+            ptr = nxt + 1;
+        }
+    }
+}
+
+
+Ans::ArgI AnsPost::decode_I(const char* tag)
+{
+    char* f = find_field(tag);
+    assert(f);
+    return strtoul(f, NULL, 10);
+}
+
+Ans::ArgTU AnsPost::decode_TU(const char* tag)
+{
+    char* f = find_field(tag);
+    assert(f);
+    return f;
+}
+
+Ans::ArgTD AnsPost::decode_TD(const char* tag)
+{
+    char* f = find_field(tag);
+    assert(f);
+    utf8_to_dos(f);
+    return f;
+}
+
+size_t AnsStream::read(size_t shift, size_t rest)
+{
+    int total, total_read = 0;
+    do {
+        if (rest > BufSize - shift - dlm_size) rest = BufSize - shift - dlm_size;
+        do {total = httpd_req_recv(req, buf_start() + shift, rest);} while (total ==  HTTPD_SOCK_ERR_TIMEOUT);
+        assert(total >= 0 && total <= rest);
+
+        shift += total;
+        rest -= total;
+    } while(rest && shift < BufSize - dlm_size);
+    return total_read;
+}
+
+// Try to read pack of data. retrun true if something was read (updates 'end' and 'remaining')
+bool AnsStream::read_pack(size_t shift)
+{
+    if (!remaining) return false;
+    size_t total = read(shift, remaining);
+    end = buf_start() + shift + total;
+    remaining -= total;
+    return total != 0;
+}
+
+// Discard processed part (by 'ptr') from begining of buffer and read next portion of buffer
+// Updates 'ptr', 'end' and 'remaining'
+// Returns true if somethig was read
+bool AnsStream::chop(int keep)
+{
+    if (keep > processed()) keep = processed();
+    ptr -= keep;
+    memcpy(buf_start(), ptr, size());
+    end -= ptr - buf_start();
+    ptr = buf_start() + keep;
+    return read_pack(size());
+}
+
+void AnsStream::extract_dlm()
+{
+    char* e = (char*)memchr(ptr, '\n', size());
+    assert(e!=NULL);
+    *e++ = 0;
+
+    dlm = ptr;
+    ptr = e;
+    dlm_size = ptr - dlm;
+}
+
+void AnsStream::skip_after_headers()
+{
+    for(;;)
+    {
+        char* e = (char*)memchr(ptr, '\n', size());
+        if (!e)
+        {
+            bool some = chop();
+            assert(some);
+            continue;
+        }
+        ptr = e+1; // Skip header line
+        if (ptr == end) // We need to load more
+        {
+            bool some = chop(1);
+            assert(some);
+        }
+        if (ptr[1] == '\n') {++ptr; return;} // Empty line - end of headers
+    }
+}
+
+size_t AnsStream::find_eof(bool& eof)
+{
+    eof = false;
+    char* e = (char*)memrchr(ptr, '\n', size());
+    if (!e) return size();
+    size_t may_be_retrun = e-ptr;
+    ++e;
+    size_t trailer_len = end-e;
+    if (trailer_len >= dlm_size-1) // Whole trailer should fit
+    {
+        if (memcmp(e, dlm, dlm_size-1)!=0) return size(); // Not delimiter
+        // Delimiter
+        eof = true;
+        return may_be_retrun;
+    }
+    // Partial delimiter (may be)
+    if (memcmp(e, dlm, trailer_len)!=0) return size(); // Not delimiter
+    // May be delimiter, test for it later
+    return may_be_retrun;
+}
+
+void AnsStream::run()
+{
+    remaining = req->content_len; // Total number of unread yet data
+    assert(remaining >= 0);
+    if (!remaining) return;
+    
+    ptr = buf_start(); // Current position in buffer
+    read_pack(0); // Read first buffer
+    extract_dlm(); // Extract first line - this is delimiter
+    skip_after_headers(); // Skip all headrs
+
+    // Now file body starts
+    chop(); // Discard header from buffer and load file contents (if any)
+    bool eof;
+    do {
+        size_t buf_size = find_eof(eof);
+        assert(buf_size || eof);
+        if (buf_size)
+        {
+            size_t processed = consume_stream((uint8_t*)ptr, buf_size, eof);
+            ptr += processed;
+            chop();
+            assert(processed < buf_size ? !eof : true);
+        }
+    } while(!eof);
 }

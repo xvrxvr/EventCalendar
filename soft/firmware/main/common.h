@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <string.h>
+
 // Priorities of various tasks
 enum TasksPriority {
     TP_Hardware = 5,    // Handling of HW input
@@ -20,3 +23,11 @@ enum SetupConsts {
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
 #define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red
+
+void utf8_to_dos(char*);
+
+struct U {
+    char b[4];
+};
+
+U dos_to_utf8(char sym);

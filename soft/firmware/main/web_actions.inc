@@ -1,6 +1,10 @@
 #ifndef P
     #define P G
-#endif 
+#endif
+
+#ifndef S
+    #define S(id) P(id, P0)
+#endif    
 
 #ifndef VP0
     #define VP0
@@ -49,7 +53,7 @@ G(update_users, P2(U, users, OV, load_gifts))
 G(end_game, P0)
 G(start_game, P1(U, users))
 G(add_user, P0)
-P(bg_add, P1(TU, file))
+S(bg_add)
 G(bg_remove, P1(I, index))
 P(update_challenge, P5(I, index, I, min_age, I, max_age, TD, text, TD, answer))
 G(recalibrate_touch, P0)
@@ -62,6 +66,7 @@ G(fg_editor_done, P2(OSD, name, OI, age))
 
 #undef G
 #undef P
+#undef S
 
 #undef VP0
 #undef VP1
@@ -86,6 +91,7 @@ G(fg_editor_done, P2(OSD, name, OI, age))
 Macros:
 G(<url>,<args>) - GET request to <url> wit parameters <args> (one of P<n> macro)
 P(<url>,<args>) - POST request to <url> wit parameters <args> (one of P<n> macro)
+S(<url>) - POST request with 1 file. Should be accepted in streaming manner
 
 P<n> - Params pack. <n> - number of arguments. Parameters - { <type>, <mame> }
 Types is:

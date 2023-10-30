@@ -1,4 +1,5 @@
 set(srcs
+    common.cpp
     protocol_examples_utils.c
     hadrware.cpp
     R503.cpp
