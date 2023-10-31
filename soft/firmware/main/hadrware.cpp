@@ -637,7 +637,7 @@ void LCD::text2(const char* text, int16_t x, int16_t y)
     }
 }
 
-
+#undef _B
 #define _B(n) (1ull<<(n))
 
 void hw_init()
@@ -795,7 +795,9 @@ void hw_init()
         printf("FP_sensor init error: %s\n", R503::errorMsg(err));
         abort();
     }
+    fp_sensor.setAuraLED(auraOff);
 }
+#undef _B
 
 
 void sol_hit(int index)
@@ -810,15 +812,6 @@ void sol_hit(int index)
     WR/Y+   - 21          WR      ADC    ADC         1       0            0           PullUP/Sence      1       -> 36 (SENSOR_VP)
     RS/X-   - 19          RS       0      1         ADC     ADC        PullUP/Sence      0              1       -> 39 (SENSOR_VN)
 */
-
-enum TouchType {
-    TT_LCD,
-    TT_X,
-    TT_XInv,
-    TT_Y,
-    TT_YInv,
-    TT_Sence
-};
 
 enum TTSetup {
     TTS_SW1     = 0x01,
@@ -882,28 +875,32 @@ int touch_config(TouchType tt)
 TouchConfig::TouchConfig() {x=y=-1; touched();}
 TouchConfig::~TouchConfig() {touch_config(TT_LCD);}
 
+bool TouchConfig::raw_touch_read()
+{
+    x = touch_config(TT_X);
+//  y = touch_config(TT_Y);
+//  if (y < min_y) y = mid_y - touch_config(TT_YInv);
+    y = touch_config(TT_YInv); // Inverted part has higher minimum value (about threshold - 240-250). Not-inverted has minimum of 78
+    return !touch_config(TT_Sence);
+}
+
+int TouchConfig::raw_touch_config(TouchType tt) {return touch_config(tt);}
+
 constexpr int32_t mid_y = 2850;
 constexpr int32_t min_y = 300;
 
-
 bool TouchConfig::touched()
 {
-    int ts = 0;
     x=y=-1;
+    Debouncer db;
     for(int i=0; i<100; ++i)
     {
-        ts <<= 4;
-        ts |= touch_config(TT_Sence) ? 1 : 2;
-        ts &= 0x3FF;
-        if (ts == 0x111) return false;
-        if (ts == 0x222)
+        db << !touch_config(TT_Sence);
+        if (db.stable())
         {
-            x = touch_config(TT_X);
-//            y = touch_config(TT_Y);
-//            if (y < min_y) y = mid_y - touch_config(TT_YInv);
-            y = touch_config(TT_YInv); // Inverted part has higher minimum value (about threshold - 240-250). Not-inverted has minimum of 78
-            if (!touch_config(TT_Sence)) return true;
-            ts = 0;
+            if (!db.value()) return false;
+            if (raw_touch_read()) return true;
+            db.clear();
         }
     }
     printf("TouchConfig: Can't get Touch status for 100 samples!\n");

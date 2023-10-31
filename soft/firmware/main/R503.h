@@ -362,23 +362,25 @@ public:
 };
 
 enum AuraLEDControl {
-    ALC_Breathing = 1,
-    ALC_Flashing,
-    ALC_On,
-    ALC_Off,
-    ALC_TurnOn,
-    ALC_TurnOff
+    ALC_Breathing   = AURA_BREATH,
+    ALC_Flashing    = AURA_FLASH,
+    ALC_On          = AURA_ON,
+    ALC_Off         = AURA_OFF,
+    ALC_TurnOn      = AURA_GRADUAL_ON,
+    ALC_TurnOff     = AURA_GRADUAL_OFF
 };
 
 enum AuraLEDColor {
-    ALC_Red = 1,
-    ALC_Blue,
-    ALC_Purpule
+    ALC_Red         = AURA_RED,
+    ALC_Blue        = AURA_BLUE,
+    ALC_Purpule     = AURA_PURPLE
 };
 
 inline constexpr uint32_t auraLEDCode(AuraLEDControl ctrl, AuraLEDColor color, uint8_t speed = 0, uint8_t count = 0)
 {
     return speed | (count <<8) | (color<<16) | (ctrl << 18);
 }
+
+constexpr uint32_t auraOff = auraLEDCode(ALC_Off, ALC_Red);
 
 #endif

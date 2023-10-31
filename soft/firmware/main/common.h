@@ -55,9 +55,6 @@
 #include <hal/spi_ll.h>
 #pragma GCC diagnostic pop
 
-
-
-
 // Priorities of various tasks
 enum TasksPriority {
     TP_Hardware = 5,    // Handling of HW input
@@ -73,7 +70,15 @@ enum TaskStackSize {
 enum SetupConsts {
     SC_WEBPing_Pings = 2,   // Number of missing Pings to hit threshold
     SC_WEBPing_Time  = 500,  // Time (in MS) between WEB Pings
-    SC_HW_INPUT_AUTO_OFF = 1000 // Time (in MS) to automatically passivating HW Input
+    SC_HW_INPUT_AUTO_OFF = 1000, // Time (in MS) to automatically passivating HW Input
+    SC_TouchTrackInterval = 10, // Time between Touch Track samples (in ticks)
+    SC_TouchTrackDeadZone = 10  // Minimal distance in Touch Track to report move
+};
+
+// Debouncers (in ticks)
+enum DebounceSetup {
+    DS_Touch = 10,
+    DS_FG = 10
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 5
@@ -96,3 +101,12 @@ inline TickType_t hit_to_ticks(time_t tm)
 {
     return s2ticks(tm - time(NULL));
 }
+
+class Debouncer {
+    uint8_t shift_reg = 0;
+public:
+    bool stable() const {return shift_reg == 0x55 || shift_reg == 0xAA;}    
+    bool value() const {return shift_reg == 0x55;}
+    void operator <<(bool sw) {shift_reg <<= 2; shift_reg |= sw ? 1 : 2;}
+    void clear() {shift_reg = 0;}
+};

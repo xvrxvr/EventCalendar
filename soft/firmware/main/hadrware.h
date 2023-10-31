@@ -86,6 +86,16 @@ void sol_hit(int index);
 //    _BGColour = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 //       <rrrrr> <ggg> | <ggg> <bbbbb>
 
+// RAW touch
+enum TouchType {
+    TT_LCD,
+    TT_X,
+    TT_XInv,
+    TT_Y,
+    TT_YInv,
+    TT_Sence
+};
+
 struct TouchConfig {
     int x, y; // Raw X & Y of tounch (if any) or -1, -1 if no touch
 
@@ -97,7 +107,12 @@ struct TouchConfig {
     
     void wait_press();
     void wait_release();
+
+    static int raw_touch_config(TouchType tt);
+    // Read Touch. Return true if Touch still pressed at end
+    bool raw_touch_read();
 };
+
 
 int get_temperature();
 

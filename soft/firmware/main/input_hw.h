@@ -146,30 +146,3 @@ protected:
     virtual void disable() override {di();} // Disable interrupts from Input HW
     virtual void passivate() override {di();} // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
 };
-
-
-class TouchInput : public PinAttachedInputProxy {
-public:
-    TouchInput(const char* tag, size_t stack_size=hw_input_default_stack_size);
-
-    virtual void init() override; // Initialize all hardware
-    virtual void enable() override; // Enable interrupts from Input HW
-    virtual void disable() override; // Disable interrupts from Input HW
-    virtual void process_input() override; // Called on interrupt from Input HW
-    virtual void process_cmd(uint32_t) override; // Called to process external command
-    virtual void process_autorepeat() override; // Called at autorepeat intervals
-    virtual void passivate() override; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
-};
-
-class FGInput : public PinAttachedInputProxy {
-public:
-    FGInput(const char* tag, size_t stack_size=hw_input_default_stack_size);
-
-    virtual void init() override; // Initialize all hardware
-//    virtual void enable() override; // Enable interrupts from Input HW
-//    virtual void disable() override; // Disable interrupts from Input HW
-    virtual void process_input() override; // Called on interrupt from Input HW
-    virtual void process_cmd(uint32_t) override; // Called to process external command
-    virtual void process_autorepeat() override; // Called at autorepeat intervals
-    virtual void passivate() override; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
-};

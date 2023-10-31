@@ -2,11 +2,13 @@
 
 #include "activity.h"
 #include "input_hw.h"
+#include "input_hw_touch.h"
+#include "input_hw_fg.h"
 
 static constexpr int MAX_ACTIVITIES = 4;
 
-static TouchInput touch_input("Input-Touch");
-static FGInput fg_input("Input-FG");
+static TouchInput touch_input;
+static FGInput fg_input;
 
 static Activity* all_activities[MAX_ACTIVITIES];
 

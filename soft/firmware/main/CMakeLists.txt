@@ -13,6 +13,8 @@ set(srcs
     web_vars.cpp
     web_ajax_bodies.cpp
     activity.cpp
+    input_hw_touch.cpp
+    input_hw_fg.cpp
     main.cpp
 )
 
