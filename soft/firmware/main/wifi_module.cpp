@@ -1,14 +1,7 @@
+#include "common.h"
 #include "wifi_module.h"
 #include "setup_data.h"
 #include "hadrware.h"
-
-#include <string.h>
-
-#include <nvs_flash.h>
-#include <esp_netif.h>
-#include <esp_wifi.h>
-#include <lwip/inet.h>
-#include <esp_log.h>
 
 static const char* TAG = "wifi";
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "web_gadgets.h"
 
 struct WebOptions {

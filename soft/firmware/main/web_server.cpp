@@ -1,12 +1,4 @@
-#include "esp_http_server.h"
-#include "esp_spiffs.h"
-#include "mdns.h"
-#include "lwip/apps/netbiosns.h"
-#include "protocol_examples_utils.h"
-#include "esp_task_wdt.h"
-#include "esp_log.h"
-
-#include <assert.h>
+#include "common.h"
 
 #include "hadrware.h"
 #include "setup_data.h"

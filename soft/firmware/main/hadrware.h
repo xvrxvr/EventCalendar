@@ -1,8 +1,5 @@
 #pragma once
 
-#include <inttypes.h>
-#include <algorithm>
-
 #include "R503.h"
 
 class LCD {

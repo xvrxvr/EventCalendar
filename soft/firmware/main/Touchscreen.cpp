@@ -1,5 +1,4 @@
-#include <limits>
-#include <stdio.h>
+#include "common.h"
 
 #include "hadrware.h"
 #include "setup_data.h"
@@ -37,6 +36,15 @@ struct Vec5 {
 
 constexpr int32_t touch_scale = std::numeric_limits<int32_t>::max();
 
+static constexpr int cross_long = 10; // +/- 10 pixels
+static constexpr int cross_short = 1; // +/- 1 pixels
+
+static void cross(uint16_t x, uint16_t y, uint16_t color)
+{
+    lcd.WRect(x - cross_long,  y - cross_short, cross_long *2+1, cross_short*2+1, color);
+    lcd.WRect(x - cross_short, y - cross_long,  cross_short*2+1, cross_long *2+1, color);
+}
+
 void TouchSetup::calibrate()
 {
   Vec5 raw_x, raw_y;
@@ -51,8 +59,8 @@ void TouchSetup::calibrate()
   
   for(int i = 0; i < 5; i++)
   {
-    if(i > 0) lcd.WRect(xd[i - 1] - 1, yd[i - 1] - 1, 3, 3, 0);
-    lcd.WRect(xd[i] - 1, yd[i] - 1, 3, 3, -1);
+    if(i > 0) cross(xd[i - 1], yd[i - 1], 0);
+    cross(xd[i], yd[i], -1);
     
     TouchConfig touch;
     touch.wait_press();

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string.h>
-
 // This module contains various setup data thet holds in EEPROM and RTC RAM
 
 static constexpr int max_users = 32;

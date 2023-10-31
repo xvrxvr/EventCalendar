@@ -1,27 +1,5 @@
+#include "common.h"
 #include "hadrware.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <utility>
-
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <esp_system.h>
-#include <driver/gpio.h>
-#include <driver/spi_master.h>
-
-#include <esp_adc/adc_oneshot.h>
-#include <esp_adc/adc_cali.h>
-#include <esp_adc/adc_cali_scheme.h>
-
-#include <driver/i2c.h>
-#include <driver/ledc.h>
-#include <driver/uart.h>
-
-#include <soc/spi_struct.h>
-#include <soc/gpio_struct.h>
-#include <hal/spi_ll.h>
 
 #include "ILI9327_SHIELD.h"
 #include "pins.h"
@@ -55,7 +33,7 @@ struct LCDAccess {
 
 int LCDAccess::lock_count;
 
-#define delay(v) vTaskDelay((v)/portTICK_PERIOD_MS ? (v)/portTICK_PERIOD_MS : 1)
+#define delay(v) vTaskDelay(ms2ticks(v))
 
 static void sol_task(void*);
 
@@ -695,6 +673,9 @@ void hw_init()
     gpio_set_level(PIN_NUM_LCD_WR, 1);
     gpio_set_level(PIN_NUM_LCD_BL, 1);
 
+    gpio_set_intr_type(PIN_NUM_FP_WAKEUP, GPIO_INTR_NEGEDGE);
+    gpio_set_intr_type(PIN_NUM_LCD_RS, GPIO_INTR_ANYEDGE); // This is Touch sence pin
+
     spi_bus_config_t buscfg={
         .mosi_io_num=PIN_NUM_MOSI,
         .miso_io_num=-1,
@@ -921,7 +902,8 @@ bool TouchConfig::touched()
 //            y = touch_config(TT_Y);
 //            if (y < min_y) y = mid_y - touch_config(TT_YInv);
             y = touch_config(TT_YInv); // Inverted part has higher minimum value (about threshold - 240-250). Not-inverted has minimum of 78
-            return true;
+            if (!touch_config(TT_Sence)) return true;
+            ts = 0;
         }
     }
     printf("TouchConfig: Can't get Touch status for 100 samples!\n");

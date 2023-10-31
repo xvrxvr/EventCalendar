@@ -1,4 +1,4 @@
-#include <esp_log.h>
+#include "common.h"
 
 #include "web_vars.h"
 #include "setup_data.h"
@@ -20,7 +20,7 @@ void  WebOptions::err_type_wrong(const char* var)
 
 void WebOptions::CurrentUser(Ans &ans)         // Name of currently logged on user
 {
-    ans.write_string_dos((char*)current_user_name);
+    ans << DOS << (char*)current_user_name;
 }
 
 void WebOptions::MainStatus(Ans &ans)          // HTML block with current status of system
@@ -75,7 +75,7 @@ void  WebOptions::HTMLOptionsUserList(Ans &ans) // HTML block with list of Users
 }
 
 
-//  ['Антон (1)', 'Антон (2)', null, null, 'Vasya', 'Roman', null, null]
+//  ["Антон (1)", "Антон (2)", null, null, "Vasya", "Roman", null, null]
 void  WebOptions::LoadedGiftDoors(Ans &ans)     // JSON list of titles on Doors
 {
 

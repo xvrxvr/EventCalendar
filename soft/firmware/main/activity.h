@@ -1,12 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <assert.h>
-
-#include <freertos/FreeRTOS.h>
-#include <freertos/timers.h>
-#include <freertos/semphr.h>
-
 #include "hadrware.h"
 
 enum ActionType {
@@ -84,15 +77,14 @@ class Activity {
     uint32_t custom_fg_color = 0; // Custom color for AT_Fingerprint2 Action
     const char* web_ping_tag = NULL;
     int web_ping_counter = 0; // Incremented on each 'ping' send to WEB, reset on each 'ping' echo from web. If this counter reached threshold limit - WEB timeout fired
+    bool update_scene_req = true; // Set to true to update Scene before waiting for Action
 
     uint32_t setup_alarm_time;
-    uint32_t setup_watchdog_time;
+    uint32_t setup_watchdog_time = 0;
 
     TimerHandle_t alarm_timer = NULL;
-    TimerHandle_t watchdog_timer = NULL;
     QueueHandle_t actions_queue = NULL;
 
-    void reset_watchdog() {if (watchdog_timer) xTimerReset(watchdog_timer, portMAX_DELAY);}
     void check()
     {
         assert(status_checked);
@@ -125,14 +117,17 @@ public:
 
     // Required Activity setup. Appropriate members must be called BEFORE call to get_action()
     // Multiple calls to these methods possible - later call will override setup from former.
-    Activity& setup_alarm_action(uint32_t time_to_hit);
-    Activity& setup_watchdog(uint32_t timeout);
+    Activity& setup_alarm_action(time_t time_to_hit); // time_to_hit is UTC timestamp
+    Activity& setup_watchdog(uint32_t timeout) {setup_watchdog_time = timeout; return *this;}
     Activity& setup_web_ping_type(const char* tag) {web_ping_tag = tag; return *this;}
     Activity& set_special_color_feedback_code(uint32_t color) {custom_fg_color = color; return *this;}
 
     // You SHOULD call this method if AF_CanFail was specified in Activity::Activity(). Otherwise get_action will fail with abort()
     // Method returns true if this Activity successfully lock all required Actions.
     bool is_ok() {status_checked = true; return status_ok;}
+
+    // Request to update current Scene
+    void update() {update_scene_req = true;}
 
     Action get_action(); //Return input action. Blocks until action will be available.
 
@@ -142,7 +137,10 @@ public:
 
     // These callbacks will be called on Override (by other Action)
     virtual void on_suspend() {}
-    virtual void on_resume(LCD&); // You should restore LCD screen in this callback
+    virtual void on_resume() {} // You should restore LCD screen in this callback
+
+    // Scene updater
+    virtual void update_scene(LCD&) = 0;
 
     // Initialize all Activity system, starts background tasks which handles Touch/LCD and FG
     // After this call all access to LCD/Touch/FG only through LCDAccess/FPAccess

@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include "hadrware.h"
 #include "setup_data.h"
 #include "wifi_module.h"

@@ -1,4 +1,4 @@
-#include <string.h>
+#include "common.h"
 
 #include "activity.h"
 #include "input_hw.h"
@@ -61,7 +61,6 @@ void Activity::lock_out()
     suspended = true;
     push_spc_code(IA_Suspend);
     if (alarm_timer) xTimerStop(alarm_timer, portMAX_DELAY);
-    if (watchdog_timer) xTimerStop(watchdog_timer, portMAX_DELAY);
 }
 
 void Activity::unlock_out()
@@ -70,7 +69,6 @@ void Activity::unlock_out()
     suspended = false;
     push_spc_code(IA_Resume);
     if (alarm_timer) setup_alarm_action(setup_alarm_time);
-    if (watchdog_timer) setup_watchdog(setup_watchdog_time);
 }
 
 Activity::~Activity() 
@@ -95,13 +93,10 @@ Activity::~Activity()
         }
     }
     if (alarm_timer) xTimerDelete(alarm_timer, portMAX_DELAY);
-    if (watchdog_timer) xTimerDelete(watchdog_timer, portMAX_DELAY);
     vQueueDelete(actions_queue);
 }
 
-TickType_t hit_to_ticks(uint32_t);
-
-Activity& Activity::setup_alarm_action(uint32_t time_to_hit)
+Activity& Activity::setup_alarm_action(time_t time_to_hit)
 {
     check();
     setup_alarm_time = time_to_hit;
@@ -114,24 +109,6 @@ Activity& Activity::setup_alarm_action(uint32_t time_to_hit)
     else
     {
         xTimerChangePeriod(alarm_timer, hit_to_ticks(time_to_hit), portMAX_DELAY);
-    }
-    return *this;
-}
-
-Activity& Activity::setup_watchdog(uint32_t timeout)
-{
-    check();
-    setup_watchdog_time = timeout;
-    auto tout = setup_watchdog_time * 1000 / portTICK_PERIOD_MS;
-    if (!(actions & AT_WatchDog)) return *this;
-    if (!watchdog_timer)
-    {
-        watchdog_timer = xTimerCreate("Activity-Watchdog", tout, 0, this, &Activity::watchdog_proxy);
-        xTimerStart(watchdog_timer, portMAX_DELAY);    
-    }
-    else
-    {
-        xTimerReset(watchdog_timer, portMAX_DELAY);   
     }
     return *this;
 }
@@ -158,13 +135,21 @@ Action Activity::get_action() //Return input action. Blocks until action will be
         }
         if (actions & AT_TouchBit) fg_input.cmd(actions & (AT_TouchBit|AT_TouchDown|AT_TouchUp|AT_TouchTrack));
 
-        xQueueReceive(actions_queue, &result, portMAX_DELAY);
+        if (update_scene_req)
+        {
+            update_scene_req = false;
+            update_scene(LCDAccess(this).access());
+        }
+        if (!xQueueReceive(actions_queue, &result, setup_watchdog_time && !suspended ? ms2ticks(setup_watchdog_time) : portMAX_DELAY))
+        {
+            result = Action{.type = AT_WatchDog};
+        }
         if (result.type == AT_Internal)
         {
             switch(result.internal.code)
             {
                 case IA_Suspend: on_suspend(); break;
-                case IA_Resume: on_resume(LCDAccess(this).access()); break;
+                case IA_Resume:  update_scene_req = true; on_resume(); break;
                 case IA_Borrow: on_action_borrow(ActionType(result.internal.p1)); break;
                 case IA_Return: on_action_return(ActionType(result.internal.p1)); break;
             }
@@ -220,7 +205,7 @@ static void web_ping_task(void*)
     for(;;)
     {
         Activity::send_web_ping();
-        vTaskDelay(SC_WEBPing_Time / portTICK_PERIOD_MS);
+        vTaskDelay(s2ticks(SC_WEBPing_Time));
     }
 }
 

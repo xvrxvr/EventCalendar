@@ -2,6 +2,61 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <assert.h>
+#include <inttypes.h>
+
+#include "estring.h"
+
+#include <limits>
+#include <utility>
+#include <algorithm>
+#include <memory>
+#include <optional>
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/timers.h>
+#include <freertos/semphr.h>
+
+#include <esp_system.h>
+#include <esp_log.h>
+#include <esp_http_server.h>
+#include <esp_spiffs.h>
+#include <mdns.h>
+#include <esp_task_wdt.h>
+#include <nvs_flash.h>
+#include <esp_netif.h>
+#include <esp_wifi.h>
+
+#include "protocol_examples_utils.h"
+
+#include <driver/gpio.h>
+#include <driver/spi_master.h>
+#include <driver/i2c.h>
+#include <driver/ledc.h>
+#include <driver/uart.h>
+
+#include <lwip/apps/netbiosns.h>
+#include <lwip/inet.h>
+
+#include <esp_adc/adc_oneshot.h>
+#include <esp_adc/adc_cali.h>
+#include <esp_adc/adc_cali_scheme.h>
+
+#include <soc/spi_struct.h>
+#include <soc/gpio_struct.h>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvolatile"
+#include <hal/spi_ll.h>
+#pragma GCC diagnostic pop
+
+
+
 
 // Priorities of various tasks
 enum TasksPriority {
@@ -17,12 +72,13 @@ enum TaskStackSize {
 // Generic consts
 enum SetupConsts {
     SC_WEBPing_Pings = 2,   // Number of missing Pings to hit threshold
-    SC_WEBPing_Time  = 500  // Time (in MS) between WEB Pings
+    SC_WEBPing_Time  = 500,  // Time (in MS) between WEB Pings
+    SC_HW_INPUT_AUTO_OFF = 1000 // Time (in MS) to automatically passivating HW Input
 };
 
-#define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue
+#define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 5
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
-#define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red
+#define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 5
 
 void utf8_to_dos(char*);
 
@@ -31,3 +87,12 @@ struct U {
 };
 
 U dos_to_utf8(char sym);
+
+inline TickType_t s2ticks(uint32_t time) {return time * 1000 / portTICK_PERIOD_MS;}
+inline TickType_t ms2ticks(uint32_t time) {return time && time < portTICK_PERIOD_MS ? 1 : time / portTICK_PERIOD_MS;}
+
+// Convert timestamp to ticks
+inline TickType_t hit_to_ticks(time_t tm) 
+{
+    return s2ticks(tm - time(NULL));
+}

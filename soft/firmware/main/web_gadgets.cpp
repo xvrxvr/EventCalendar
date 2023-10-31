@@ -1,9 +1,5 @@
-#include <ctype.h>
 #include "common.h"
-#include "estring.h"
 #include "protocol_examples_utils.h"
-
-#include <esp_log.h>
 
 #include "web_gadgets.h"
 #include "web_files_access.h"

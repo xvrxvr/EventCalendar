@@ -1,13 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <algorithm>
-#include <optional>
-
-#include <string.h>
-
-#include <esp_http_server.h>
-
 struct CDNDef {
     const char* start = nullptr;
     const char* end = nullptr;
@@ -15,6 +7,11 @@ struct CDNDef {
     size_t size() const {return end-start;}
 };
 
+class AnsDOS;
+class AnsUTF;
+
+enum SelectorDOS {DOS};
+enum SelectorUTF8 {UTF8}; 
 class Ans {
     static constexpr size_t VarNameSize = 64;
     std::unique_ptr<char> buffer; // Chunk of data to send to httpd client. Allocated on heap, because it quite large to be allocated on stack
@@ -82,6 +79,11 @@ public:
     void set_hdr(const char* tag, const char* value);
     void redirect(const char* path);
 
+// Stream output
+    AnsDOS operator <<(SelectorDOS);
+    AnsUTF operator <<(SelectorUTF8);
+    Ans& operator <<(uint32_t val) { write_int(val); return *this;}
+
 // Members for AJAX handlers
     using ArgI = uint32_t;
     using ArgOI = std::optional<uint32_t>;
@@ -94,6 +96,36 @@ public:
     using ArgU = uint32_t;
     using ArgOV = bool;
 };
+
+class AnsDOS {
+    Ans* owner;
+public:
+    AnsDOS(Ans* owner) : owner(owner) {}
+
+
+    AnsDOS& operator <<(SelectorDOS) {return *this;}
+    AnsUTF operator <<(SelectorUTF8);
+
+    AnsDOS& operator <<(uint32_t val) { owner->write_int(val); return *this;}
+    AnsDOS& operator <<(const char* str) {if (str) owner->write_string_dos(str); return *this;}
+    AnsDOS& operator <<(uint8_t* str) {if (str && *str != 0xFF)  owner->write_string_dos((const char*)str); return *this;}
+};
+
+class AnsUTF {
+    Ans* owner;
+public:
+    AnsUTF(Ans* owner) : owner(owner) {}
+
+    AnsDOS operator <<(SelectorDOS) {return AnsDOS(owner);}
+    AnsUTF& operator <<(SelectorUTF8)  {return *this;}
+    AnsUTF& operator <<(uint32_t val) { owner->write_int(val); return *this;}
+    AnsUTF& operator <<(const char* str) {if (str) owner->write_string_utf8(str); return *this;}
+    AnsUTF& operator <<(uint8_t* str) {if (str) owner->write_string_utf8((const char*)str); return *this;}
+};
+
+inline AnsDOS Ans::operator <<(SelectorDOS) {return AnsDOS(this);}
+inline AnsUTF Ans::operator <<(SelectorUTF8) {return AnsUTF(this);}
+inline AnsUTF AnsDOS::operator <<(SelectorUTF8) {return AnsUTF(owner);}
 
 // GET request
 class AnsGet : public Ans {

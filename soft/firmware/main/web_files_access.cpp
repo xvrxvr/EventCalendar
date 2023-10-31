@@ -1,6 +1,6 @@
+#include "common.h"
+
 #include "web_files_access.h"
-#include <string.h>
-#include <stdint.h>
 
 CDNDef decode_web_files_access_function(const char* key)
 {

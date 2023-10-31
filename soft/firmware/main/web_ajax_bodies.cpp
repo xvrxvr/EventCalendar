@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include "web_ajax_classes.h"
 
 

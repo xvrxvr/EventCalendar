@@ -1,16 +1,11 @@
 #pragma once
 
-#include <stdint.h>
-
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/semphr.h>
-
-#include "common.h"
-
+static constexpr int hw_input_default_stack_size = 1024;
 class InputProxy {
     const char* tag;
     size_t stack_size;
+    bool passivate_pending = false;
+    uint32_t autorepeat = 0;
 
     TaskHandle_t worker = NULL;
     SemaphoreHandle_t outer_lock = NULL;
@@ -27,7 +22,11 @@ class InputProxy {
     void pass_cmds()
     {
         uint32_t cmd;
-        while(xQueueReceive(data_queue, &cmd, 0)) process_cmd(cmd);
+        while(xQueueReceive(data_queue, &cmd, 0))
+        {
+            passivate_pending = false;
+            process_cmd(cmd);
+        }
     }
 
     void run()
@@ -39,9 +38,16 @@ class InputProxy {
         for(;;)
         {
             pass_cmds();
-            xTaskNotifyWait(0, -1, &notify_val, portMAX_DELAY);
+            TickType_t wait_time = autorepeat ? autorepeat : passivate_pending ? ms2ticks(SC_HW_INPUT_AUTO_OFF) : portMAX_DELAY;
+            auto result = xTaskNotifyWait(0, -1, &notify_val, wait_time);
             pass_cmds();
-            if (notify_val & B_WakeUp) process_input();
+            if (!result)
+            {
+                if (autorepeat) process_autorepeat(); else
+                if (passivate_pending) {passivate_pending = false; passivate();}
+                continue;
+            }
+            if (notify_val & B_WakeUp) {passivate_pending = true; process_input();}
             if (notify_val & B_AqReq) // Lock processing
             {
                 disable();
@@ -59,7 +65,7 @@ class InputProxy {
     }
 
 public:
-    InputProxy(const char* tag, size_t stack_size=1024) :tag(tag), stack_size(stack_size) {}
+    InputProxy(const char* tag, size_t stack_size=hw_input_default_stack_size) :tag(tag), stack_size(stack_size) {}
 
     void start() // Start input task
     {
@@ -90,37 +96,80 @@ public:
         xTaskNotify(worker, B_DataAvail, eSetBits);
     }
 
-    [[gnu::always_inline]] void wakeup() 
+    void set_autorepeat(uint32_t rep_interval_in_ticks=0) {autorepeat = rep_interval_in_ticks;}
+
+    // Wakeup (and call process_input() ) from ISR
+    [[gnu::always_inline]] void wakeup_from_isr() 
     {
         BaseType_t prio = 0;
         xTaskNotifyFromISR(worker, B_WakeUp, eSetBits, &prio);
     }
 
+protected:
+    // Callbacks. Intended to call from child only
     virtual void init() = 0; // Initialize all hardware
     virtual void enable() = 0; // Enable interrupts from Input HW
     virtual void disable() = 0; // Disable interrupts from Input HW
     virtual void process_input() = 0; // Called on interrupt from Input HW
     virtual void process_cmd(uint32_t) = 0; // Called to process external command
+    virtual void process_autorepeat() = 0; // Called at autorepeat intervals
+    virtual void passivate() = 0; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
 };
 
-class TouchInput : public InputProxy {
+// HW input proxy for HW attached to GPIO pin
+// Interrupt handler installed automatically and call wakeup_from_isr() and disable interrupt (it should be reenabled in process_input() or some other callback)
+class PinAttachedInputProxy : public InputProxy {
+    static void IRAM_ATTR isr_handler(void* arg)
+    {
+        PinAttachedInputProxy* self = (PinAttachedInputProxy*)arg;
+        self->wakeup_from_isr();
+        gpio_intr_disable(self->gpio_pin_num);
+    }
+
+protected:
+    gpio_num_t gpio_pin_num;
 public:
-    using InputProxy::InputProxy;
+    PinAttachedInputProxy(gpio_num_t gpio_pin_num, const char* tag, size_t stack_size=hw_input_default_stack_size) : InputProxy(tag, stack_size), gpio_pin_num(gpio_pin_num) {}
+
+    void ei() {gpio_intr_enable(gpio_pin_num);}
+    void di() {gpio_intr_disable(gpio_pin_num);}
+
+protected:
+    virtual void init() override // Initialize all hardware
+    {
+        gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+        gpio_isr_handler_add(gpio_pin_num, &isr_handler, this);
+        ei();
+    }
+
+    virtual void enable() override {ei();} // Enable interrupts from Input HW
+    virtual void disable() override {di();} // Disable interrupts from Input HW
+    virtual void passivate() override {di();} // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
+};
+
+
+class TouchInput : public PinAttachedInputProxy {
+public:
+    TouchInput(const char* tag, size_t stack_size=hw_input_default_stack_size);
 
     virtual void init() override; // Initialize all hardware
     virtual void enable() override; // Enable interrupts from Input HW
     virtual void disable() override; // Disable interrupts from Input HW
     virtual void process_input() override; // Called on interrupt from Input HW
     virtual void process_cmd(uint32_t) override; // Called to process external command
+    virtual void process_autorepeat() override; // Called at autorepeat intervals
+    virtual void passivate() override; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
 };
 
-class FGInput : public InputProxy {
+class FGInput : public PinAttachedInputProxy {
 public:
-    using InputProxy::InputProxy;
+    FGInput(const char* tag, size_t stack_size=hw_input_default_stack_size);
 
     virtual void init() override; // Initialize all hardware
-    virtual void enable() override; // Enable interrupts from Input HW
-    virtual void disable() override; // Disable interrupts from Input HW
+//    virtual void enable() override; // Enable interrupts from Input HW
+//    virtual void disable() override; // Disable interrupts from Input HW
     virtual void process_input() override; // Called on interrupt from Input HW
     virtual void process_cmd(uint32_t) override; // Called to process external command
+    virtual void process_autorepeat() override; // Called at autorepeat intervals
+    virtual void passivate() override; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
 };

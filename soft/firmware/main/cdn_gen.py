@@ -171,7 +171,7 @@ if args.action == 'dirscan':
     generate_dir(args.output, args.source)
 elif args.action == 'webswitch':
     with open(args.output+".cpp", "w") as f:
-        print(f'#include <string.h>\n#include "{args.source}"\n', file=f)
+        print(f'#include "common.h"\n#include "{args.source}"\n', file=f)
         load_vars_file(args.source, f)
 else:
     assert False, f"Unknown command {args.action}"
