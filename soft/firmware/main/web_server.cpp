@@ -43,6 +43,7 @@ static esp_err_t start_http_data_server()
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.ctrl_port++;
+    config.max_uri_handlers = 32;
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different

@@ -3,6 +3,7 @@
 
 #include "ILI9327_SHIELD.h"
 #include "pins.h"
+#include "activity.h"
 
 #define MY_SPI_HOST    HSPI_HOST
 
@@ -49,12 +50,17 @@ inline void LCD::write_lcd(uint8_t d)
 }
 
 #define LCD_HW SPI2
+
+inline void wait4lcd_done() {while(!LCD_HW.slave.trans_done) {;}}
+inline void wait4lcd_vacant() {wait4lcd_done(); while (LCD_HW.cmd.val) {;}}
+
+
 inline void write_lcd_fast(uint8_t data)
 {
     LCD_HW.slave.trans_done = 0;
     LCD_HW.data_buf[0] = data;
     LCD_HW.cmd.usr = 1;
-    while(!LCD_HW.slave.trans_done) {;}
+    wait4lcd_done();
 
     GPIO.out_w1tc = 1 << PIN_NUM_LCD_WR;
     GPIO.out_w1ts = 1 << PIN_NUM_LCD_WR;
@@ -253,6 +259,7 @@ void LCD::DRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
         _WriteData(col2); 
         _WriteData(col1); 
     }
+    wait4lcd_vacant();
 }
 
 #define RNG(var, limit) if (var < 0) var = 0; else if (var >= limit) var = limit-1
@@ -608,6 +615,7 @@ void LCD::text(const char* text, int16_t x, int16_t y)
             } while (--cnt);
         }
     }
+    wait4lcd_vacant();
 }
 
 void LCD::text2(const char* text, int16_t x, int16_t y)
@@ -635,6 +643,7 @@ void LCD::text2(const char* text, int16_t x, int16_t y)
             } while (--cnt);
         }
     }
+    wait4lcd_vacant();
 }
 
 #undef _B
@@ -843,6 +852,7 @@ int touch_config(TouchType tt)
     int read_adc = -1;
     int setup = tts_setup[tt];
 #define V(name) ((setup & TTS_##name) != 0)
+    wait4lcd_vacant();
     lcd.write_lcd(setup & 0xC0); // DB6 & DB7
     gpio_set_level(PIN_NUM_LCD_SW1, V(SW1));
     gpio_set_level(PIN_NUM_LCD_SW2, V(SW2));
@@ -850,7 +860,18 @@ int touch_config(TouchType tt)
     if (setup & TTS_WR_ADC) {gpio_set_direction(PIN_NUM_LCD_WR, GPIO_MODE_DISABLE); read_adc = ADC_Y_PLUS;}
     else {gpio_set_level(PIN_NUM_LCD_WR, V(WR)); gpio_set_direction(PIN_NUM_LCD_WR, GPIO_MODE_OUTPUT);}
 
-    if (setup & TTS_RS_SNS) {gpio_set_direction(PIN_NUM_LCD_RS, GPIO_MODE_INPUT); gpio_set_pull_mode(PIN_NUM_LCD_RS, GPIO_PULLUP_ONLY); NOP(); NOP(); return gpio_get_level(PIN_NUM_LCD_RS);} else
+    if (setup & TTS_RS_SNS) 
+    {
+        // Precharge
+        gpio_set_direction(PIN_NUM_LCD_RS, GPIO_MODE_OUTPUT);
+        gpio_set_level(PIN_NUM_LCD_RS, 1);
+        NOP(); NOP();
+        // Sence
+        gpio_set_direction(PIN_NUM_LCD_RS, GPIO_MODE_INPUT); 
+        gpio_set_pull_mode(PIN_NUM_LCD_RS, GPIO_PULLUP_ONLY); 
+        NOP(); NOP(); 
+        return gpio_get_level(PIN_NUM_LCD_RS);
+    } else
     if (setup & TTS_RS_ADC) {gpio_set_pull_mode(PIN_NUM_LCD_RS, GPIO_FLOATING); gpio_set_direction(PIN_NUM_LCD_RS, GPIO_MODE_DISABLE); read_adc = ADC_X_MINUS;} 
     else {gpio_set_level(PIN_NUM_LCD_RS, V(RS)); gpio_set_direction(PIN_NUM_LCD_RS, GPIO_MODE_OUTPUT);}
 #undef V
@@ -875,7 +896,7 @@ int touch_config(TouchType tt)
 TouchConfig::TouchConfig() {x=y=-1; touched();}
 TouchConfig::~TouchConfig() {touch_config(TT_LCD);}
 
-bool TouchConfig::raw_touch_read()
+bool TouchConfig::raw_touch_read(int& x, int& y)
 {
     x = touch_config(TT_X);
 //  y = touch_config(TT_Y);
@@ -1210,3 +1231,6 @@ esp_lcd_panel_handle_t esp_lcd_new_panel_my()
     };
 }
 #endif
+
+LCD& Activity::LCDAccess::access() {return lcd;}
+R503& Activity::FPAccess::access() {return fp_sensor;}

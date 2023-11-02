@@ -449,7 +449,7 @@ int R503::setAuraLED(uint32_t code)
     uint8_t count = uint8_t((code >> 8) & 0xFF);
     uint8_t color = uint8_t((code >> 16) & 3);
     uint8_t ctrl =  uint8_t((code >> 18) & 7);
-    SEND_CMD(0x35, ctrl, speed, color, count);
+    return auraControl(ctrl, speed, color, count);
 }
 
 #if R503_DEBUG & 0x04

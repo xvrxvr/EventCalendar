@@ -1,6 +1,6 @@
 #pragma once
 
-static constexpr int hw_input_default_stack_size = 1024;
+static constexpr int hw_input_default_stack_size = 8*1024;
 class InputProxy {
     const char* tag;
     size_t stack_size;
@@ -39,9 +39,9 @@ class InputProxy {
         {
             pass_cmds();
             TickType_t wait_time = autorepeat ? autorepeat : passivate_pending ? ms2ticks(SC_HW_INPUT_AUTO_OFF) : portMAX_DELAY;
-            auto result = xTaskNotifyWait(0, -1, &notify_val, wait_time);
+            xTaskNotifyWait(0, -1, &notify_val, wait_time);
             pass_cmds();
-            if (!result)
+            if (!notify_val)
             {
                 if (autorepeat) process_autorepeat(); else
                 if (passivate_pending) {passivate_pending = false; passivate();}
@@ -118,6 +118,7 @@ protected:
 
 // HW input proxy for HW attached to GPIO pin
 // Interrupt handler installed automatically and call wakeup_from_isr() and disable interrupt (it should be reenabled in process_input() or some other callback)
+// Also class implements debounce and convert pin state to events
 class PinAttachedInputProxy : public InputProxy {
     static void IRAM_ATTR isr_handler(void* arg)
     {
@@ -126,8 +127,84 @@ class PinAttachedInputProxy : public InputProxy {
         gpio_intr_disable(self->gpio_pin_num);
     }
 
+    Debouncer deb;
+
 protected:
     gpio_num_t gpio_pin_num;
+
+    // Main member to process all changes in pin state
+    void pin_state_process(bool clear_debouncer = false)
+    {
+        if (clear_debouncer) deb.clear();
+
+        if (!ll_is_enabled())
+        {
+            set_autorepeat(0);
+            di();
+            return;
+        }
+
+        const int track_time = ll_tracking_time();
+        const bool was_stable = deb.stable();
+
+        deb << ll_pin_state();
+        if (!deb.stable()) // Not stable - activate autorepeat for debounce purpose
+        {
+            set_autorepeat(ll_debounce_time());
+            di();
+        }
+        else if (was_stable) // Stable state (no change) - on or off
+        {
+            if (!deb.value() || !track_time) // Off or no tracking
+            {
+                set_autorepeat();
+                ei();
+            }
+            else // Tracking
+            {
+                event_track();
+                set_autorepeat(track_time);
+                di();
+            }
+        }
+        else if (deb.value()) // turn on
+        {
+            event_press();
+            set_autorepeat(track_time); // Turn on/off repeat for Tracking
+            if (track_time) di(); else ei();
+        }
+        else // turn off
+        {
+            event_release();
+            set_autorepeat();
+            ei();
+        }
+    }
+
+    /////////// Low level interface (to be implemented in derived class) ////////////
+    
+    // Callabacks
+
+    // Is HW enabled?
+    virtual bool ll_is_enabled() = 0;
+
+    // Check pin state, returns logical state. Default implementation return pin state directly (pin logic assumed to be inverted)
+    /*virtual*/ bool ll_pin_state() {return !gpio_get_level(gpio_pin_num);}
+
+    // Enable/disable hardware. Default implementation assumed that hardware always enabled
+    virtual void ll_enable(bool enable) {}
+
+    // Get time interval between track events. Default implementation assume tracking is turned off
+    virtual int ll_tracking_time() {return 0;}
+
+    // Get debounce time
+    /*virtual*/ int ll_debounce_time() {return SC_DebounceTime;}
+
+    // Outgoing API
+    virtual void event_press() = 0; // Pin was activated
+    virtual void event_track() {}   // Tracking event
+    virtual void event_release() {} // Pin was desactivated
+
 public:
     PinAttachedInputProxy(gpio_num_t gpio_pin_num, const char* tag, size_t stack_size=hw_input_default_stack_size) : InputProxy(tag, stack_size), gpio_pin_num(gpio_pin_num) {}
 
@@ -139,10 +216,11 @@ protected:
     {
         gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
         gpio_isr_handler_add(gpio_pin_num, &isr_handler, this);
-        ei();
+        pin_state_process();
     }
 
-    virtual void enable() override {ei();} // Enable interrupts from Input HW
-    virtual void disable() override {di();} // Disable interrupts from Input HW
-    virtual void passivate() override {di();} // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
+    virtual void enable() override {ll_enable(true); pin_state_process(true);} // Enable interrupts from Input HW
+    virtual void disable() override {ll_enable(false); di();} // Disable interrupts from Input HW
+    virtual void process_input() override {pin_state_process();}
+    virtual void process_autorepeat() override {pin_state_process();}
 };

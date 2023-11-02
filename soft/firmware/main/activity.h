@@ -12,6 +12,7 @@ enum ActionType {
     AT_TouchDown       = 0x0018,
     AT_TouchUp         = 0x0028,
     AT_TouchTrack      = 0x0048,
+    AT_TouchPure       = (AT_TouchDown|AT_TouchUp|AT_TouchTrack) & ~AT_TouchBit,
     AT_WatchDog        = 0x0080,
     AT_WEBEvent        = 0x0100,
     AT_Alarm           = 0x0200,
@@ -118,7 +119,7 @@ public:
     // Required Activity setup. Appropriate members must be called BEFORE call to get_action()
     // Multiple calls to these methods possible - later call will override setup from former.
     Activity& setup_alarm_action(time_t time_to_hit); // time_to_hit is UTC timestamp
-    Activity& setup_watchdog(uint32_t timeout) {setup_watchdog_time = timeout; return *this;}
+    Activity& setup_watchdog(uint32_t timeout) {setup_watchdog_time = timeout; return *this;} // time in seconds
     Activity& setup_web_ping_type(const char* tag) {web_ping_tag = tag; return *this;}
     Activity& set_special_color_feedback_code(uint32_t color) {custom_fg_color = color; return *this;}
 
@@ -146,26 +147,25 @@ public:
     // After this call all access to LCD/Touch/FG only through LCDAccess/FPAccess
     static void start();
 
+    class LCDAccess {
+    public:
+        LCDAccess(Activity*);
+        ~LCDAccess();
+
+        LCD& access();
+    };
+
+    class FPAccess {
+    public:
+        FPAccess(Activity*);
+        ~FPAccess();
+
+        R503& access();
+    };
+
 ////////////
 // Method(s) for Activity sources
     static void push_action(const Action&); // Global entry - dispatched for particular Activity inside
     static void on_web_ping_echo(const char* tag); // Global entry - dispatched to all active WEB ping sources
     static void send_web_ping(); // Internal function - called by WEB ping thread in this module.
-};
-
-
-class LCDAccess {
-public:
-    LCDAccess(Activity*);
-    ~LCDAccess();
-
-    LCD& access();
-};
-
-class FPAccess {
-public:
-    FPAccess(Activity*);
-    ~FPAccess();
-
-    R503& access();
 };

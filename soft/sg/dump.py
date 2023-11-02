@@ -12,14 +12,14 @@ for idx, s in enumerate(all):
 
 #print(sg)
 
-for sym in sg:
+for idx, sym in enumerate(sg):
     # One symbol - 16 lines
+    print(f'---------{idx:02X}---------')
     for ln_bin in sym:
         ln = ''
         for i in range(8):
             ln += '*' if (ln_bin << i) & 0x80 else ' '
         print(ln)
-    print()
 
         
 

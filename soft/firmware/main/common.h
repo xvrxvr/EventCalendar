@@ -71,19 +71,14 @@ enum SetupConsts {
     SC_WEBPing_Pings = 2,   // Number of missing Pings to hit threshold
     SC_WEBPing_Time  = 500,  // Time (in MS) between WEB Pings
     SC_HW_INPUT_AUTO_OFF = 1000, // Time (in MS) to automatically passivating HW Input
-    SC_TouchTrackInterval = 10, // Time between Touch Track samples (in ticks)
-    SC_TouchTrackDeadZone = 10  // Minimal distance in Touch Track to report move
+    SC_TouchTrackInterval = 5, // Time between Touch Track samples (in ticks)
+    SC_TouchTrackDeadZone = 5, // Minimal distance in Touch Track to report move
+    SC_DebounceTime = 2     // Debounce time (in ticks)
 };
 
-// Debouncers (in ticks)
-enum DebounceSetup {
-    DS_Touch = 10,
-    DS_FG = 10
-};
-
-#define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 5
+#define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
-#define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 5
+#define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 1
 
 void utf8_to_dos(char*);
 

@@ -109,8 +109,10 @@ struct TouchConfig {
     void wait_release();
 
     static int raw_touch_config(TouchType tt);
+
     // Read Touch. Return true if Touch still pressed at end
-    bool raw_touch_read();
+    static bool raw_touch_read(int& x, int& y);
+    bool raw_touch_read() {return raw_touch_read(x, y);}
 };
 
 

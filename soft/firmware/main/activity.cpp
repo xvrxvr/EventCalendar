@@ -32,6 +32,7 @@ Activity::Activity(uint32_t /* bitset of ActionType and ActionFlags*/ actions, u
         if (a->actions & actions & (AT_Fingerprint|AT_TouchBit)) {status_ok = false; locked_out |= 1<< i;}
         if (a->can_be_borrowed_actions & can_be_borrowed_actions) {status_ok = false; actions &= ~AF_Override; break;} // This is definitely error - Override will not work
     }
+    if (!(actions & AF_CanFail)) status_checked = true;
     if (!(actions & AF_Override))
     {
         assert(status_ok || (actions & AF_CanFail));
@@ -135,14 +136,14 @@ Action Activity::get_action() //Return input action. Blocks until action will be
             }
             fg_input.cmd(col);
         }
-        if (actions & AT_TouchBit) fg_input.cmd(actions & (AT_TouchBit|AT_TouchDown|AT_TouchUp|AT_TouchTrack));
+        if (actions & AT_TouchBit) touch_input.cmd(actions & (AT_TouchBit|AT_TouchDown|AT_TouchUp|AT_TouchTrack));
 
         if (update_scene_req)
         {
             update_scene_req = false;
             update_scene(LCDAccess(this).access());
         }
-        if (!xQueueReceive(actions_queue, &result, setup_watchdog_time && !suspended ? ms2ticks(setup_watchdog_time) : portMAX_DELAY))
+        if (!xQueueReceive(actions_queue, &result, setup_watchdog_time && !suspended ? s2ticks(setup_watchdog_time) : portMAX_DELAY))
         {
             result = Action{.type = AT_WatchDog};
         }
@@ -157,8 +158,8 @@ Action Activity::get_action() //Return input action. Blocks until action will be
             }
             continue;
         }
-    }
-    return result;
+        return result;
+    }    
 }
 
 void Activity::push_action(const Action& action)
@@ -219,24 +220,24 @@ void Activity::start()
     xTaskCreate(web_ping_task, "WEB-Ping", TSS_WEBPing, NULL, TP_WEBPing, NULL);
 }
 
-LCDAccess::LCDAccess(Activity* a)
+Activity::LCDAccess::LCDAccess(Activity* a)
 {
     assert(a || !touch_input.is_started());
     touch_input.suspend();
 }
 
-LCDAccess::~LCDAccess()
+Activity::LCDAccess::~LCDAccess()
 {
     touch_input.resume();
 }
 
-FPAccess::FPAccess(Activity* a)
+Activity::FPAccess::FPAccess(Activity* a)
 {
     assert(a || !fg_input.is_started());
     fg_input.suspend();
 }
 
-FPAccess::~FPAccess()
+Activity::FPAccess::~FPAccess()
 {
     fg_input.resume();
 }

@@ -5,33 +5,8 @@
 
 const char* TAG = "FGInput";
 
-void FGInput::enable()
+void FGInput::event_press()
 {
-    if (prev_color != -1) ei();
-}
-
-bool FGInput::upd_finger_detector()
-{
-    db << !gpio_get_level(PIN_NUM_FP_WAKEUP);
-    if (db.stable()) {set_autorepeat(); return true;}
-    set_autorepeat(DS_FG);
-    return false;
-}
-
-void FGInput::restart()
-{
-    db.clear();
-    set_autorepeat(DS_FG);
-    prev_pressed = false;
-}
-
-void FGInput::check_press()
-{
-    if (!upd_finger_detector()) return;
-    if (db.value() == prev_pressed) return;
-    prev_pressed = !prev_pressed;
-    if (!prev_pressed) return;
-
     int ret = fp_sensor.takeImage();
     if (ret != R503_SUCCESS) 
     {
@@ -71,12 +46,12 @@ void FGInput::process_cmd(uint32_t color)
     if (prev_color == color) return;
     prev_color = color;
     fp_sensor.setAuraLED(color);
-    ei();
+    pin_state_process(true);
 }
 
 void FGInput::passivate()
 {
     fp_sensor.setAuraLED(auraOff);
     prev_color = -1;
-    di();
+    pin_state_process(true);
 }

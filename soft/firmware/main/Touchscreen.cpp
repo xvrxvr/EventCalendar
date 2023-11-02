@@ -34,12 +34,13 @@ struct Vec5 {
     }
 };
 
-constexpr int32_t touch_scale = std::numeric_limits<int32_t>::max();
 
-static constexpr int cross_long = 10; // +/- 10 pixels
+constexpr double touch_scale = double(std::numeric_limits<int32_t>::max())+1;
+
+static constexpr int cross_long = 45; // +/- 10 pixels
 static constexpr int cross_short = 1; // +/- 1 pixels
 
-static void cross(uint16_t x, uint16_t y, uint16_t color)
+void cross(uint16_t x, uint16_t y, uint16_t color)
 {
     lcd.WRect(x - cross_long,  y - cross_short, cross_long *2+1, cross_short*2+1, color);
     lcd.WRect(x - cross_short, y - cross_long,  cross_short*2+1, cross_long *2+1, color);
@@ -95,20 +96,20 @@ void TouchSetup::calibrate()
   
   A = int32_t((double)dx1 / (double)dt * touch_scale + 0.5);
   B = int32_t((double)dx2 / (double)dt * touch_scale + 0.5);
-  C = int32_t((double)dx3 / (double)dt * touch_scale + 0.5);
+  C = int32_t((double)dx3 / (double)dt + 0.5);
   D = int32_t((double)dy1 / (double)dt * touch_scale + 0.5);
   E = int32_t((double)dy2 / (double)dt * touch_scale + 0.5);
-  F = int32_t((double)dy3 / (double)dt * touch_scale + 0.5);
+  F = int32_t((double)dy3 / (double)dt + 0.5);
   
   sync();
 }
 
 int32_t TouchSetup::x(int32_t x, int32_t y)
 {
-  return int32_t(int64_t(A) * x + int64_t(B) * y + C);
+  return int32_t((int64_t(A) * x + int64_t(B) * y) >> 31) + C;
 }
 
 int32_t TouchSetup::y(int32_t x, int32_t y)
 {
-  return int32_t(int64_t(D) * x + int64_t(E) * y + F);
+  return int32_t((int64_t(D) * x + int64_t(E) * y) >> 31) + F;
 }

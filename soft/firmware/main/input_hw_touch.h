@@ -1,29 +1,31 @@
 #pragma once
 #include "input_hw.h"
 #include "pins.h"
+#include "setup_data.h"
+#include "activity.h"
 
 class TouchInput : public PinAttachedInputProxy {
-    Debouncer db;
-    bool prev_pressed = false;
     int last_x=0, last_y=0;
     uint32_t touch_cmd = 0;
-    bool in_db = false; // Do we in Debouncer process (or in Move Track)
 
     bool touch_read(); // Read Touch to last_x & last_y. Returns false if Touch was lost during read (Debouncer and other will be updated)
+    void push_action(ActionType); // Send action to Activity manager
+    void new_touch_cmd(int cmd) {if (touch_cmd != cmd) {touch_cmd = cmd; pin_state_process(true);}}
 
-    void process_press();
-    void process_release();
-    void process_autorep();
+    // Callbacks to parent
+    virtual bool ll_is_enabled() override {return touch_cmd != 0;}
+    virtual void ll_enable(bool enable) override {TouchConfig::raw_touch_config(enable ? TT_Sence : TT_LCD);}
+    virtual int ll_tracking_time() override {return (touch_cmd & AT_TouchTrack) ? SC_TouchTrackInterval : 0;}
 
-    void process_input_signal(bool is_autorepeat);
+    // Actions from parent
+    virtual void event_press() override {if (touch_read()) push_action(AT_TouchDown);}
+    virtual void event_track() override;
+    virtual void event_release() override {push_action(AT_TouchUp);}
+
 public:
     TouchInput(size_t stack_size=hw_input_default_stack_size) : PinAttachedInputProxy(PIN_NUM_LCD_RS, "Touch", stack_size) {}
 
-//    virtual void init() override; // Initialize all hardware
-    virtual void enable() override; // Enable interrupts from Input HW
-    virtual void disable() override; // Disable interrupts from Input HW
-    virtual void process_input() override {process_input_signal(false);} // Called on interrupt from Input HW
-    virtual void process_cmd(uint32_t) override; // Called to process external command
-    virtual void process_autorepeat() override {process_input_signal(true);}; // Called at autorepeat intervals
-    virtual void passivate() override; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
+    // InputProxy outgoing API
+    virtual void process_cmd(uint32_t cmd) override {new_touch_cmd(cmd & AT_TouchPure);}
+    virtual void passivate() override {new_touch_cmd(0);}
 };
