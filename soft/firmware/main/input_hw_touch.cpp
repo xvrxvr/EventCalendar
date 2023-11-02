@@ -3,7 +3,7 @@
 
 void TouchInput::push_action(ActionType tp)
 {
-    if (touch_cmd & tp) Activity::push_action(Action{.type=tp, .touch = {.x = last_x, .y=last_y}});
+    if (touch_cmd & tp) PinAttachedInputProxy::push_action(Action{.type=tp, .touch = {.x = last_x, .y = last_y}});
 }
 
 void TouchInput::event_track()   // Tracking event
@@ -29,7 +29,7 @@ bool TouchInput::touch_read()
     int x, y;
     if (!TouchConfig::raw_touch_read(x, y)) // Lost touch during X/Y reading
     {
-        pin_state_process(true);
+        pin_state_process();
         return false;
     }
     last_x = touch_setup.x(x, y);

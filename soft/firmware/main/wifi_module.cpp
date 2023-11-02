@@ -39,8 +39,9 @@ static void event_handler_ip(void* arg, esp_event_base_t, int32_t event_id, void
             sta_connected=true; s_retry_num = 0;
             
             ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-            lcd.text("STA IP: ", 0, 60);
-            lcd.text(inet_ntoa(event->ip_info.ip.addr), 8*8, 60);
+
+//            lcd.text("STA IP: ", 0, 60);
+//            lcd.text(inet_ntoa(event->ip_info.ip.addr), 8*8, 60);
             break;
         }
     }

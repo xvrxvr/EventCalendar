@@ -4,7 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/Users/Roman/esp/esp-idf/components/**"
+                "C:/Users/Roman/esp/esp-idf/components/**",
+                "C:/Users/Roman/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/xtensa-esp32-elf/include/**",
+                "C:/Users/Roman/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/xtensa-esp32-elf/include"
             ],
             "defines": [
                 "_DEBUG",

@@ -1,54 +1,54 @@
 #pragma once
 
+#include <assert.h>
+#include <ctype.h>
+#include <inttypes.h>
 #include <stdint.h>
-#include <string.h>
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <assert.h>
-#include <inttypes.h>
+#include <string.h>
+#include <time.h>
 
 #include "estring.h"
 
-#include <limits>
-#include <utility>
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <optional>
+#include <utility>
 
 #include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include <freertos/task.h>
 #include <freertos/timers.h>
-#include <freertos/semphr.h>
 
-#include <esp_system.h>
-#include <esp_log.h>
 #include <esp_http_server.h>
-#include <esp_spiffs.h>
-#include <mdns.h>
-#include <esp_task_wdt.h>
-#include <nvs_flash.h>
+#include <esp_log.h>
 #include <esp_netif.h>
+#include <esp_spiffs.h>
+#include <esp_system.h>
+#include <esp_task_wdt.h>
 #include <esp_wifi.h>
+#include <mdns.h>
+#include <nvs_flash.h>
 
 #include "protocol_examples_utils.h"
 
 #include <driver/gpio.h>
-#include <driver/spi_master.h>
 #include <driver/i2c.h>
 #include <driver/ledc.h>
+#include <driver/spi_master.h>
 #include <driver/uart.h>
 
 #include <lwip/apps/netbiosns.h>
 #include <lwip/inet.h>
 
-#include <esp_adc/adc_oneshot.h>
-#include <esp_adc/adc_cali.h>
 #include <esp_adc/adc_cali_scheme.h>
+#include <esp_adc/adc_cali.h>
+#include <esp_adc/adc_oneshot.h>
 
-#include <soc/spi_struct.h>
 #include <soc/gpio_struct.h>
+#include <soc/spi_struct.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wvolatile"

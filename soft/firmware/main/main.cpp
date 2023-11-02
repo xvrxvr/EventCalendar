@@ -70,7 +70,7 @@ public:
 
 void test1()
 {
-    MyActivity act(AT_Fingerprint|AT_TouchDown|AT_WatchDog);
+    MyActivity act(AT_Fingerprint|AT_TouchDown|AT_TouchTrack|AT_TouchUp|AT_WatchDog);
     act.setup_watchdog(10); // 10 seconds
     for(;;)
     {

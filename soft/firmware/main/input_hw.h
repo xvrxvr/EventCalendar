@@ -1,6 +1,9 @@
 #pragma once
 
 static constexpr int hw_input_default_stack_size = 8*1024;
+
+struct Action;
+
 class InputProxy {
     const char* tag;
     size_t stack_size;
@@ -47,7 +50,7 @@ class InputProxy {
                 if (passivate_pending) {passivate_pending = false; passivate();}
                 continue;
             }
-            if (notify_val & B_WakeUp) {passivate_pending = true; process_input();}
+            if (notify_val & B_WakeUp) {process_input();}
             if (notify_val & B_AqReq) // Lock processing
             {
                 disable();
@@ -114,23 +117,46 @@ protected:
     virtual void process_cmd(uint32_t) = 0; // Called to process external command
     virtual void process_autorepeat() = 0; // Called at autorepeat intervals
     virtual void passivate() = 0; // Called when no new commands arrived in SC_HW_INPUT_AUTO_OFF interval
+
+    void push_action(const Action&); // Implementation in activity.cpp
+};
+
+// HW input proxy for HW attached to GPIO pin
+// Interrupt handler installed automatically and call wakeup_from_isr() and disable interrupt (it should be reenabled in process_input() or some other callback)
+class SimplePinAttachedInputProxy : public InputProxy {
+    static void IRAM_ATTR isr_handler(void* arg)
+    {
+        SimplePinAttachedInputProxy* self = (SimplePinAttachedInputProxy*)arg;
+        self->wakeup_from_isr();
+        gpio_intr_disable(self->gpio_pin_num);
+    }
+protected:
+    gpio_num_t gpio_pin_num;
+
+    // Check pin state, returns logical state. Default implementation return pin state directly (pin logic assumed to be inverted)
+    bool ll_pin_state() {return !gpio_get_level(gpio_pin_num);}
+
+    void ei() {gpio_intr_enable(gpio_pin_num);}
+    void di() {gpio_intr_disable(gpio_pin_num);}
+
+public:
+    SimplePinAttachedInputProxy(gpio_num_t gpio_pin_num, const char* tag, size_t stack_size=hw_input_default_stack_size) : InputProxy(tag, stack_size), gpio_pin_num(gpio_pin_num) {}
+
+protected:
+    virtual void init() override // Initialize all hardware
+    {
+        gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+        gpio_isr_handler_add(gpio_pin_num, &isr_handler, this);
+    }
 };
 
 // HW input proxy for HW attached to GPIO pin
 // Interrupt handler installed automatically and call wakeup_from_isr() and disable interrupt (it should be reenabled in process_input() or some other callback)
 // Also class implements debounce and convert pin state to events
-class PinAttachedInputProxy : public InputProxy {
-    static void IRAM_ATTR isr_handler(void* arg)
-    {
-        PinAttachedInputProxy* self = (PinAttachedInputProxy*)arg;
-        self->wakeup_from_isr();
-        gpio_intr_disable(self->gpio_pin_num);
-    }
-
+class PinAttachedInputProxy : public SimplePinAttachedInputProxy {
     Debouncer deb;
 
 protected:
-    gpio_num_t gpio_pin_num;
 
     // Main member to process all changes in pin state
     void pin_state_process(bool clear_debouncer = false)
@@ -188,9 +214,6 @@ protected:
     // Is HW enabled?
     virtual bool ll_is_enabled() = 0;
 
-    // Check pin state, returns logical state. Default implementation return pin state directly (pin logic assumed to be inverted)
-    /*virtual*/ bool ll_pin_state() {return !gpio_get_level(gpio_pin_num);}
-
     // Enable/disable hardware. Default implementation assumed that hardware always enabled
     virtual void ll_enable(bool enable) {}
 
@@ -206,20 +229,16 @@ protected:
     virtual void event_release() {} // Pin was desactivated
 
 public:
-    PinAttachedInputProxy(gpio_num_t gpio_pin_num, const char* tag, size_t stack_size=hw_input_default_stack_size) : InputProxy(tag, stack_size), gpio_pin_num(gpio_pin_num) {}
-
-    void ei() {gpio_intr_enable(gpio_pin_num);}
-    void di() {gpio_intr_disable(gpio_pin_num);}
+    PinAttachedInputProxy(gpio_num_t gpio_pin_num, const char* tag, size_t stack_size=hw_input_default_stack_size) : SimplePinAttachedInputProxy(gpio_pin_num, tag, stack_size) {}
 
 protected:
     virtual void init() override // Initialize all hardware
     {
-        gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
-        gpio_isr_handler_add(gpio_pin_num, &isr_handler, this);
+        SimplePinAttachedInputProxy::init();
         pin_state_process();
     }
 
-    virtual void enable() override {ll_enable(true); pin_state_process(true);} // Enable interrupts from Input HW
+    virtual void enable() override {ll_enable(true); pin_state_process();} // Enable interrupts from Input HW
     virtual void disable() override {ll_enable(false); di();} // Disable interrupts from Input HW
     virtual void process_input() override {pin_state_process();}
     virtual void process_autorepeat() override {pin_state_process();}

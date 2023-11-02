@@ -241,3 +241,9 @@ Activity::FPAccess::~FPAccess()
 {
     fg_input.resume();
 }
+
+void InputProxy::push_action(const Action& action)
+{
+    passivate_pending = true;
+    Activity::push_action(action);
+}
