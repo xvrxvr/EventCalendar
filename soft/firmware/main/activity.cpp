@@ -48,12 +48,18 @@ Activity::Activity(uint32_t /* bitset of ActionType and ActionFlags*/ actions, u
         for(int i=0; i<MAX_ACTIVITIES; ++i)
         {
             auto a = all_activities[i];
-            if ((locked_out >> i) & 1) a->lock_out(); else
-            if (a && (actions & a->can_be_borrowed_actions)) // borrow something
-            {
-                a->borrowed |= actions & a->can_be_borrowed_actions;
-                a->push_spc_code(IA_Borrow, actions & a->can_be_borrowed_actions);
-            }
+            if (!a) continue;
+            if ((locked_out >> i) & 1) a->lock_out();
+        }
+    }
+    for(int i=0; i<MAX_ACTIVITIES; ++i)
+    {
+        auto a = all_activities[i];
+        if (!a || a->suspended) continue;
+        if (actions & a->can_be_borrowed_actions & ~a->borrowed) // borrow something
+        {
+            a->borrowed |= actions & a->can_be_borrowed_actions;
+            a->push_spc_code(IA_Borrow, actions & a->can_be_borrowed_actions);
         }
     }
 }
@@ -86,8 +92,8 @@ Activity::~Activity()
                 auto a = all_activities[i];
                 if (!a) continue;
                 // Situation when locked out Activity was removed during lock and some new was created in that place is not handled - it's almost impossible to ocure
-                if ((locked_out >> i) & 1) a->lock_out(); else
-                if (a && (actions & a->can_be_borrowed_actions)) // borrow something
+                if ((locked_out >> i) & 1) a->unlock_out(); else
+                if (actions & a->can_be_borrowed_actions) // borrow something
                 {
                     a->borrowed &= ~(actions & a->can_be_borrowed_actions);
                     a->push_spc_code(IA_Return, actions & a->can_be_borrowed_actions);
@@ -137,7 +143,6 @@ Action Activity::get_action() //Return input action. Blocks until action will be
             fg_input.cmd(col);
         }
         if (actions & AT_TouchBit) touch_input.cmd(actions & (AT_TouchBit|AT_TouchDown|AT_TouchUp|AT_TouchTrack));
-
         if (update_scene_req)
         {
             update_scene_req = false;

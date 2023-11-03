@@ -65,18 +65,55 @@ class MyActivity : public Activity {
 public:
     using Activity::Activity;
 
-    virtual void update_scene(LCD&) {}
+    virtual void update_scene(LCD&) {printf("MyActivity(%p):UpdateScene()\n", this);}
+    virtual void on_action_borrow(ActionType at) {printf("MyActivity(%p):borrow(%x)\n", this, at);}
+    virtual void on_action_return(ActionType at) {printf("MyActivity(%p):return(%x)\n", this, at);}
+
+    // These callbacks will be called on Override (by other Action)
+    virtual void on_suspend() {printf("MyActivity(%p):suspend()\n", this);}
+    virtual void on_resume() {printf("MyActivity(%p):resume()\n", this);}
 };
+
+
+void test3(void*)
+{
+    {
+        MyActivity act(AT_TouchDown|AF_Override);
+        printf("Test3 Activity %p\n", &act);
+        auto action = act.get_action();
+        printf("Action3: %x -> exit\n",action.type);
+    }
+    vTaskDelete(NULL);
+}
+
+void test2(void*)
+{
+    {
+        MyActivity act(AT_Fingerprint1);
+        printf("Test2 Activity %p\n", &act);
+        auto action = act.get_action();
+        printf("Action2/1: %x\n",action.type);
+        xTaskCreate(test3, "Test2", 8096, NULL, 5, NULL);
+        action = act.get_action();
+        printf("Action2/2: %x -> exit\n",action.type);
+    }
+    vTaskDelete(NULL);
+}
 
 void test1()
 {
-    MyActivity act(AT_Fingerprint|AT_TouchDown|AT_TouchTrack|AT_TouchUp|AT_WatchDog);
+    MyActivity act(AT_TouchDown|AT_TouchTrack|AT_TouchUp|AT_WatchDog, AT_Fingerprint);
+    printf("Test1 Activity %p\n", &act);
     act.setup_watchdog(10); // 10 seconds
     for(;;)
     {
         auto action = act.get_action();
         printf("Action: %x\n",action.type);
-        if (action.type & AT_Fingerprint) printf(" FP: %d\n", action.fp_index);
+        if (action.type & AT_Fingerprint) 
+        {
+            printf(" FP: %d\n", action.fp_index);
+            static auto unused = xTaskCreate(test2, "Test2", 8096, NULL, 5, NULL);
+        }
         if (action.type & AT_TouchDown)
         {
             printf(" Touch: %d,%d\n", action.touch.x, action.touch.y);

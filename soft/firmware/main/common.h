@@ -12,6 +12,7 @@
 #include "estring.h"
 
 #include <algorithm>
+#include <atomic>
 #include <limits>
 #include <memory>
 #include <optional>

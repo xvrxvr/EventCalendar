@@ -40,6 +40,13 @@ void FGInput::press()
     }
 }
 
+void FGInput::process_input() 
+{
+    press();     
+    fp_sensor.setAuraLED(prev_color);
+    ei();
+}
+
 void FGInput::process_cmd(uint32_t color)
 {
     if (prev_color == color) return;

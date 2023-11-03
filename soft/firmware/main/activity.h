@@ -72,9 +72,9 @@ class Activity {
     int my_index = -1; // Index of this Activity in array of Activities
     uint32_t actions; // Set of Actions belong to this Activity
     uint32_t can_be_borrowed_actions; // Set of Actions which can be borrowed
-    uint32_t borrowed = 0; // Set of Actions that was really borrowed
+    std::atomic<uint32_t> borrowed = 0; // Set of Actions that was really borrowed
     uint32_t locked_out = 0; // Set of indexes of other Activities that was locked out by this one (by AF_Override option)
-    bool suspended = false; // Set to true if this Activity was locked out by another
+    std::atomic<bool> suspended = false; // Set to true if this Activity was locked out by another
     uint32_t custom_fg_color = 0; // Custom color for AT_Fingerprint2 Action
     const char* web_ping_tag = NULL;
     int web_ping_counter = 0; // Incremented on each 'ping' send to WEB, reset on each 'ping' echo from web. If this counter reached threshold limit - WEB timeout fired
