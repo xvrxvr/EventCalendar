@@ -110,7 +110,7 @@ void BGImage::draw(Activity* act)
     Prn b;
     b.printf("/bg.%d.jpg", bg_img_index);
 
-    std::unique_ptr<FILE, int(*)(FILE*)> stream(fopen(b.c_str(), "rb"), &fclose);
+    std::unique_ptr<FILE, decltype(&fclose)> stream(fopen(b.c_str(), "rb"), &fclose);
     
     if (!stream)
     {

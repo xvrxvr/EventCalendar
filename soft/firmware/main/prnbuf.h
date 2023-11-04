@@ -6,7 +6,7 @@ class Prn {
     size_t allocated = 0;   // Allocated size of buffer (allocated >= size)
 
     // Round up requested buffer size. Use to avoid too often buffer reallocation
-    static size_t new_size(size_t size) {return std::max<size_t>(1024, size*3/2 + 128);}
+    static size_t new_size(size_t size) {return std::max<size_t>(32, size*3/2 + 8);}
 
     // Resize buffer.
     //  sz - New requested size
