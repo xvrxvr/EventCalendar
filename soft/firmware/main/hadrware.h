@@ -7,7 +7,7 @@ class LCD {
     int _res_x;
     int	_res_y;
 
-    uint8_t fc1=0xFF, fc2=0xFF, bc1=0, bc2=0;
+    uint8_t fc_high=0xFF, fc_low=0xFF, bc_high=0, bc_low=0;
 
     void LCD_CtrlWrite_ILI9327(uint8_t command, uint8_t data);
 
@@ -67,8 +67,11 @@ public:
     void DRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
     void WRect(int16_t x1, int16_t y1, int16_t w, int16_t h, uint16_t color) {DRect(x1, y1, x1+w-1, y1+h-1, color);}
 
-    void set_fg(uint16_t color) {fc1 = color >> 8; fc2 = color & 0xFF;}
-    void set_bg(uint16_t color) {bc1 = color >> 8; bc2 = color & 0xFF;}
+    // Draw buffer in format RGB888
+    void draw_rgb888(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t* data);
+
+    void set_fg(uint16_t color) {fc_high = color >> 8; fc_low = color & 0xFF;}
+    void set_bg(uint16_t color) {bc_high = color >> 8; bc_low = color & 0xFF;}
 
     // Emit text. Use -1 for x coordinate to emit in center of screen
     void text(const char* text, int16_t x, int16_t y);

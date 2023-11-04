@@ -2,11 +2,15 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
 #include <inttypes.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <time.h>
 
 #include "estring.h"
@@ -16,7 +20,10 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <vector>
 #include <utility>
+
+#include "prnbuf.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -26,6 +33,7 @@
 #include <esp_http_server.h>
 #include <esp_log.h>
 #include <esp_netif.h>
+#include <esp_random.h>
 #include <esp_spiffs.h>
 #include <esp_system.h>
 #include <esp_task_wdt.h>

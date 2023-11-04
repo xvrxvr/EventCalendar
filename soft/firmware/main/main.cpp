@@ -127,13 +127,93 @@ void test1()
 
 void send_web_ping_to_ws(const char*) {}
 
+static constexpr int R1   = 0x0800;  // BLUE?
+static constexpr int G1   = 0x0020;  // RED?
+static constexpr int B1   = 0x0001;  // GREEN?
+
+static void test_color1(int y, const char* title, uint16_t color, int bits)
+{
+    lcd.text2(title, 0, y);
+    int start = 2*16+8;
+    int w = 10;
+    if (bits == 6) w >>= 1;
+    for(int c=0; c<(1<<bits); ++c)
+    {
+        lcd.WRect(start, y, w, 32, c*color);
+        start+=w;
+    }
+}
+
+static void test_colors()
+{
+    int y = 60;
+    test_color1(y, "R:", R1, 5);
+    test_color1(y+35, "G:", G1, 6);
+    test_color1(y+70, "B:", B1, 5);
+}
+
+#include "rom/tjpgd.h"
+
+#define JPEG_WORK_BUF_SIZE  3100    /* Recommended buffer size; Independent on the size of the image */
+//#define JD_FORMAT 0
+//#define ESP_JPEG_COLOR_BYTES    3
+
+struct MyConfig {
+    const uint8_t* buffer;
+    size_t rest_of_buffer;
+};
+
+static unsigned int jpeg_decode_in_cb(JDEC *dec, uint8_t *buff, unsigned int nbyte)
+{
+    assert(dec != NULL);
+
+    MyConfig *cfg = (MyConfig *)dec->device;
+    assert(cfg != NULL);
+
+    if (nbyte > cfg->rest_of_buffer) nbyte = cfg->rest_of_buffer;
+    if (buff) 
+    {
+        memcpy(buff, cfg->buffer, nbyte);
+    }
+    cfg->rest_of_buffer -= nbyte;
+    cfg->buffer += nbyte;
+
+    return nbyte;
+}
+
+static unsigned int jpeg_decode_out_cb(JDEC *dec, void *bitmap, JRECT *rect)
+{
+    lcd.draw_rgb888(rect->left, rect->top, rect->right, rect->bottom, (uint8_t*)bitmap);
+    return 1;
+}
+
+
+void test_jpeg(const void* img, size_t size)
+{
+    JDEC JDEC;
+
+    std::unique_ptr<uint8_t[]> workbuf(new uint8_t[JPEG_WORK_BUF_SIZE]);
+
+    MyConfig cfg {
+        .buffer = (const uint8_t *)img,
+        .rest_of_buffer = size
+    };
+
+    /* Prepare image */
+    auto err = jd_prepare(&JDEC, jpeg_decode_in_cb, workbuf.get(), JPEG_WORK_BUF_SIZE, &cfg);
+    printf("jd_prepare -> %d\n", err);
+    err = jd_decomp(&JDEC, jpeg_decode_out_cb, 0);
+    printf("jd_decomp -> %d\n", err);
+}
+
+
 extern "C" void app_main(void)
 {
     hw_init();
     init_or_load_setup();
     wifi_init();
     start_http_servers();
-    Activity::start();
+//    Activity::start();
 
 //    touch_setup.calibrate();
 //    printf("Setup=%ld,%ld,%ld,%ld,%ld,%ld\n", touch_setup.A, touch_setup.B, touch_setup.C, touch_setup.D, touch_setup.E, touch_setup.F);
@@ -141,7 +221,13 @@ extern "C" void app_main(void)
     lcd.text("Hello!", 100, 100);
 
  //   simple_test();
-    test1();
+//    test1();
+
+ //   test_colors();
+
+    extern const char test_bg_start[] asm("_binary_test_bg_jpg_start");
+    extern const char test_bg_end[] asm("_binary_test_bg_jpg_end");
+    test_jpeg(test_bg_start, test_bg_end-test_bg_start);
 
     for(;;);
 }

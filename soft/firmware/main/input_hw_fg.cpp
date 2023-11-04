@@ -52,10 +52,12 @@ void FGInput::process_cmd(uint32_t color)
     if (prev_color == color) return;
     prev_color = color;
     fp_sensor.setAuraLED(color);
+    ei();
 }
 
 void FGInput::passivate()
 {
     fp_sensor.setAuraLED(auraOff);
     prev_color = -1;
+    di();
 }

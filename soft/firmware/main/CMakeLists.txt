@@ -15,6 +15,7 @@ set(srcs
     activity.cpp
     input_hw_touch.cpp
     input_hw_fg.cpp
+    bg_image.cpp
     main.cpp
 )
 
@@ -22,7 +23,7 @@ file(GLOB web_srcs "web/*")
 
 idf_component_register(SRCS ${srcs}
                     INCLUDE_DIRS "."
-                    EMBED_FILES ${web_srcs}
+                    EMBED_FILES ${web_srcs} test_bg.jpg
                     )
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-missing-field-initializers)

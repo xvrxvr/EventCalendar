@@ -252,12 +252,35 @@ void LCD::DRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
     _WriteCommand(REG_WRITEMEM); //Write to RAM
 
     uint32_t total = (x2-x1+1)*(y2-y1+1);
-    uint8_t col1 = color >> 8;
-    uint8_t col2 = color & 0xFF;
+    uint8_t col_high = color >> 8;
+    uint8_t col_low = color & 0xFF;
     while(total--)
     {
-        _WriteData(col2); 
-        _WriteData(col1); 
+        _WriteData(col_high); 
+        _WriteData(col_low); 
+    }
+    wait4lcd_vacant();
+}
+
+// Draw buffer in format RGB888
+void LCD::draw_rgb888(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t* data)
+{
+    LCDAccess lcd;
+    CS_EN cs_en;
+
+    _SetWriteArea(x1, y1, x2, y2);
+    _WriteCommand(REG_WRITEMEM); //Write to RAM
+
+    for(int yy = y1; yy <= y2; ++yy)
+    {
+        for(int xx = x1; xx <= x2; ++xx, data += 3)
+        {
+            // |RRRRR:GGG|GGG:BBBBB|
+            uint8_t color_high = (data[0] & 0xF8) | ((data[1] >> 5) & 7);
+            uint8_t color_low = ((data[2] >> 3) & 0x1F) | ((data[1] << 3 ) & 0xE0);
+            _WriteData(color_high); 
+            _WriteData(color_low); 
+        }
     }
     wait4lcd_vacant();
 }
@@ -609,8 +632,8 @@ void LCD::text(const char* text, int16_t x, int16_t y)
             uint8_t bits = font[sym*16+scan_line];
             uint8_t cnt=8;
             do {
-                if (bits&0x80) {_WriteData(fc2); _WriteData(fc1);}
-                else {_WriteData(bc2); _WriteData(bc1);}
+                if (bits&0x80) {_WriteData(fc_high); _WriteData(fc_low);}
+                else {_WriteData(bc_high); _WriteData(bc_low);}
                 bits <<= 1;
             } while (--cnt);
         }
@@ -637,8 +660,8 @@ void LCD::text2(const char* text, int16_t x, int16_t y)
             uint8_t bits = font[sym*16+(scan_line>>1)];
             uint8_t cnt=8;
             do {
-                if (bits&0x80) {_WriteData(fc2); _WriteData(fc1); _WriteData(fc2); _WriteData(fc1);}
-                else {_WriteData(bc2); _WriteData(bc1); _WriteData(bc2); _WriteData(bc1);}
+                if (bits&0x80) {_WriteData(fc_high); _WriteData(fc_low); _WriteData(fc_high); _WriteData(fc_low);}
+                else {_WriteData(bc_high); _WriteData(bc_low); _WriteData(bc_high); _WriteData(bc_low);}
                 bits <<= 1;
             } while (--cnt);
         }
