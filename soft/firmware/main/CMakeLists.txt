@@ -16,6 +16,7 @@ set(srcs
     input_hw_touch.cpp
     input_hw_fg.cpp
     bg_image.cpp
+    box_draw.cpp
     main.cpp
 )
 
