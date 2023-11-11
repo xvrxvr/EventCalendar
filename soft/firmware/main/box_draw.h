@@ -15,7 +15,7 @@ public:
         while(y>x)
         {
             if (p < 0) {p += 4*x+6; ++x;}
-            else {p += 4*(x-y)+10; ++x, ++y;}
+            else {p += 4*(x-y)+10; ++x, --y;}
             put_pnt(x, y);
         }
     }
@@ -44,6 +44,8 @@ public:
 
     virtual void put_pnt(int x, int y) override
     {
+        assert(y < r+1);
+        assert(x < r+1);
         result[y] = x;
         if (result[x] == 0xFF) result[x] = y;
     }
@@ -66,11 +68,11 @@ class BresPoints : public BresenhameBase {
 public:
     using XY = std::pair<uint8_t, uint8_t>;
 
-    BresPoints(int r) : BresenhameBase(r), result(new XY[r+1]) {}
+    BresPoints(int r) : BresenhameBase(r), result(new XY[2*(r+1)]) {}
 
     virtual void put_pnt(int x, int y)
     {
-        assert(filled + 2 <= r+1);
+        assert(filled + 2 <= 2*(r+1));
         result[filled++] = XY{x, y};
         result[filled++] = XY{y, x};
     }
@@ -96,13 +98,13 @@ enum Color {
 };
 
 struct Rect {
-    uint16_t x : 13;
-    uint16_t color:3;
+    uint16_t x;
+    int16_t y;
     uint16_t w;
-    uint8_t y;
     uint8_t h;
+    uint8_t color;
 
-    Rect(uint16_t x, uint8_t y, uint16_t w, uint8_t h, uint8_t color) : x(x), color(color), w(w), y(y), h(h) {}
+    Rect(uint16_t x, int16_t y, uint16_t w, uint8_t h, uint8_t color) : x(x), y(y), w(w), h(h), color(color) {}
     Rect() = default;
 };
 
@@ -178,5 +180,5 @@ class BoxCreator {
 public:
     BoxCreator(int width, int height, int r, int border_width, int shadow_width);
 
-    void draw(class LCD& lcd, int dx, int dy, uint16_t* pallete, bool with_clip = true);
+    void draw(class LCD& lcd, int dx, int dy, const uint16_t* pallete, bool with_clip = true);
 };

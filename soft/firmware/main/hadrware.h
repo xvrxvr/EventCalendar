@@ -17,6 +17,8 @@ class LCD {
     void _SetWriteArea(int16_t& X1, int16_t& Y1, int16_t& X2, int16_t& Y2);
     void _SetWriteAreaDelta(int16_t& X1, int16_t& Y1, int16_t dx, int16_t dy);
 
+    void WImgPalleteClip(int16_t x1, int16_t y1, int16_t w, int16_t h, const uint8_t* image, const uint16_t* pallete);
+
 public:
     static const int16_t MAX = 0x7FFF; // Maximum coordinate
 
@@ -66,6 +68,7 @@ public:
     */
     void DRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
     void WRect(int16_t x1, int16_t y1, int16_t w, int16_t h, uint16_t color) {DRect(x1, y1, x1+w-1, y1+h-1, color);}
+    void WImgPallete(int16_t x1, int16_t y1, int16_t w, int16_t h, const uint8_t* image, const uint16_t* pallete, bool with_clip=false);
 
     // Draw buffer in format RGB888
     void draw_rgb888(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t* data);
@@ -77,6 +80,14 @@ public:
     void text(const char* text, int16_t x, int16_t y);
     void text2(const char* text, int16_t x, int16_t y);
 };
+
+inline uint16_t rgb(uint8_t red, uint8_t green, uint8_t blue)
+{
+    red>>=3;
+    green>>=2;
+    blue>>=3;
+    return (uint16_t(red) << 11) | (uint16_t(green)<<5) | blue;
+}
 
 extern R503 fp_sensor;
 extern LCD lcd;

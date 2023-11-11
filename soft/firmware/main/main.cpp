@@ -4,6 +4,7 @@
 #include "setup_data.h"
 #include "wifi_module.h"
 #include "activity.h"
+#include "box_draw.h"
 
 void start_http_servers();
 
@@ -228,6 +229,12 @@ extern "C" void app_main(void)
     extern const char test_bg_start[] asm("_binary_test_bg_jpg_start");
     extern const char test_bg_end[] asm("_binary_test_bg_jpg_end");
     test_jpeg(test_bg_start, test_bg_end-test_bg_start);
+
+//     BoxCreator(int width, int height, int r, int border_width, int shadow_width);
+    BoxCreator box(200, 100, 15, 2, 5);
+
+    static const uint16_t pallete[] = {0, rgb(0x04, 0xAA, 0x6D), 0, rgb(0x66,0x66,0x66)};
+    box.draw(lcd, 50, 50, pallete, true);
 
     for(;;);
 }

@@ -12,7 +12,7 @@ void RectList::sub(const Rect& clip)
         int x1=r.x, y1=r.y, x2=r.x+r.w, y2 = r.y+r.h;
         int xx1=clip.x, yy1=clip.y, xx2=clip.x+clip.w, yy2 = clip.y+clip.h;
 
-        if (x1 >= xx2 or y1 >= yy2 or x2 <= xx1 or y2 <= yy1) continue;
+        if (x1 >= xx2 || y1 >= yy2 || x2 <= xx1 || y2 <= yy1) continue;
 
         xx1 = std::min(x2, std::max(x1, xx1));
         xx2 = std::min(x2, std::max(x1, xx2));
@@ -57,12 +57,12 @@ void PicBox::put_line(int x, int y, int length, Color color, bool clip)
 {
     if (length < 0) {x += length + 1; length = -length;}
     if (clip && (y< 0 || y>= h)) return;
-    assert(y>= 0);
+    assert(y>= 0 && y< h);
     uint8_t* line = img.get() + w*(h - y - 1);
     for(int idx = 0; idx < length; ++idx, ++x)
     {
         if (clip && (x<0 || x >= w)) continue;
-        assert(x >= 0);
+        assert(x >= 0 && x < w);
         line[x] = color;
     }
 }
@@ -72,7 +72,7 @@ void PicBox::put_box(int x, int y, int w, int h, Color color, bool clip)
     if (h < 0) {y += h + 1; h = -h;}
     for(int idx=0; idx<h; ++idx, ++y)
     {
-        if (!clip || !(y < 0 || y >= h)) put_line(x, y, w, color, clip);
+        if (!clip || !(y < 0 || y >= this->h)) put_line(x, y, w, color, clip);
     }
 }
 
@@ -86,7 +86,7 @@ void PicBox::draw_corner_box(char type, int corner, int x, int y, int r, Color c
     {
         case 'H': h = r; if ((corner & 2) == 0) {h ++; bt = 'T';} else bt = 'B'; break;
         case 'V': w = r; if (corner & 1) {w ++; bt = 'R';} else bt = 'L'; break;
-        default: return;
+        default: break;
     }
     if (corner & 2) {h = -h;  y--;}
     if ((corner & 1) == 0) {w = -w; x--;}
@@ -138,7 +138,7 @@ void BoxCreator::draw_pic_box(PicBox& pic, int corner)
     int h = pic.get_h()-1;
     int x = corner & 1 ? 0 : r;
     int y = corner & 2 ? h : h-r;
-    if (s and corner != 0) pic.draw_arc(corner, x+s, y-s, r, C_Shadow);
+    if (s && corner != 0) pic.draw_arc(corner, x+s, y-s, r, C_Shadow);
     pic.draw_arc(corner, x, y, r, C_Body, b);
 }
 
@@ -194,18 +194,19 @@ BoxCreator::BoxCreator(int width, int height, int r, int border_width, int shado
     }
 }
 
-void BoxCreator::draw(LCD& lcd, int dx, int dy, uint16_t* pallete, bool with_clip)
+void BoxCreator::draw(LCD& lcd, int dx, int dy, const uint16_t* pallete, bool with_clip)
 {
     for(const auto& box: result)
     {
-        int box_y = total_height - s - box.y - box.h;
+        int box_y = total_height - s - box.h - box.y;
         if (box.color < C_Img0)
         {
             lcd.WRect(box.x+dx, box_y+dy, box.w, box.h, pallete[box.color]);
         }
         else
         {
-            lcd.WImgPallete(box.x+dx, box_y+dy, box.w, box.h, images[box.color-C_Img0], pallete, with_clip);
+            assert(box.color-C_Img0 < 4);
+            lcd.WImgPallete(box.x+dx, box_y+dy, box.w, box.h, images[box.color-C_Img0].get(), pallete, with_clip);
         }
     }
 }

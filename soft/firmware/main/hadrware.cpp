@@ -285,6 +285,63 @@ void LCD::draw_rgb888(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t* d
     wait4lcd_vacant();
 }
 
+void LCD::WImgPallete(int16_t x1, int16_t y1, int16_t w, int16_t h, const uint8_t* image, const uint16_t* pallete, bool with_clip)
+{
+    if (with_clip) {WImgPalleteClip(x1, y1, w, h, image, pallete); return;}
+    LCDAccess lcd;
+    CS_EN cs_en;
+
+    int16_t x2 = x1 + w - 1;
+    int16_t y2 = y1 + h - 1;
+
+    _SetWriteArea(x1, y1, x2, y2);
+    _WriteCommand(REG_WRITEMEM); //Write to RAM
+    for(int yy = y1; yy <= y2; ++yy)
+    {
+        for(int xx = x1; xx <= x2; ++xx, ++image)
+        {
+            uint16_t color = pallete[*image];
+            _WriteData(uint8_t(color >> 8)); 
+            _WriteData(uint8_t(color)); 
+        }
+    }
+    wait4lcd_vacant();
+}
+
+void LCD::WImgPalleteClip(int16_t x1, int16_t y1, int16_t w, int16_t h, const uint8_t* image, const uint16_t* pallete)
+{
+    const uint8_t* row_end = image + w - 1;
+    const uint8_t* start = image;
+    int16_t start_row = 0;
+    int16_t row = 0;
+
+    auto flush = [&, this]()
+    {
+        if (row > start_row && start_row < h)
+        {
+            WImgPallete(x1, y1+start_row, w, row - start_row, start, pallete);
+            start_row = row;
+            start = image;
+        }
+    };
+
+    for(; row < h; ++row, image += w, row_end += w)
+    {
+        if (*image == 0 || *row_end == 0)
+        {
+            flush();
+            const uint8_t* b = image;
+            const uint8_t* e = row_end+1;
+            while(*b == 0 && b < e) ++b;
+            while(e[-1] == 0 && b < e) --e;
+            if (b != e) WImgPallete(x1 + (b-image), y1+row, e-b, 1, b, pallete);
+            start = image + w;
+            start_row = row+1;
+        }
+    }
+    flush();
+}
+
 #define RNG(var, limit) if (var < 0) var = 0; else if (var >= limit) var = limit-1
 void LCD::_SetWriteAreaDelta(int16_t& X1, int16_t& Y1, int16_t dx, int16_t dy)
 {

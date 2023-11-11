@@ -389,6 +389,6 @@ pic = Picture(400, 240)
 shadow = 5
 height = 100
 
-pic.draw_boxes(BoxCreator(width=300, height=height, r=9, border_width=2, shadow_width=shadow).get_result(), height+shadow, shadow)
+pic.draw_boxes(BoxCreator(width=200, height=height, r=15, border_width=2, shadow_width=shadow).get_result(), height+shadow, shadow)
 
 pic.gen_png('test.png')
