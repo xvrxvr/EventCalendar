@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html>
+<script src="text_lib.js"></script>
+<body>
+
+<form>
+<table><tr><td style="vertical-align: top;">
+<textarea id="text" name="text" rows="10" cols="40">?</textarea>
+<br>
+<canvas id="canvas" width="400" height="240" style="width:500px; height:300px; border: 2px solid black;"></canvas>
+<br>
+<button type="button" onclick="run_test()">Run!</button>
+<td>
+<div id="result"></div>
+</tr></table>
+</form>
+
+<script>
+
+function run_test()
+{
+    let t = document.getElementById('text').value;
+    let c = document.getElementById('canvas').getContext("2d");
+
+    let p= new TextsParser();
+//    try {
+        p.parse_text(t);
+        let box_sz = p.eval_box(0, 0);
+        let ww = p.word_wrap(350);
+        box_sz = ww.eval_box(0, 0);
+        document.getElementById('result').innerText = `${p}\n${p.have_letter_size ? "Explicit Letter size" : ""}\nText size: ${p.text_size()}\n\nWord Wrap to 350:\n${ww}\nText size: ${ww.text_size()}\nBox size: ${box_sz}`;
+
+        c.fillStyle = 'white';
+        c.fillRect(0, 0, 400, 240);
+        ww.draw_to_canvas(c);
+
+//    }
+//    catch (e) {
+//        document.getElementById('result').innerText = e.toString();
+//    }
+}
+
+</script>
+
+</html>

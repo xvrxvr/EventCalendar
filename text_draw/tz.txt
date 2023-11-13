@@ -1,0 +1,40 @@
+﻿Text format (line oriented):
+
+[<global options>]
+... strings ...
+
+String contents: { ... text ... | <control option> }
+
+Control-option:
+    \1 - Letter size 1
+    \2 - Letter size 2
+    \< - Left align       -- All 2 align can be used in one line:  \< ... \# .... \> ...
+    \> - Right align
+    \# - Center
+    \s - Fit line in box width by equaly extending spaces
+    \w - Fit line in box width by adding spaces between letters
+    \W         - Enable word wrap (by spaces)
+    \c<color>\ - Set FG color for next text
+    \b<color>\ - Set background color for next text
+    \\ - \
+
+Global options (line started with \!)
+
+    m:<pixels> - Marging (between Boxes)
+    mv:<pixels> - Vertical margings
+    mh:<pixels> - Horisontal margins
+    p:<pixels> - Padding (between text and box/border)
+    pv:<pixels> - Padding vertical
+    ph:<pixels> - Pading horisontal
+    b:<width>[:<color>] - Border
+    s:<pixels>[:<color>] - Shadow
+    r:<radius>  - Round corner for Box
+    bg:<color>  - Background color for Box
+    fg:<color>  - Default text color for Box
+    1           - Set default letter size to 1 (and turn off autosizing)
+    2           - Set default letter size to 2 (and turn off autosizing)
+    W           - Enable word wrap (by spaces)
+    d:(v|h)     - Direction for multiple Boxes (Vertical/Horizontal). By default - auto select
+    st:[e][r][d][c] -  Selection type (keyboard): English/Russina/Digits/Choise (no keyboard but list of alternatives)
+    dist:<num>  - Max text distance for fuzzy compare
+
