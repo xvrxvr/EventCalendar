@@ -11,17 +11,19 @@ class TextGlobalDefinition {
     padding_v = 10;
     padding_h = 10;
     border_width = 0;
-    border_color = '000000';
+    border_color = 0;
     shadow_width = 0;
-    shadow_color = "999999";
+    shadow_color = color_to_rgb565('999999');
     corner_r = 0;
-    fg_color = '';      // FG color (hex string)
-    bg_color = '';      // BG color (hex string)
+    fg_color = '';  // FG color (rgb565 hex string)
+    bg_color = '';  // BG color (rgb565 hex string)
     letter_size = 0;    // 0 - auto, 1,2 - defined size
     word_wrap = false;  // Enable word wrap (by spaces)
     boxes_dir = 0;      // Multiple boxes direction: 0 - auto, 1 - boxes placed vertically, 2 - boxes placed horizontaly
     keyb_type = '';     // Keyboard type: [e][r][d][c]
     fuzzy_dist = '30%';    // Text distance for Fuzzy compare. Number (in symbols) or string in form <???>% - for percent of answer length (excluding digits)
+    min_age = 10;
+    max_age = 99;
 
     connect_to_html_form()
     {
@@ -48,8 +50,12 @@ class TextGlobalDefinition {
         for(const id of ["border_color", "shadow_color", "fg_color", "bg_color"])
         {
             const html_item = document.getElementById(`hdr_${id}`);
-            this.#model2html_update_list.push( () => {html_item.value = `#${this[id]}`;});
-            html_item.onchange = () => {this[id] = html_item.value.slice(1); this.update_from_html();};
+            this.#model2html_update_list.push( () => {html_item.value = `#${rgb565_to_color(this[id])}`;});
+            html_item.onchange = () => {
+                this[id] = color_to_rgb565(html_item.value.slice(1)); 
+                html_item.value = `#${rgb565_to_color(this[id])}`;
+                this.update_from_html();
+            };
         }
         // Selection (selection)
         for(const id of ["boxes_dir", "letter_size"])
@@ -82,6 +88,70 @@ class TextGlobalDefinition {
     }
 
     update_from_html = () => {};
+
+    get header()
+    {
+        let result = base64_digit(this.marging_v) + base64_digit(this.marging_h) + base64_digit(this.padding_v) + base64_digit(this.padding_h) + base64_digit(this.border_width);
+        result += base64_digit(this.shadow_width) + base64_digit(this.corner_r) + base64_digit(this.fuzzy_dist.replace(/%$/, "") - 0);
+        result += hex(this.min_age) + hex(this.max_age);
+
+        let kb_sel = 0;
+        for(const s of this.keyb_type)
+        {
+            kb_sel |= {'e': 1, 'r': 2, 'n': 4, 'c': 8}[s];
+        }
+        result += hex(kb_sel, 1);
+
+        let opt = this.boxes_dir | (this.letter_size<<2);
+        if (this.word_wrap) opt |= 0x10;
+        if (this.fuzzy_dist.endsWith('%')) opt |= 0x20;
+        result += hex(opt) + ' ';
+
+        const c = (color, comma=true) => {
+            result += color ? color : '-'; 
+            if (comma) result += ',';
+        };
+
+        c(this.bg_color); c(this.border_color); c(this.shadow_color); c(this.fg_color, false);
+
+        return result;
+    }
+
+    set header(value)
+    {
+        const vals = value.split(/\s+/);
+
+        this.marging_v    = unbase64_digit(value[0]);
+        this.marging_h    = unbase64_digit(value[1]);
+        this.padding_v    = unbase64_digit(value[2]);
+        this.padding_h    = unbase64_digit(value[3]);
+        this.border_width = unbase64_digit(value[4]);
+        this.shadow_width = unbase64_digit(value[5]);
+        this.corner_r     = unbase64_digit(value[6]);
+        this.fuzzy_dist   = unbase64_digit(value[7]);
+        this.min_age      = Number.parseInt(value.slice(8, 10), 16);
+        this.max_age      = Number.parseInt(value.slice(10, 12), 16);
+
+        let kb_sel = Number.parseInt(value.slice(12, 13), 16);
+        this.keyb_type = '';
+        if (kb_sel & 1) this.keyb_type += 'e';
+        if (kb_sel & 2) this.keyb_type += 'r';
+        if (kb_sel & 4) this.keyb_type += 'n';
+        if (kb_sel & 8) this.keyb_type += 'c';
+
+        let opt = Number.parseInt(value.slice(12, 13), 16);
+        this.boxes_dir = opts & 3;
+        this.letter_size = (opt >> 2) & 3;
+        this.word_wrap = (opt & 0x10)!=0;
+        if (opt & 0x20) this.fuzzy_dist += '%';
+
+        const colors      = vals[1].split(',');
+        this.bg_color     = colors[0] == '-' ? '' : colors[0];
+        this.border_color = colors[1] == '-' ? '' : colors[1];
+        this.shadow_color = colors[2] == '-' ? '' : colors[2];
+        this.fg_color     = colors[3] == '-' ? '' : colors[3];       
+    }
+
 
     // Process '\...' control code. 'symbol' is a pure code (without '\')
     process_ctrl(symbol) 
@@ -135,6 +205,66 @@ class TextGlobalDefinition {
         return result.join(', ');
     }
 }
+
+function base64_digit(val)
+{
+    if (val < 10) return String.fromCharCode(val + "0".charCodeAt(0));
+    val -= 10;
+    if (val < 26) return String.fromCharCode(val + "A".charCodeAt(0));
+    val -= 26;
+    if (val < 26) return String.fromCharCode(val + "a".charCodeAt(0));
+    val -= 26;
+    switch(val)
+    {
+        case 0: return '+';
+        case 1: return '-';
+        default: return '?';
+    }
+}
+
+function hex(val, digits=2)
+{
+    return val.toString(16).toUpperCase().padStart(digits, '0');
+}
+
+function unbase64_digit(val)
+{
+    const code = val.charCodeAt(0);
+    if (val >= '0' && val <= '9') return code - "0".charCodeAt(0);
+    if (val >= 'A' && val <= 'Z') return code - "A".charCodeAt(0) + 10;
+    if (val >= 'a' && val <= 'z') return code - "a".charCodeAt(0) + 36;
+    switch(val)
+    {
+        case '+': return 62;
+        case '-': return 63;
+        default: return 0;
+    }
+}
+
+function rgb565_to_color(rgb565)
+{
+    if (typeof rgb565 == 'string') rgb565 = Number.parseInt(rgb565, 16);
+    let r = (rgb565 >> 11) & 0x1F;
+    let g = (rgb565 >> 5) & 0x3F;
+    let b = rgb565 & 0x1F;
+
+    if (r & 1) {r <<= 3; r |= 7;} else r <<= 3;
+    if (g & 1) {g <<= 2; g |= 3;} else g <<= 2;
+    if (b & 1) {b <<= 3; b |= 7;} else b <<= 3;
+
+    return hex(r) + hex(g) + hex(b);
+}
+
+
+function color_to_rgb565(color)
+{
+    const r = Number.parseInt(color.slice(0, 2), 16) >> 3;
+    const g = Number.parseInt(color.slice(2, 4), 16) >> 2;
+    const b = Number.parseInt(color.slice(4, 6), 16) >> 3;
+    return hex((r << 11) | (g << 5) | b, 4);
+}
+
+
 
 class TextSegment {
     #letter_size(default_letter_size, total_letters)

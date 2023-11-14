@@ -117,6 +117,7 @@ FFFF - Text foreground color
 ------------------------------------------------------------------------------
 File format (text, line oriented, DOS coding):
 
+<user-who-load-this-question>
 <header line>
 <body lines> ...
 <answers lines> ...
