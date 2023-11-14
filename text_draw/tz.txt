@@ -11,12 +11,13 @@ Control-option:
     \< - Left align       -- All 2 align can be used in one line:  \< ... \# .... \> ...
     \> - Right align
     \# - Center
-    \s - Fit line in box width by equaly extending spaces
-    \w - Fit line in box width by adding spaces between letters
+    \s - Fit line in box width by adding spaces between letters
     \W         - Enable word wrap (by spaces)
     \c<color>\ - Set FG color for next text
     \b<color>\ - Set background color for next text
     \\ - \
+
+
 
 Global options (line started with \!)
 
@@ -37,4 +38,87 @@ Global options (line started with \!)
     d:(v|h)     - Direction for multiple Boxes (Vertical/Horizontal). By default - auto select
     st:[e][r][d][c] -  Selection type (keyboard): English/Russina/Digits/Choise (no keyboard but list of alternatives)
     dist:<num>  - Max text distance for fuzzy compare
+
+Global options wroten in dedicated line (1st) as series of HEX strings.
+First string defines bit options. Each letter represents 4 bit (in HEX) or 6 bits (in BASE64 alphabete).
+Rest of strings represents colors in RGB(565) format (as 4 HEX string or '-' if no color defined)
+
+
+Legend:
+    H{H} - Hex string + bits numbers
+    B    - Base64 value
+    D    - Decimal value
+
+Strings (grouped in packs, with ',' delimiter inside):
+'V1'  - Version
+
+D..  - Size of 'body' part (in lines)
+
+B   - Vertical Margin
+B   - Horisontal Margin
+B   - Padding vertical
+B   - Pading horisontal
+B   - Border width
+B   - Shadow width
+B   - Round corner for Box
+B   - Max fuzzy compare distance
+HH  - Min age
+HH  - Max age
+H   - Selection/keyboard type
+ 0 - English
+ 1 - Russian
+ 2 - Numbers
+ 3 - Selector (not a keyboard)
+HH
+ 0:1 - Direction for multiple Boxes: 0-auto, 1- Vertical, 2 - Horizontal
+ 2:3 - Default letter size (0-2)
+ 4   - Enable word wrap (by spaces)
+ 5   - 0 - 'Max fuzzy compare distance' is absolute number, 1 - percent
+ 6:7 - Reserved
+
+Colors group (can be '-' for default or missing one):
+
+HHHH - Box color (and default text BG color)
+HHHH - Border color
+HHHH - Shadow color
+HHHH - Text foreground color
+
+
+
+Example: 
+
+V1 123 AA5520000A6304 1234,0000,-,FFFF
+
+Version 1
+
+123 lines in body part
+
+10 (A)- Vertical Margin
+10 (A)- Horisontal Margin
+5   - Padding vertical
+5   - Pading horisontal
+2   - Border width
+0   - Shadow width
+0   - Round corner for Box
+0   - Max fuzzy compare distance
+10 (0A)  - Min age
+99 (63)  - Max age
+0   - Selection/keyboard type (use default)
+00
+ 0 - Direction for multiple Boxes: 0-auto, 1- Vertical, 2 - Horizontal
+ 0 - Default letter size (0-2)
+ 1  - Enable word wrap (by spaces)
+
+1234 - Box color (and default text BG color)
+0000 - Border color
+-    - Shadow color
+FFFF - Text foreground color
+
+------------------------------------------------------------------------------
+File format (text, line oriented, DOS coding):
+
+<header line>
+<body lines> ...
+<answers lines> ...
+
 

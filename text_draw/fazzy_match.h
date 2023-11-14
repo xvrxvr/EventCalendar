@@ -2,6 +2,7 @@
 
 #include "prnbuf.h"
 
+// Damerau–Levenshtein distance evaluator
 class DV {
     const char* a;
     const char* b;
@@ -13,7 +14,7 @@ class DV {
         if (i < 0 || j < 0) return -1u;
         if (i == 0 && j == 0) return 0;
 
-        const auto m = [&min_val](int score) {min_val = std::min(min_val, score);};
+        const auto m = [&](int score) {min_val = std::min(min_val, score);};
 
         if (i > 0) m(d(i-1, j) + 1);
         if (j > 0) m(d(i, j-1) + 1);
@@ -59,20 +60,22 @@ public:
         iters[1][1] = iters[1][1] = ptrs[1] = ptrs[0]+len;
     }
 
+    size_t size(int idx) const {return strlen(ptrs[idx]);}
+
     unsigned score()
     {
-        int digits = 0;
+        bool digits = false;
         for(;;)
         {
             int s1 = iter(0);
             int s2 = iter(1);
             if (s1 == 0 && s2 == 0) break;
-            ++digits;
+            digits = true;
             if (s1 != s2) return -1u;
         }
         int l1 = strlen(ptrs[0]);
         int l2 = strlen(ptrs[1]);
-        if (l1 ==0 || l2 == 0) return digits ? (l1+l2) : -1u;
+        if (l1 == 0 || l2 == 0) return digits ? (l1+l2) : -1u;
         return DV(ptrs[0], ptrs[1]).score();
     }
 };

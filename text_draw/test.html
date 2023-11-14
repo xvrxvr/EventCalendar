@@ -1,5 +1,15 @@
 ﻿<!DOCTYPE html>
 <html>
+
+<style>
+
+#HeaderTable input[type="number"] {
+    width: 4em;
+}
+
+</style>
+
+
 <script src="text_lib.js"></script>
 <body>
 
@@ -13,9 +23,94 @@
 <td>
 <div id="result"></div>
 </tr></table>
+
+<fieldset id="HeaderTable" style="width: fit-content;">
+<legend>Text Visual Appearance setup</legend>
+
+<table><tr><td>
+<fieldset>
+<legend>Box Model</legend>
+
+<table><tr><th><th>Vertical<th>Horizontal</tr>
+<tr><th><label for="hdr_marging_v">Margin (0-63):</label><td><input type="number" id="hdr_marging_v" min="0" max="63"/><td><input type="number" id="hdr_marging_h" min="0" max="63"/></tr>
+<tr><th><label for="hdr_padding_v">Padding (0-63):</label><td><input type="number" id="hdr_padding_v" min="0" max="63"/><td><input type="number" id="hdr_padding_h" min="0" max="63"/></tr>
+</table>
+
+</fieldset>
+<td>
+<fieldset>
+<legend>Box Sizing</legend>
+
+<table>
+<tr><th><label for="hdr_corner_r">Corner radius (0-63):</label><td colspan="2"><input type="number" id="hdr_corner_r" min="0" max="63"/></tr>
+<tr><th><label for="hdr_border_width">Border (0-63):</label><td><input type="number" id="hdr_border_width" min="0" max="63"/><td><input type="color" id="hdr_border_color" value="#000"/></tr>
+<tr><th><label for="hdr_shadow_width">Shadow (0-63):</label><td><input type="number" id="hdr_shadow_width" min="0" max="63"/><td><input type="color" id="hdr_shadow_color" value="#000" /></tr>
+</table>
+
+</fieldset>
+
+</tr><tr>
+<td>
+<fieldset>
+<legend>Other Colors</legend>
+<table>
+<tr><th><label for="hdr_fg_color">Default Text color:</label><td><input type="color" id="hdr_fg_color" value="#000" /></tr>
+<tr><th><label for="hdr_bg_color">Panel color:</label><td><input type="color" id="hdr_bg_color" value="#000" /></tr>
+</table>
+
+</fieldset>
+<td>
+<fieldset>
+<legend>Options</legend>
+
+<table>
+<tr><th><label for="hdr_letter_size">Default char size:</label><td>
+<select id="hdr_letter_size">
+  <option value="0">Not set</option>
+  <option value="1">Small</option>
+  <option value="2">Big</option>
+</select>
+<th><label for="hdr_keyb_type">Input type:</label></tr>
+
+</tr>
+<tr><th><label for="hdr_boxes_dir">Answer boxes layout:</label><td>
+<select id="hdr_boxes_dir">
+  <option value="">Auto</option>
+  <option value="v">Vertical</option>
+  <option value="h">Horizontal</option>
+</select>
+<td rowspan="3">
+<select id="hdr_keyb_type" multiple size="5">
+  <optgroup label="Keyboard">
+    <option value="r">Russian</option>
+    <option value="e">English</option>
+    <option value="n">Numeric</option>
+  </optgroup>
+  <option value="c">Choice</option>
+</select>
+</tr>
+<tr><th><label for="hdr_fuzzy_dist">Fuzzy compare distance<br>(symbols or percent):</label><td><input type="text" id="hdr_fuzzy_dist" maxlength="4" size="5" pattern="^\d{0,3}%?$"/></tr>
+<tr><th><label for="hdr_word_wrap">Word Wrap:</label><td><input type="checkbox" id="hdr_word_wrap" /></tr>
+</table>
+
+</fieldset>
+</tr>
+</table>
+
+</fieldset>
+
 </form>
 
 <script>
+
+let gl = new TextGlobalDefinition();
+gl.connect_to_html_form();
+gl.update_to_html();
+
+gl.update_from_html = () => {
+    let t = document.getElementById('result');
+    t.innerText = `${gl}`;
+};
 
 function run_test()
 {

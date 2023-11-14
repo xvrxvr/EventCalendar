@@ -3,6 +3,139 @@
 class WordWrapError extends Error {}
 class OutOfBounds extends Error {}
 
+class TextGlobalDefinition {
+    #model2html_update_list = []
+
+    marging_v = 5;  // ???
+    marging_h = 5;
+    padding_v = 10;
+    padding_h = 10;
+    border_width = 0;
+    border_color = '000000';
+    shadow_width = 0;
+    shadow_color = "999999";
+    corner_r = 0;
+    fg_color = '';      // FG color (hex string)
+    bg_color = '';      // BG color (hex string)
+    letter_size = 0;    // 0 - auto, 1,2 - defined size
+    word_wrap = false;  // Enable word wrap (by spaces)
+    boxes_dir = 0;      // Multiple boxes direction: 0 - auto, 1 - boxes placed vertically, 2 - boxes placed horizontaly
+    keyb_type = '';     // Keyboard type: [e][r][d][c]
+    fuzzy_dist = '30%';    // Text distance for Fuzzy compare. Number (in symbols) or string in form <???>% - for percent of answer length (excluding digits)
+
+    connect_to_html_form()
+    {
+        // Number (input type=number):
+        for(const id of ["marging_v", "marging_h", "padding_v", "padding_h", "border_width", "shadow_width", "corner_r"])
+        {
+            const html_item = document.getElementById(`hdr_${id}`);
+            this.#model2html_update_list.push( () => {html_item.value = this[id];});
+            html_item.onchange = () => {this[id] = html_item.value - 0; this.update_from_html();};
+        }
+        // Text (input type="text"):
+        {
+            const html_item = document.getElementById('hdr_fuzzy_dist');
+            this.#model2html_update_list.push( () => {html_item.value = this.fuzzy_dist;});
+            html_item.onchange = () => {this.fuzzy_dist = html_item.value; this.update_from_html();};
+        }
+        // Word Wrap - checkbox
+        {
+            const html_ww_item = document.getElementById('hdr_word_wrap');
+            this.#model2html_update_list.push( () => {html_ww_item.checked  = this.word_wrap;});
+            html_ww_item.onchange = () => {this.word_wrap = html_ww_item.checked; this.update_from_html();};
+        }
+        // Color (input type=color):
+        for(const id of ["border_color", "shadow_color", "fg_color", "bg_color"])
+        {
+            const html_item = document.getElementById(`hdr_${id}`);
+            this.#model2html_update_list.push( () => {html_item.value = `#${this[id]}`;});
+            html_item.onchange = () => {this[id] = html_item.value.slice(1); this.update_from_html();};
+        }
+        // Selection (selection)
+        for(const id of ["boxes_dir", "letter_size"])
+        {
+            const html_item = document.getElementById(`hdr_${id}`);
+            this.#model2html_update_list.push( () => {html_item.selectedIndex = this[id];});
+            html_item.onchange = () => {this[id] = html_item.selectedIndex; this.update_from_html();};
+        }
+        // keyb_type Selection Muilti
+        {
+            const html_item = document.getElementById('hdr_keyb_type');
+            this.#model2html_update_list.push( () => {
+                for(const opt of html_item.options)
+                {
+                    opt.selected = this.keyb_type.includes(opt.value);
+                }
+            });
+            html_item.onchange = () => {
+                let acc = '';
+                for(const opt of html_item.selectedOptions) acc += opt.value;
+                this.keyb_type = acc;
+                this.update_from_html();
+           };
+        }
+    }
+
+    update_to_html()
+    {
+        for(let f of this.#model2html_update_list) f();
+    }
+
+    update_from_html = () => {};
+
+    // Process '\...' control code. 'symbol' is a pure code (without '\')
+    process_ctrl(symbol) 
+    {
+        let spl = symbol.split(':')
+        switch(spl[0])
+        {
+            case 'm':  this.marging_v = this.marging_h = spl[1] - 0; break;
+            case 'mv': this.marging_v = spl[1] - 0; break;
+            case 'mh': this.marging_h = spl[1] - 0; break;
+            case 'p':  this.padding_v = this.padding_h = spl[1] - 0; break;
+            case 'pv': this.padding_v = spl[1] - 0; break;
+            case 'ph': this.padding_h = spl[1] - 0; break;
+            case 'b':  this.border_width = spl[1] - 0; if (spl.length > 2) this.border_color = spl[2]; break;
+            case 's':  this.shadow_width = spl[1] - 0; if (spl.length > 2) this.shadow_color = spl[2]; break;
+            case 'r':  this.corner_r = spl[1] - 0; break;
+            case 'bg': this.bg_color = check_color_name(spl[1]); break;
+            case 'fg': this.fg_color = check_color_name(spl[1]); break;
+            case '1':  this.letter_size = 1; break;
+            case '2':  this.letter_size = 2; break;
+            case 'W':  this.word_wrap = true; break;
+            case 'd':  this.boxes_dir = spl[1]; if (!(/^(d|v)$/.test(this.boxes_dir))) throw Error(`Global definition 'd:<v|h>' expect 'v' or 'h' symbols, but found '${spl[1]}'`); break;
+            case 'st': this.keyb_type = spl[1]; if (!(/^([edr]+|c)$/.test(this.keyb_type))) throw Error(`st definition wrong '${this.keyb_type}'. Expected [e][r][d] or c`); break;
+            case 'dist': this.fuzzy_dist = spl[1]; if (!(/^\\d+%?$/.test(this.fuzzy_dist))) throw Error(`dist definition wrong '${this.fuzzy_dist}'. Expected number or percent`); break;
+            default: throw Error(`Unknown Global definition '${symbol}'`);
+        }
+    }
+
+    new_text_segment()
+    {
+        let tseg = new TextSegment();
+        tseg.letter_size = this.letter_size;
+        tseg.spacing     = this.spacing;
+        tseg.fg_color    = this.fg_color;
+        tseg.bg_color    = this.bg_color;
+        tseg.word_wrap   = this.word_wrap;
+        return tseg;
+    }
+
+    toString()
+    {
+        let result = [];
+        if (this.marging_v) result.push(`marging_v: ${this.marging_v}`);
+        if (this.marging_h) result.push(`marging_h: ${this.marging_h}`);
+        if (this.padding_v) result.push(`padding_v: ${this.padding_v}`);
+        if (this.padding_h) result.push(`padding_h: ${this.padding_h}`);
+        if (this.border_width) result.push(`border: ${this.border_width}:${this.border_color}`);
+        if (this.shadow_width) result.push(`shadow: ${this.shadow_width}:${this.shadow_color}`);
+        if (this.corner_r) result.push(`corner: ${this.corner_r}`);
+        if (this.boxes_dir) result.push(`boxdir: ${this.boxes_dir}`);
+        return result.join(', ');
+    }
+}
+
 class TextSegment {
     #letter_size(default_letter_size, total_letters)
     {
@@ -13,7 +146,7 @@ class TextSegment {
 
     letter_size = 0;    // 0 -auto, 1,2 - defined size
     align = '';         // '' - no align, else < or > or #
-    spacing = '';       // '' - no spacing, 'w' - spacing at each symbol, 's' - spacing by 'space' sizes
+    spacing = false;    // false - no spacing, true - spacing at each symbol
     fg_color = '';      // FG color (hex string)
     bg_color = '';      // BG color (hex string)
     word_wrap = false;  // Enable word wrap (by spaces)
@@ -43,7 +176,7 @@ class TextSegment {
             case '1': this.letter_size = 1; break;
             case '2': this.letter_size = 2; break;
             case '<': case '>': case '#': this.align = symbol.at(0); break;
-            case 's': case 'w': this.spacing = symbol.at(0); break;
+            case 's': this.spacing = true; break;
             case 'W': this.word_wrap = true; break;
             case 'c': this.fg_color = symbol.slice(1); break;
             case 'b': this.bg_color = symbol.slice(1); break;
@@ -85,8 +218,8 @@ class TextSegment {
             if (let_width*(part.length + s.length) > width) // Split here
             {
                 if (!idx) return;
-                this.text = splited.slice(idx).join(' ');
-                return this.dup(part);
+                this.text = splited.slice(idx).join(' ').trimStart();
+                return this.dup(part.trimEnd());
             }
             if (idx) part += ' ';
             part += s;
@@ -94,7 +227,7 @@ class TextSegment {
     }
 
     // JS only method to draw current object to Canvas
-    draw_to_canvas(canvas, default_letter_size=0)
+    draw_to_canvas(canvas, last_in_line, default_letter_size=0)
     {
         //l.draw_to_canvas(canvas);
         const sz = this.#letter_size(default_letter_size, 1);
@@ -107,10 +240,28 @@ class TextSegment {
         }
         if (this.fg_color) canvas.fillStyle = `#${this.fg_color}`; else canvas.fillStyle = '#000';
 
+        let incremental;
+
+        if (this.spacing && this.width)
+        {
+            const target_width = this.width;
+            const my_width = sz[0] * this.text.length;
+            const my_increment = sz[0];
+            let current_width = 0;
+            incremental = () => {
+                current_width += my_increment;
+                x = this.x + Math.floor(target_width * current_width / my_width);
+            };
+        }
+        else
+        {
+            incremental = () => {x += sz[0];};
+        }
+
         for(let sym of this.text)
         {
             canvas.fillText(sym, x, this.y+sz[1], sz[1]);
-            x += sz[0];
+            incremental();
         }
     }
 
@@ -119,11 +270,11 @@ class TextSegment {
         let result = '';
         if (this.letter_size) result += `[Size: ${this.letter_size}] `;
         if (this.align)       result += `[Align: ${this.align}] `;
-        if (this.spacing)     result += `[Spacing: ${this.spacing}] `;
+        if (this.spacing)     result += `[Spacing] `;
         if (this.fg_color)    result += `[FG: ${this.fg_color}] `;
         if (this.bg_color)    result += `[BG: ${this.bg_color}] `;
         if (this.word_wrap)   result += '[WordWrap] ';
-        return result + `(${this.x}x${this.y})  "${this.text}"`;
+        return result + `(${this.x}x${this.y}:${this.width})  "${this.text}"`;
     }
 }
 
@@ -161,7 +312,7 @@ class TextLine {
         }
 
         let x_left = x;
-        let x_right = x + width;
+        let x_right = width;
 
         if (aligns_by_types[0]) // Left aligh
         {
@@ -260,6 +411,7 @@ class TextLine {
                     if (!new_item) // Split is unsuccessfull - flush line and try again
                     {
                         if (!new_line.length) throw new WordWrapError(`Can't word wrap line "${this.raw_text}" - word inside is too long`);
+                        new_line.at(-1).text = new_line.at(-1).text.trimEnd();
                         target.push(this.clone(new_line)); 
                         new_line = [];
                         rest_width = width;
@@ -323,7 +475,10 @@ class TextLine {
     // JS only method to draw current object to Canvas
     draw_to_canvas(canvas, default_letter_size=0)
     {
-        for(let l of this.line) l.draw_to_canvas(canvas, default_letter_size);
+        for(let i = 0; i < this.line.length; ++i) 
+        {
+            this.line[i].draw_to_canvas(canvas, i+1 == this.line.length, default_letter_size);
+        }
     }
 
     toString()
@@ -342,77 +497,6 @@ class TextLine {
 function check_color_name(color)
 {
     return color;
-}
-
-class TextGlobalDefinition {
-    marging_v = 5;  // ???
-    marging_h = 5;
-    padding_v = 10;
-    padding_h = 10;
-    border_width = 0;
-    border_color = 'black';
-    shadow_width = 0;
-    shadow_color = "#999";
-    corner_r = 0;
-    fg_color = '';      // FG color (hex string or name)
-    bg_color = '';      // BG color (hex string or name)
-    letter_size = 0;    // 0 -auto, 1,2 - defined size
-    word_wrap = false;  // Enable word wrap (by spaces)
-    boxes_dir = '';     // Multiple boxes direction: '' - auto, 'v' - boxes placed vertically, 'h' - boxes placed horizontaly
-    keyb_type = '';     // Keyboard type: [e][r][d][c]
-    fuzzy_dist = '30%';    // Text distance for Fuzzy compare. Number (in symbols) or string in form <???>% - for percent of answer length (excluding digits)
-
-    // Process '\...' control code. 'symbol' is a pure code (without '\')
-    process_ctrl(symbol) 
-    {
-        let spl = symbol.split(':')
-        switch(spl[0])
-        {
-            case 'm':  this.marging_v = this.marging_h = spl[1] - 0; break;
-            case 'mv': this.marging_v = spl[1] - 0; break;
-            case 'mh': this.marging_h = spl[1] - 0; break;
-            case 'p':  this.padding_v = this.padding_h = spl[1] - 0; break;
-            case 'pv': this.padding_v = spl[1] - 0; break;
-            case 'ph': this.padding_h = spl[1] - 0; break;
-            case 'b':  this.border_width = spl[1] - 0; if (spl.length > 2) this.border_color = spl[2]; break;
-            case 's':  this.shadow_width = spl[1] - 0; if (spl.length > 2) this.shadow_color = spl[2]; break;
-            case 'r':  this.corner_r = spl[1] - 0; break;
-            case 'bg': this.bg_color = check_color_name(spl[1]); break;
-            case 'fg': this.fg_color = check_color_name(spl[1]); break;
-            case '1':  this.letter_size = 1; break;
-            case '2':  this.letter_size = 2; break;
-            case 'W':  this.word_wrap = true; break;
-            case 'd':  this.boxes_dir = spl[1]; if (!(/^(d|v)$/.test(this.boxes_dir))) throw Error(`Global definition 'd:<v|h>' expect 'v' or 'h' symbols, but found '${spl[1]}'`); break;
-            case 'st': this.keyb_type = spl[1]; if (!(/^([edr]+|c)$/.test(this.keyb_type))) throw Error(`st definition wrong '${this.keyb_type}'. Expected [e][r][d] or c`); break;
-            case 'dist': this.fuzzy_dist = spl[1]; if (!(/^\\d+%?$/.test(this.fuzzy_dist))) throw Error(`dist definition wrong '${this.fuzzy_dist}'. Expected number or percent`); break;
-            default: throw Error(`Unknown Global definition '${symbol}'`);
-        }
-    }
-
-    new_text_segment()
-    {
-        let tseg = new TextSegment();
-        tseg.letter_size = this.letter_size;
-        tseg.spacing     = this.spacing;
-        tseg.fg_color    = this.fg_color;
-        tseg.bg_color    = this.bg_color;
-        tseg.word_wrap   = this.word_wrap;
-        return tseg;
-    }
-
-    toString()
-    {
-        let result = [];
-        if (this.marging_v) result.push(`marging_v: ${this.marging_v}`);
-        if (this.marging_h) result.push(`marging_h: ${this.marging_h}`);
-        if (this.padding_v) result.push(`padding_v: ${this.padding_v}`);
-        if (this.padding_h) result.push(`padding_h: ${this.padding_h}`);
-        if (this.border_width) result.push(`border: ${this.border_width}:${this.border_color}`);
-        if (this.shadow_width) result.push(`shadow: ${this.shadow_width}:${this.shadow_color}`);
-        if (this.corner_r) result.push(`corner: ${this.corner_r}`);
-        if (this.boxes_dir) result.push(`boxdir: ${this.boxes_dir}`);
-        return result.join(', ');
-    }
 }
 
 class TextsParser {
@@ -444,7 +528,7 @@ class TextsParser {
         this.#cur_text_line = new TextLine();
         this.#prev_in_line_was_text = false;
         this.#cur_text_segment = this.global_definitions.new_text_segment();
-        for(let str of line.split(/(\\[cb][^\\]+\\|\\.)/))
+        for(let str of line.split(/(\\[cb][^\\]*\\|\\.)/))
         {
             if(str.startsWith('\\'))
             {
