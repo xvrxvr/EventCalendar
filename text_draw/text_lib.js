@@ -6,17 +6,17 @@ class OutOfBounds extends Error {}
 class TextGlobalDefinition {
     #model2html_update_list = []
 
-    marging_v = 5;  // ???
+    marging_v = 5;
     marging_h = 5;
-    padding_v = 10;
-    padding_h = 10;
-    border_width = 0;
-    border_color = 0;
-    shadow_width = 0;
+    padding_v = 5;
+    padding_h = 5;
+    border_width = 1;
+    border_color = '0000';
+    shadow_width = 5;
     shadow_color = color_to_rgb565('999999');
-    corner_r = 0;
+    corner_r = 5;
     fg_color = '';  // FG color (rgb565 hex string)
-    bg_color = '';  // BG color (rgb565 hex string)
+    bg_color = 'AFD5';  // BG color (rgb565 hex string)
     letter_size = 0;    // 0 - auto, 1,2 - defined size
     word_wrap = false;  // Enable word wrap (by spaces)
     boxes_dir = 0;      // Multiple boxes direction: 0 - auto, 1 - boxes placed vertically, 2 - boxes placed horizontaly
@@ -25,10 +25,15 @@ class TextGlobalDefinition {
     min_age = 10;
     max_age = 99;
 
+    center_vertical = true;
+    center_horizontal = true;
+    equal_size_vertical = true;
+    equal_size_horizontal = true;
+
     connect_to_html_form()
     {
         // Number (input type=number):
-        for(const id of ["marging_v", "marging_h", "padding_v", "padding_h", "border_width", "shadow_width", "corner_r"])
+        for(const id of ["marging_v", "marging_h", "padding_v", "padding_h", "border_width", "shadow_width", "corner_r", "min_age", "max_age"])
         {
             const html_item = document.getElementById(`hdr_${id}`);
             this.#model2html_update_list.push( () => {html_item.value = this[id];});
@@ -40,11 +45,12 @@ class TextGlobalDefinition {
             this.#model2html_update_list.push( () => {html_item.value = this.fuzzy_dist;});
             html_item.onchange = () => {this.fuzzy_dist = html_item.value; this.update_from_html();};
         }
-        // Word Wrap - checkbox
+        // checkbox
+        for(const id of ["word_wrap", "center_vertical", "center_horizontal", "equal_size_vertical", "equal_size_horizontal"])
         {
-            const html_ww_item = document.getElementById('hdr_word_wrap');
-            this.#model2html_update_list.push( () => {html_ww_item.checked  = this.word_wrap;});
-            html_ww_item.onchange = () => {this.word_wrap = html_ww_item.checked; this.update_from_html();};
+            const html_item = document.getElementById(`hdr_${id}`);
+            this.#model2html_update_list.push( () => {html_item.checked  = this[id];});
+            html_item.onchange = () => {this[id] = html_item.checked; this.update_from_html();};
         }
         // Color (input type=color):
         for(const id of ["border_color", "shadow_color", "fg_color", "bg_color"])
@@ -105,7 +111,16 @@ class TextGlobalDefinition {
         let opt = this.boxes_dir | (this.letter_size<<2);
         if (this.word_wrap) opt |= 0x10;
         if (this.fuzzy_dist.endsWith('%')) opt |= 0x20;
-        result += hex(opt) + ' ';
+        if (this.center_vertical) opt |= 0x40;
+        if (this.center_horizontal) opt |= 0x80;
+        result += hex(opt);
+
+        opt = 0;
+        if (this.equal_size_vertical) opt |= 1;
+        if (this.equal_size_horizontal) opt |= 2;
+        result += hex(opt, 1);
+         
+        result += ' ';
 
         const c = (color, comma=true) => {
             result += color ? color : '-'; 
@@ -139,45 +154,23 @@ class TextGlobalDefinition {
         if (kb_sel & 4) this.keyb_type += 'n';
         if (kb_sel & 8) this.keyb_type += 'c';
 
-        let opt = Number.parseInt(value.slice(12, 13), 16);
+        let opt = Number.parseInt(value.slice(12, 14), 16);
         this.boxes_dir = opts & 3;
         this.letter_size = (opt >> 2) & 3;
         this.word_wrap = (opt & 0x10)!=0;
         if (opt & 0x20) this.fuzzy_dist += '%';
+        this.center_vertical = (opt & 0x40) != 0;
+        this.center_horizontal = (opt & 0x80) !=0;
+
+        opt = Number.parseInt(value.slice(14, 15), 16);
+        this.equal_size_vertical = (opt & 1) != 0;
+        this.equal_size_horizontal = (opt & 2) != 0;
 
         const colors      = vals[1].split(',');
         this.bg_color     = colors[0] == '-' ? '' : colors[0];
         this.border_color = colors[1] == '-' ? '' : colors[1];
         this.shadow_color = colors[2] == '-' ? '' : colors[2];
         this.fg_color     = colors[3] == '-' ? '' : colors[3];       
-    }
-
-
-    // Process '\...' control code. 'symbol' is a pure code (without '\')
-    process_ctrl(symbol) 
-    {
-        let spl = symbol.split(':')
-        switch(spl[0])
-        {
-            case 'm':  this.marging_v = this.marging_h = spl[1] - 0; break;
-            case 'mv': this.marging_v = spl[1] - 0; break;
-            case 'mh': this.marging_h = spl[1] - 0; break;
-            case 'p':  this.padding_v = this.padding_h = spl[1] - 0; break;
-            case 'pv': this.padding_v = spl[1] - 0; break;
-            case 'ph': this.padding_h = spl[1] - 0; break;
-            case 'b':  this.border_width = spl[1] - 0; if (spl.length > 2) this.border_color = spl[2]; break;
-            case 's':  this.shadow_width = spl[1] - 0; if (spl.length > 2) this.shadow_color = spl[2]; break;
-            case 'r':  this.corner_r = spl[1] - 0; break;
-            case 'bg': this.bg_color = check_color_name(spl[1]); break;
-            case 'fg': this.fg_color = check_color_name(spl[1]); break;
-            case '1':  this.letter_size = 1; break;
-            case '2':  this.letter_size = 2; break;
-            case 'W':  this.word_wrap = true; break;
-            case 'd':  this.boxes_dir = spl[1]; if (!(/^(d|v)$/.test(this.boxes_dir))) throw Error(`Global definition 'd:<v|h>' expect 'v' or 'h' symbols, but found '${spl[1]}'`); break;
-            case 'st': this.keyb_type = spl[1]; if (!(/^([edr]+|c)$/.test(this.keyb_type))) throw Error(`st definition wrong '${this.keyb_type}'. Expected [e][r][d] or c`); break;
-            case 'dist': this.fuzzy_dist = spl[1]; if (!(/^\\d+%?$/.test(this.fuzzy_dist))) throw Error(`dist definition wrong '${this.fuzzy_dist}'. Expected number or percent`); break;
-            default: throw Error(`Unknown Global definition '${symbol}'`);
-        }
     }
 
     new_text_segment()
@@ -307,7 +300,7 @@ class TextSegment {
             case '2': this.letter_size = 2; break;
             case '<': case '>': case '#': this.align = symbol.at(0); break;
             case 's': this.spacing = true; break;
-            case 'W': this.word_wrap = true; break;
+            case 'w': this.word_wrap = true; break;
             case 'c': this.fg_color = symbol.slice(1); break;
             case 'b': this.bg_color = symbol.slice(1); break;
             default: this.text += symbol; break;
@@ -365,10 +358,11 @@ class TextSegment {
         let x = this.x;
         if (this.bg_color) 
         {
-            canvas.fillStyle = `#${this.bg_color}`;
+            canvas.fillStyle = `#${rgb565_to_color(this.bg_color)}`;
             canvas.fillRect(this.x, this.y, sz[0]*this.text.length, sz[1]);
         }
-        if (this.fg_color) canvas.fillStyle = `#${this.fg_color}`; else canvas.fillStyle = '#000';
+        if (this.fg_color) canvas.fillStyle = `#${rgb565_to_color(this.fg_color)}`; 
+        else canvas.fillStyle = '#000'; // !!! Pass default color from TextGlobalDefinition
 
         let incremental;
 
@@ -442,7 +436,7 @@ class TextLine {
         }
 
         let x_left = x;
-        let x_right = width;
+        let x_right = x + width;
 
         if (aligns_by_types[0]) // Left aligh
         {
@@ -492,7 +486,7 @@ class TextLine {
     text_size(default_letter_size=0)
     {
         let w=0;
-        let h=0;
+        let h=16;
         for(let token of this.line)
         {
             const size = token.text_size(default_letter_size);
@@ -633,14 +627,6 @@ class TextsParser {
     #prev_in_line_was_text = false;
     #cur_text_line;
 
-    #parse_global_line(line)
-    {
-        for(let ctrl of line.split(/\s+/))
-        {
-            if (ctrl) this.global_definitions.process_ctrl(ctrl);
-        }
-    }
-
     #flush_text()
     {
         if (this.#prev_in_line_was_text)
@@ -678,16 +664,17 @@ class TextsParser {
     }
 
 /////////////////////// Public part ///////////////////////////////////////////////
-    global_definitions = new TextGlobalDefinition();
+    global_definitions;
     text_lines = [];
+
+    constructor(gl) {this.global_definitions = gl;}
 
     parse_text(lines)
     {
         this.text_lines = [];
         for(let str of lines.split('\n'))
         {
-            if (str.startsWith('\\!')) this.#parse_global_line(str.slice(2));
-            else this.#parse_line(str);
+            this.#parse_line(str);
         }
         while(this.text_lines.length && !this.text_lines.at(-1).line.length) this.text_lines.pop();
     }
@@ -718,8 +705,7 @@ class TextsParser {
             it.word_wrap(new_text_lines, width, this.global_definitions.letter_size);
         }
 
-        let result = new TextsParser();
-        result.global_definitions = this.global_definitions;
+        let result = new TextsParser(this.global_definitions);
         result.text_lines = new_text_lines;
         return result;
     }
@@ -748,27 +734,243 @@ class TextsParser {
         }
     }
 
-    // Evaluate Box size and runs position evaluation
-    // Returns array with Box definition [<width>, <height>]
-    eval_box(x, y)
+    // Evaluate minimal box size (external dims). Retuns as array
+    min_box_size()
     {
         const sz = this.text_size();
-        const inner_width = sz[0] + 2*this.global_definitions.padding_h;
-        const inner_height = sz[1] + 2*this.global_definitions.padding_v;
+        const res = this.reserved_space();
 
-        x += this.global_definitions.padding_h + this.global_definitions.border_width;
-        y += this.global_definitions.padding_v + this.global_definitions.border_width;
+        return [sz[0]+res[0], sz[1]+res[1]];
+    }
 
-        this.eval_positions(x, y, sz[0], sz[1]);
+    // How much space reserved between Box outside boundary and text inside
+    reserved_space()
+    {
+        const gap = this.global_definitions.shadow_width + 2 * Math.max(this.global_definitions.border_width, this.global_definitions.corner_r ? this.global_definitions.corner_r + 1 : 0);
+        return [2*this.global_definitions.padding_h + gap, 2*this.global_definitions.padding_v + gap];
+    }
 
-        return [inner_width + 2*this.global_definitions.border_width + this.global_definitions.shadow_width, 
-            inner_height + 2*this.global_definitions.border_width + this.global_definitions.shadow_width];
+    // Evaluate Box size and runs position evaluation
+    // Returns array with Box definition [<width>, <height>]
+    eval_box(x, y, width = 0, height = 0)
+    {
+        const sz = this.min_box_size();
+
+        if (!width) width = sz[0];
+        if (!height) height = sz[1];
+
+        if (width < sz[0] || height < sz[1]) throw new OutOfBounds("Box doesn't fit");
+
+        const gap = Math.max(this.global_definitions.border_width, this.global_definitions.corner_r ? this.global_definitions.corner_r + 1 : 0);
+
+        const box_min_gap_left = gap + this.global_definitions.padding_h;
+        const box_min_gap_right = box_min_gap_left + this.global_definitions.shadow_width;
+        const box_min_gap_top = gap + this.global_definitions.padding_v;
+        const box_min_gap_bottom = box_min_gap_top + this.global_definitions.shadow_width;
+
+        const tsz = this.text_size();
+
+        let dx = box_min_gap_left;
+        let dy = box_min_gap_top;
+        let w, h;
+
+        if (this.global_definitions.center_horizontal)
+        {
+            dx += (width - box_min_gap_right - box_min_gap_left - tsz[0]) >> 1;
+            w = tsz[0];
+        }
+        else
+        {
+            w = width - box_min_gap_left - box_min_gap_right;
+        }
+        if (this.global_definitions.center_vertical)
+        {
+            dy += (height - box_min_gap_bottom - box_min_gap_top - tsz[1]) >> 1;
+            h = tsz[1];
+        }
+        else
+        {
+            h = height - box_min_gap_top - box_min_gap_bottom;
+        }
+
+        this.eval_positions(x+dx, y+dy, w, h);
+
+        return [width, height];
     }
 
     // JS only method to draw current TextParser to Canvas
     draw_to_canvas(canvas)
     {
         for(let line of this.text_lines) line.draw_to_canvas(canvas, this.global_definitions.letter_size);
+    }
+
+    draw_box_to_canvas(canvas, x, y, width, height)
+    {
+        if (this.global_definitions.shadow_width)
+        {
+            width -= this.global_definitions.shadow_width;
+            height -= this.global_definitions.shadow_width;
+            canvas.fillStyle = '#' + rgb565_to_color(this.global_definitions.shadow_color);
+            if (this.global_definitions.corner_r)
+            {
+                canvas.beginPath();
+                canvas.roundRect(x+this.global_definitions.shadow_width, y+this.global_definitions.shadow_width, width, height, this.global_definitions.corner_r);
+                canvas.fill();
+            }
+            else
+            {
+                canvas.fillRect(x+this.global_definitions.shadow_width, y+this.global_definitions.shadow_width, width, height);
+            }
+        }
+        
+        canvas.fillStyle = '#' + rgb565_to_color(this.global_definitions.bg_color);
+        if (this.global_definitions.corner_r)
+        {
+            canvas.beginPath();
+            canvas.roundRect(x, y, width, height, this.global_definitions.corner_r);
+            canvas.fill();
+            if (this.global_definitions.border_width)
+            {
+                canvas.strokeStyle = '#' + rgb565_to_color(this.global_definitions.border_color);
+                for(let i = 0; i < this.global_definitions.border_width; ++i)
+                {
+                    canvas.beginPath();
+                    canvas.roundRect(x+i, y+i, width-2*i, height-2*i, this.global_definitions.corner_r);
+                    canvas.stroke();
+                }
+            }
+        }
+        else
+        {
+            canvas.fillRect(x, y, width, height);
+            if (this.global_definitions.border_width)
+            {
+                canvas.strokeStyle = '#' + rgb565_to_color(this.global_definitions.border_color);
+                for(let i = 0; i < this.global_definitions.border_width; ++i)
+                {
+                    canvas.strokeRect(x+i, y+i, width-2*i, height-2*i);
+                }
+            }
+        }
+    }
+
+    run_ww(width)
+    {
+        let sz = this.min_box_size();
+        if (sz[0] > width)
+        {
+            const w = width-this.reserved_space()[0];
+            if (w<0) throw new OutOfBounds("Not enough space to draw inside Box");
+            return this.word_wrap(w);
+        }
+        return this;
+    }
+
+    draw_one_box_centered(canvas, x=0, y=0, width=400, height=240)
+    {
+        let self = this.run_ww(width - 2*this.global_definitions.marging_h);
+        const mw = 2*this.global_definitions.marging_h;
+        const mh = 2*this.global_definitions.marging_v;
+        let sz = self.min_box_size();
+        if (sz[1] > height - mh || sz[0] > width - mw) throw new OutOfBounds("Box doesn't fit");
+        x += ((width-sz[0]-mw) >> 1) + this.global_definitions.marging_h;
+        y += ((height-sz[1]-mh) >> 1) + this.global_definitions.marging_v;
+        self.eval_box(x, y);
+        self.draw_box_to_canvas(canvas, x, y, ...sz);
+        self.draw_to_canvas(canvas);
+    }
+
+    draw_one_box(canvas, x, y, width, height)
+    {
+        let self = this.run_ww(width);
+        let sz = self.min_box_size();
+        if (sz[1] > height || sz[0] > width) throw new OutOfBounds("Box doesn't fit");
+        self.eval_box(x, y, width, height);
+        self.draw_box_to_canvas(canvas, x, y, width, height);
+        self.draw_to_canvas(canvas);
+    }
+
+    draw_selection_of_boxes(canvas, sel_array, x=0, y=0, width=400, height=240)
+    {
+        let selected = [];
+        if (sel_array.length > this.text_lines.length) sel_array.resize(this.text_lines.length);
+        for(const idx of sel_array)
+        {
+            let result = new TextsParser(this.global_definitions);
+            result.text_lines = [this.text_lines[idx]];
+            result = result.run_ww(width);
+            const sz = result.min_box_size();
+            if (sz[0] > width || sz[1] > height) throw new OutOfBounds("Box doesn't fit");
+            selected.push({'obj': result, 'sz': sz});
+        }
+        if (selected.length == 0) return;
+        if (selected.length == 1) {this.draw_one_box_centered(canvas, x, y, width, height); return;}
+        if (this.global_definitions.equal_size_horizontal || this.global_definitions.equal_size_vertical)
+        {
+            let sz = selected[0].sz.flat();
+            for(const it of selected)
+            {
+                sz[0] = Math.max(sz[0], it.sz[0]);
+                sz[1] = Math.max(sz[1], it.sz[1]);
+            }
+            for(let it of selected) 
+            {
+                if (this.global_definitions.equal_size_horizontal) it.sz[0] = sz[0];
+                if (this.global_definitions.equal_size_vertical)   it.sz[1] = sz[1];
+            }
+        }
+
+        let yy = y + 2*this.global_definitions.marging_v;
+        let xx = x + 2*this.global_definitions.marging_h;
+        let total_width = 0;  // Pure width and height of all boxes (without margins)
+        let total_height = 0;
+        for(let it of selected)
+        {
+            xx += it.sz[0]+this.global_definitions.marging_h;
+            yy += it.sz[1]+this.global_definitions.marging_v;
+            total_width += it.sz[0];
+            total_height += it.sz[1];
+        }
+
+        if (this.global_definitions.boxes_dir != 2) // Try vertically first
+        {
+            if (yy <= height) // We fit vertically
+            {
+                let total_gap = height - 2*this.global_definitions.marging_v - total_height;
+                let rest_boxes = selected.length - 1;
+                let yy = y + this.global_definitions.marging_v;
+                for(let box of selected)
+                {
+                    const xx = x + (width - box.sz[0]) >> 1;
+                    box.obj.draw_one_box(canvas, xx, yy, ...box.sz);
+                    const ins = Math.floor(total_gap / rest_boxes);
+                    yy += box.sz[1] + ins;
+                    --rest_boxes;
+                    total_gap -= ins;
+                }
+                return;
+            }
+        }
+        if (this.global_definitions.boxes_dir != 1) // Try horizontally last
+        {
+            if (xx <= width) // We fit horizontally
+            {
+                let total_gap = width - 2*this.global_definitions.marging_h - total_width;
+                let rest_boxes = selected.length - 1;
+                let xx = x + this.global_definitions.marging_h;
+                for(let box of selected)
+                {
+                    const yy = y + (height - box.sz[1]) >> 1;
+                    box.obj.draw_one_box(canvas, xx, yy, ...box.sz);
+                    const ins = Math.floor(total_gap / rest_boxes);
+                    xx += box.sz[0] + ins;
+                    --rest_boxes;
+                    total_gap -= ins;
+                }
+                return;
+            }
+        }
+        throw new OutOfBounds("Box doesn't fit");
     }
 
     toString()

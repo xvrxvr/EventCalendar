@@ -17,6 +17,7 @@ set(srcs
     input_hw_fg.cpp
     bg_image.cpp
     box_draw.cpp
+    text_draw.cpp
     main.cpp
 )
 

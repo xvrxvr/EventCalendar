@@ -670,12 +670,12 @@ inline int16_t midx(int syms_len)
     return (RES_X - 20 - syms_len*8) / 2;
 }
 
-void LCD::text(const char* text, int16_t x, int16_t y)
+void LCD::text(const char* text, int16_t x, int16_t y, int txt_len)
 {
     LCDAccess lcd;
     CS_EN cs_en;
 
-    uint8_t txt_len = strlen(text);
+    if (txt_len == -1) txt_len = strlen(text);
     if (x == -1) x = midx(txt_len);
     _SetWriteAreaDelta(x, y, txt_len<<3, 16);
     _WriteCommand(REG_WRITEMEM); //Write to RAM
@@ -698,12 +698,12 @@ void LCD::text(const char* text, int16_t x, int16_t y)
     wait4lcd_vacant();
 }
 
-void LCD::text2(const char* text, int16_t x, int16_t y)
+void LCD::text2(const char* text, int16_t x, int16_t y, int txt_len)
 {
     LCDAccess lcd;
     CS_EN cs_en;
 
-    uint8_t txt_len = strlen(text);
+    if (txt_len == -1) txt_len = strlen(text);
     if (x == -1) x = midx(txt_len*2);
     _SetWriteAreaDelta(x, y, txt_len<<4, 32);
     _WriteCommand(REG_WRITEMEM); //Write to RAM

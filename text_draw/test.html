@@ -21,8 +21,6 @@
 <br>
 <button type="button" onclick="run_test()">Run!</button>
 <td>
-<div id="result"></div>
-</tr></table>
 
 <fieldset id="HeaderTable" style="width: fit-content;">
 <legend>Text Visual Appearance setup</legend>
@@ -37,7 +35,33 @@
 </table>
 
 </fieldset>
+<br>
+
+<fieldset>
+<legend>Other Colors</legend>
+<table>
+<tr><th><label for="hdr_fg_color">Default Text color:</label><td><input type="color" id="hdr_fg_color" value="#000" /></tr>
+<tr><th><label for="hdr_bg_color">Panel color:</label><td><input type="color" id="hdr_bg_color" value="#000" /></tr>
+</table>
+
+</fieldset>
+<br>
+
+<fieldset>
+<legend>Answer Boxes (Selection) Setup</legend>
+<table>
+<tr><th><label for="hdr_center_vertical">Center text vertically in Box:</label><td><input type="checkbox" id="hdr_center_vertical"/></tr>
+<tr><th><label for="hdr_center_horizontal">Center text horizontally in Box:</label><td><input type="checkbox" id="hdr_center_horizontal"/></tr>
+<tr><th><label for="hdr_equal_size_vertical">Make Boxes equal vertically sized:</label><td><input type="checkbox" id="hdr_equal_size_vertical"/></tr>
+<tr><th><label for="hdr_equal_size_horizontal">Make Boxes equal horizontally sized:</label><td><input type="checkbox" id="hdr_equal_size_horizontal"/></tr>
+</table>
+
+</fieldset>
+
+
+
 <td>
+
 <fieldset>
 <legend>Box Sizing</legend>
 
@@ -48,18 +72,18 @@
 </table>
 
 </fieldset>
-
-</tr><tr>
-<td>
+<br>
 <fieldset>
-<legend>Other Colors</legend>
+<legend>Age</legend>
+
 <table>
-<tr><th><label for="hdr_fg_color">Default Text color:</label><td><input type="color" id="hdr_fg_color" value="#000" /></tr>
-<tr><th><label for="hdr_bg_color">Panel color:</label><td><input type="color" id="hdr_bg_color" value="#000" /></tr>
+<tr><th><label for="hdr_min_age">Min:<td><input type="number" id="hdr_min_age" min="0" max="255"/>&nbsp;&nbsp;&nbsp;
+<th><label for="hdr_max_age">Max:<td><input type="number" id="hdr_max_age" min="0" max="255"/></tr>
 </table>
 
 </fieldset>
-<td>
+
+<br>
 <fieldset>
 <legend>Options</legend>
 
@@ -99,6 +123,10 @@
 
 </fieldset>
 
+</tr></table>
+
+<div id="result"></div>
+
 </form>
 
 <script>
@@ -117,22 +145,30 @@ function run_test()
     let t = document.getElementById('text').value;
     let c = document.getElementById('canvas').getContext("2d");
 
-    let p= new TextsParser();
-//    try {
+    let p= new TextsParser(gl);
+    try {
         p.parse_text(t);
-        let box_sz = p.eval_box(0, 0);
-        let ww = p.word_wrap(350);
-        box_sz = ww.eval_box(0, 0);
-        document.getElementById('result').innerText = `${p}\n${p.have_letter_size ? "Explicit Letter size" : ""}\nText size: ${p.text_size()}\n\nWord Wrap to 350:\n${ww}\nText size: ${ww.text_size()}\nBox size: ${box_sz}`;
+//        let box_sz = p.eval_box(0, 0);
+//        let ww = p.word_wrap(350);
+//        box_sz = ww.eval_box(0, 0);
+//        document.getElementById('result').innerText = `${p}\n${p.have_letter_size ? "Explicit Letter size" : ""}\nText size: ${p.text_size()}\n\nWord Wrap to 350:\n${ww}\nText size: ${ww.text_size()}\nBox size: ${box_sz}`;
+    
 
         c.fillStyle = 'white';
         c.fillRect(0, 0, 400, 240);
-        ww.draw_to_canvas(c);
 
-//    }
-//    catch (e) {
-//        document.getElementById('result').innerText = e.toString();
-//    }
+//        p.draw_one_box_centered(c);
+        p.draw_selection_of_boxes(c, [0, 1, 2, 3]);
+
+        document.getElementById('result').innerText = 'Done';
+
+//        ww.draw_box_to_canvas(c, 0, 0, ...box_sz);
+//        ww.draw_to_canvas(c);
+
+    }
+    catch (e) {
+        document.getElementById('result').innerText = e.toString();
+    }
 }
 
 </script>

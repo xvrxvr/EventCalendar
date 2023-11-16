@@ -12,7 +12,7 @@ Control-option:
     \> - Right align
     \# - Center
     \s - Fit line in box width by adding spaces between letters
-    \W         - Enable word wrap (by spaces)
+    \w         - Enable word wrap (by spaces)
     \c<color>\ - Set FG color for next text
     \b<color>\ - Set background color for next text
     \\ - \
@@ -34,7 +34,7 @@ Global options (line started with \!)
     fg:<color>  - Default text color for Box
     1           - Set default letter size to 1 (and turn off autosizing)
     2           - Set default letter size to 2 (and turn off autosizing)
-    W           - Enable word wrap (by spaces)
+    w           - Enable word wrap (by spaces)
     d:(v|h)     - Direction for multiple Boxes (Vertical/Horizontal). By default - auto select
     st:[e][r][d][c] -  Selection type (keyboard): English/Russina/Digits/Choise (no keyboard but list of alternatives)
     dist:<num>  - Max text distance for fuzzy compare
@@ -74,7 +74,11 @@ HH
  2:3 - Default letter size (0-2)
  4   - Enable word wrap (by spaces)
  5   - 0 - 'Max fuzzy compare distance' is absolute number, 1 - percent
- 6:7 - Reserved
+ 6   - Center text inside oversized Box vertically
+ 7   - Center text inside oversized Box horizontally
+H
+ 0   - Make equal horizontal size boxes in Answer Selector
+ 1   - Make equal vertical size boxes in Answer Selector
 
 Colors group (can be '-' for default or missing one):
 

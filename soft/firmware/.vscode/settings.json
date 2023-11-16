@@ -16,6 +16,7 @@
         "xstring": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "utility": "cpp"
     }
 }

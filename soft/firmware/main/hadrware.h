@@ -77,8 +77,8 @@ public:
     void set_bg(uint16_t color) {bc_high = color >> 8; bc_low = color & 0xFF;}
 
     // Emit text. Use -1 for x coordinate to emit in center of screen
-    void text(const char* text, int16_t x, int16_t y);
-    void text2(const char* text, int16_t x, int16_t y);
+    void text(const char* text, int16_t x, int16_t y, int length=-1);
+    void text2(const char* text, int16_t x, int16_t y, int length=-1);
 };
 
 inline uint16_t rgb(uint8_t red, uint8_t green, uint8_t blue)
