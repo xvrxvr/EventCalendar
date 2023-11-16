@@ -6,38 +6,171 @@ $<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="styles.css">
+
+<style>
+
+#HeaderTable input[type="number"] {
+    width: 4em;
+}
+
+</style>
+
 <script src="jslib.js"></script>
+<script src="text_lib.js"></script>
 </head>
 
 <body>
 
-<form action="../action/update_challenge.html" method="post" enctype="multipart/form-data">
+<form>
 
 <table><tr><td>
 
-<table><tr><td>
+    <table><tr><td>
 
-Загадки:<br>
-<select id="index" name="index" size="20" style="min-width:20em" onchange="upd_challenge()">
-$[HTMLChallengeOptions]
-</select>
+    Загадки:<br>
+    <select id="index" name="index" size="20" style="min-width:20em" onchange="upd_challenge()">
+    $[HTMLChallengeOptions]
+    </select>
 
 
-</td><td>
-<p>Возраст: от <input type="number" id="min-age" name="min_age" min="1" max="255" value="18" style="width:3em">, до <input type="number" id="max-age" name="max_age" min="1" max="255" value="99" style="width:3em"></p>
-<p>Текст загадки:<br><textarea id="text" name="text" rows="10" cols="40">?</textarea></p>
-<p>Ответ (и неправильные ответы):<br><textarea id="answer" name="answer" rows="10" cols="40">?</textarea></p>
+    </td><td>
+    <p>Текст загадки:<br><textarea id="text" name="text" rows="10" cols="40" onchange="preview(true)">?</textarea></p>
+    <p>Ответ (и неправильные ответы):<br><textarea id="answer" name="answer" rows="10" cols="40" onchange="preview(true)">?</textarea></p>
 
-</td></tr></table>
-<p><button type="submit">Обновить загадку</button></p>
+    </td></tr></table>
+
+<p><button type="button" onclick="update_current_challenge()">Сохранить загадку</button></p>
 <p><button type="button" onclick="new_challenge()">Добавить новую загадку</button></p>
 <p><button type="button" onclick="del_challenge()" class="red-button">Удалить загадку</button></p>
-<p><button type="button" onclick="G(setup')">Назад в setup</button></p>
-</td></tr></table>
+<p><button type="button" onclick="G('setup')">Назад в setup</button></p>
+</td>
+
+<td>
+
+    <fieldset id="HeaderTable" style="width: fit-content;">
+    <legend>Text Visual Appearance setup</legend>
+
+    <table><tr><td>
+    <fieldset>
+    <legend>Box Model</legend>
+
+    <table><tr><th><th>Vertical<th>Horizontal</tr>
+    <tr><th><label for="hdr_marging_v">Margin (0-63):</label><td><input type="number" id="hdr_marging_v" min="0" max="63"/><td><input type="number" id="hdr_marging_h" min="0" max="63"/></tr>
+    <tr><th><label for="hdr_padding_v">Padding (0-63):</label><td><input type="number" id="hdr_padding_v" min="0" max="63"/><td><input type="number" id="hdr_padding_h" min="0" max="63"/></tr>
+    </table>
+
+    </fieldset>
+    <br>
+
+    <fieldset>
+    <legend>Other Colors</legend>
+    <table>
+    <tr><th><label for="hdr_fg_color">Default Text color:</label><td><input type="color" id="hdr_fg_color" value="#000" /></tr>
+    <tr><th><label for="hdr_bg_color">Panel color:</label><td><input type="color" id="hdr_bg_color" value="#000" /></tr>
+    </table>
+
+    </fieldset>
+    <br>
+
+    <fieldset>
+    <legend>Answer Boxes (Selection) Setup</legend>
+    <table>
+    <tr><th><label for="hdr_center_vertical">Center text vertically in Box:</label><td><input type="checkbox" id="hdr_center_vertical"/></tr>
+    <tr><th><label for="hdr_center_horizontal">Center text horizontally in Box:</label><td><input type="checkbox" id="hdr_center_horizontal"/></tr>
+    <tr><th><label for="hdr_equal_size_vertical">Make Boxes equal vertically sized:</label><td><input type="checkbox" id="hdr_equal_size_vertical"/></tr>
+    <tr><th><label for="hdr_equal_size_horizontal">Make Boxes equal horizontally sized:</label><td><input type="checkbox" id="hdr_equal_size_horizontal"/></tr>
+    </table>
+
+    </fieldset>
+
+    <td>
+
+    <fieldset>
+    <legend>Box Sizing</legend>
+
+    <table>
+    <tr><th><label for="hdr_corner_r">Corner radius (0-63):</label><td colspan="2"><input type="number" id="hdr_corner_r" min="0" max="63"/></tr>
+    <tr><th><label for="hdr_border_width">Border (0-63):</label><td><input type="number" id="hdr_border_width" min="0" max="63"/><td><input type="color" id="hdr_border_color" value="#000"/></tr>
+    <tr><th><label for="hdr_shadow_width">Shadow (0-63):</label><td><input type="number" id="hdr_shadow_width" min="0" max="63"/><td><input type="color" id="hdr_shadow_color" value="#000" /></tr>
+    </table>
+
+    </fieldset>
+    <br>
+    <fieldset>
+    <legend>Age</legend>
+
+    <table>
+    <tr><th><label for="hdr_min_age">Min:<td><input type="number" id="hdr_min_age" min="0" max="255"/>&nbsp;&nbsp;&nbsp;
+    <th><label for="hdr_max_age">Max:<td><input type="number" id="hdr_max_age" min="0" max="255"/></tr>
+    </table>
+
+    </fieldset>
+
+    <br>
+    <fieldset>
+    <legend>Options</legend>
+
+    <table>
+    <tr><th><label for="hdr_letter_size">Default char size:</label><td>
+    <select id="hdr_letter_size">
+      <option value="0">Not set</option>
+      <option value="1">Small</option>
+      <option value="2">Big</option>
+    </select>
+    <th><label for="hdr_keyb_type">Input type:</label></tr>
+
+    <tr><th><label for="hdr_boxes_dir">Answer boxes layout:</label><td>
+    <select id="hdr_boxes_dir">
+      <option value="">Auto</option>
+      <option value="v">Vertical</option>
+      <option value="h">Horizontal</option>
+    </select>
+    <td rowspan="3">
+    <select id="hdr_keyb_type" multiple size="5">
+      <optgroup label="Keyboard">
+        <option value="r">Russian</option>
+        <option value="e">English</option>
+        <option value="n">Numeric</option>
+      </optgroup>
+      <option value="c">Choice</option>
+    </select>
+    </tr>
+    <tr><th><label for="hdr_fuzzy_dist">Fuzzy compare distance<br>(symbols or percent):</label><td><input type="text" id="hdr_fuzzy_dist" maxlength="4" size="5" pattern="^\d{0,3}%?$"/></tr>
+    <tr><th><label for="hdr_word_wrap">Word Wrap:</label><td><input type="checkbox" id="hdr_word_wrap" /></tr>
+    </table>
+
+    </fieldset>
+
+    </tr></table>
+
+    </fieldset>
+
+    <span>
+        <canvas id="example" width="400" height="240" style="width:500px; height:300px; border: 2px solid black;"></canvas>
+        <canvas id="answers" width="400" height="240" style="width:500px; height:300px; border: 2px solid black;"></canvas>
+    </span>
+    <br>
+    <div id="result"></div>
+
+</tr></table>
 
 </form>
 
+<input type="color" id="dummy_color_picker" style='opacity:0;width:1px;position:absolute;' onchange="color_done()"/>
+
 <script>
+
+const gl = new TextGlobalDefinition();
+
+const example_canvas = document.getElementById('example').getContext("2d");
+const answers_canvas = document.getElementById('answers').getContext("2d");
+const msg = document.getElementById('result');
+const text_area = document.getElementById('text');
+const answer_area = document.getElementById('answer');
+const color_picker = document.getElementById('dummy_color_picker');
+
+let modified = false;
+let current_challenge_index;
 
 function new_challenge()
 {
@@ -64,29 +197,117 @@ function del_challenge()
     let opts = I("index").options;
     if (opts.selectedIndex == -1) return;
     if (!confirm("Удалить загадку? Вы уверены?")) return;
+    modified = false;
     send_del_challenge(opts.options[opts.selectedIndex].value);
     opts.remove(opts.selectedIndex);
     upd_challenge();
+    clr();
 }
 
 function upd_challenge()
 {
+    if (modified) update_current_challenge();
+
     let opts = I("index").options;
+    current_challenge_index = opts.selectedIndex;
     if (opts.selectedIndex == -1)
     {
         I("text").value = "";
-        I("answer").value = "";        
-        I("min-age").value = 1;
-        I("max-age").value = 99;
+        I("answer").value = "";
+        clr();
         return;
     }
     send_get_challenge(opts[opts.selectedIndex].value, (json) => {
-        I("text").value = json.text;
+        I("text").value = json.text;       // !!! Pack/unpack full definition
         I("answer").value = json.answer;        
-        I("min-age").value = json.min_age;
-        I("max-age").value = json.max_age;
+        preview();
     });
 }
+
+function update_current_challenge()
+{
+    let challenge = I("text").value;
+    const answers = I("answer").value;
+
+    while(challenge.length && challenge.at(-1) == '\n') challenge.trimEnd(1);
+    challenge += '\n';
+    const total = challenge.match(/\n/g).length;
+    
+    const data_to_send = 'V1 ${total} ${gl.header}\n' + challenge + answers;
+//  action="../action/update_challenge.html" method="post" enctype="multipart/form-data"
+    modified = false;
+    preview();
+}
+
+
+gl.connect_to_html_form();
+gl.update_to_html();
+
+function clr()
+{
+    example_canvas.fillStyle = 'white';
+    example_canvas.fillRect(0, 0, 400, 240);
+    answers_canvas.fillStyle = 'white';
+    answers_canvas.fillRect(0, 0, 400, 240);
+    msg.innerText = modified ? '* MODIFIED * (Save required!)' : '';
+}
+
+function preview(is_modification = false)
+{
+    if (is_modification) modified = true;
+
+    let msg_str = '';
+
+    clr();
+
+    let p= new TextsParser(gl);
+    try {
+        p.parse_text(text_area.value);
+        p.draw_one_box_centered(example_canvas);
+    }
+    catch (e) {
+        msg_str = e.toString();
+    }
+
+    p= new TextsParser(gl);
+    try {
+        p.parse_text(answer_area.value);
+        p.draw_selection_of_boxes(answers_canvas, [0, 1, 2, 3]);
+    }
+    catch (e) {
+        if (msg) msg += '\n';
+        msg_str += e.toString();
+    }
+
+    if (!msg_str && modified) msg_str = '* MODIFIED * (Save required!)';
+    msg.innerText = msg_str;
+}
+
+gl.update_from_html = preview;
+
+let active_area;
+let active_code;
+
+function text_area_keypress(area, event)
+{
+    if (event.altKey && (event.code == "KeyC" || event.code == "KeyB"))
+    {
+        active_area = area;
+        active_code = event.code.at(-1).toLowerCase();
+        event.preventDefault();
+        color_picker.showPicker();
+    }
+}
+
+function color_done()
+{
+     const color = color_to_rgb565(color_picker.value.slice(1));
+     active_area.setRangeText(`\\${active_code}${color}\\`);
+     preview(true);
+}
+
+text_area.onkeydown = (event) => text_area_keypress(text_area, event);
+answer_area.onkeydown = (event) => text_area_keypress(enswer_area, event);
 
 
 </script>

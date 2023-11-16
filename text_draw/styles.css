@@ -1,0 +1,95 @@
+button {
+  padding: 15px 25px;
+  font-size: 24px;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  color: #fff;
+  background-color: #04AA6D;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
+  width: 100%;
+}
+
+button:hover {background-color: #3e8e41}
+
+button:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+.red-button {
+  background-color: #f4511e;
+}
+
+.red-button:hover {background-color: #da190b}
+
+.door-p33 {width: 33.3%; display:inline-block; margin: 2px}
+.door-p25 {width: 25%; display:inline-block; margin: 2px}
+.door-p50 {width: 50%; display:inline-block; margin: 2px}
+.door-p100 {width: 100%; display:inline-block; white-space: nowrap; padding-bottom: 5px}
+
+.disabled {
+    background-color: #e7e7e7; 
+    color: black;
+    box-shadow: none;
+}
+
+.disabled:hover {background-color: #e7e7e7}
+
+.disabled:active {
+    background-color: #e7e7e7;
+    transform: none;
+    box-shadow: none;
+}
+
+.door-table {
+    border: 1px solid; 
+    padding-right: 15px; 
+    padding-bottom: 5px;
+}
+
+.fgl-box {
+  padding: 3px 3px;
+  text-align: center;
+  outline: none;
+  color: #fff;
+  background-color: LightGray;
+  border: none;
+  border-radius: 7px;
+  box-shadow: 3px 3px #999;
+  width: 4em;
+  height: 1em;
+  transition: background-color 1s;
+}
+
+.fgl-ptr {
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+}
+
+.fgl-popuptext {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 8px;
+  position: fixed;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.fgl-show {
+  visibility: visible;
+  animation: fadeIn 1s
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity:1 ;}
+}
+
