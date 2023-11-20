@@ -154,7 +154,6 @@ void TextSegment::draw_to_canvas(LCD& lcd, bool last_in_line, int default_letter
 // Assign positions for each slice of text - version when Align defined for this line
 void TextLine::eval_position_aligned(int x, int y, int width, int height, int default_letter_size)
 {
-    auto aligns = align_segments; // Copy array
     Align3P aligns_by_types = {Size{-1, -1}, Size{-1, -1}, Size{-1, -1}}; // Aligns rearranged by types. Value - {-1, -1} (no segmnent) or {<start index>, <length>} (for segment)
 
     const auto write_line = [&, this](int al_type, int xx) {
@@ -177,8 +176,10 @@ void TextLine::eval_position_aligned(int x, int y, int width, int height, int de
 
     for(int i=0; i<align_segments.size(); ++i)
     {
-        const auto align_type = line[align_segments[i]].align-1;
-        aligns_by_types[align_type] = {align_segments[i], (i+1 < 3 ? aligns[i+1] : line.size()) - aligns[i]};
+        const auto idx = align_segments[i];
+        if (idx==-1) break;
+        const auto align_type = line[idx].align-1;
+        aligns_by_types[align_type] = {idx, (i+1 < 3 && align_segments[i+1] != -1 ? align_segments[i+1] : line.size()) - idx};
     }
 
     auto x_left = x;
@@ -418,10 +419,10 @@ int TextsParser::need_ww(int width)
 
 void TextsParser::parse_text(const String& lines)
 {
-    static std::regex re("\\\\[cb][^\\\\]*\\\\|\\\\.");
+    static std::regex re("\n");
 
     text_lines.clear();
-    for(std::cregex_token_iterator iter(lines.data(), lines.data() + lines.size(), re); iter != std::cregex_token_iterator(); ++iter)
+    for(std::cregex_token_iterator iter(lines.data(), lines.data() + lines.size(), re, -1); iter != std::cregex_token_iterator(); ++iter)
     {
         parse_line(String(iter->first, iter->second));
     }

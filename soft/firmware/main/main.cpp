@@ -5,6 +5,7 @@
 #include "wifi_module.h"
 #include "activity.h"
 #include "box_draw.h"
+#include "text_draw.h"
 
 void start_http_servers();
 
@@ -231,10 +232,15 @@ extern "C" void app_main(void)
     test_jpeg(test_bg_start, test_bg_end-test_bg_start);
 
 //     BoxCreator(int width, int height, int r, int border_width, int shadow_width);
-    BoxCreator box(200, 100, 15, 2, 5);
+ //   BoxCreator box(200, 100, 15, 2, 5);
 
-    static const uint16_t pallete[] = {0, rgb(0x04, 0xAA, 0x6D), 0, rgb(0x66,0x66,0x66)};
-    box.draw(lcd, 50, 50, pallete, true);
+//    static const uint16_t pallete[] = {0, rgb(0x04, 0xAA, 0x6D), 0, rgb(0x66,0x66,0x66)};
+//    box.draw(lcd, 50, 50, pallete, true);
+
+    TextBoxDraw::TextGlobalDefinition gd;
+    TextBoxDraw::TextsParser pars(gd);
+    pars.parse_text("Hello world!\n\\2\\#Hi!");
+    pars.draw_one_box_centered(lcd);
 
     for(;;);
 }

@@ -682,10 +682,10 @@ void LCD::text(const char* text, int16_t x, int16_t y, int txt_len)
 
     for(uint8_t scan_line=0; scan_line!=16; ++scan_line)
     {
-        for(const char* t=text;; ++t)
+        int tl = txt_len;
+        for(const char* t=text;tl--; ++t)
         {
             uint8_t sym = *t;
-            if (!sym) break;
             uint8_t bits = font[sym*16+scan_line];
             uint8_t cnt=8;
             do {
@@ -710,10 +710,10 @@ void LCD::text2(const char* text, int16_t x, int16_t y, int txt_len)
 
     for(uint8_t scan_line=0; scan_line!=32; ++scan_line)
     {
-        for(const char* t=text;; ++t)
+        int tl = txt_len;
+        for(const char* t=text;tl--; ++t)
         {
             uint8_t sym = *t;
-            if (!sym) break;
             uint8_t bits = font[sym*16+(scan_line>>1)];
             uint8_t cnt=8;
             do {
