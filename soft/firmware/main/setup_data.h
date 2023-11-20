@@ -23,7 +23,7 @@ enum UserOptions {
     UO_CanDisableUser       = 0x0400,   // This Admin can temporary disable/enable user
     UO_CanHelpUser          = 0x0800,   // This Admin can help another User to bypass a challenge (by logging in and pressing button on WEB interface)
 
-    uo_CanViewFG            = 0x1000,   // This Admin can view FingerPrint status
+    UO_CanViewFG            = 0x1000,   // This Admin can view FingerPrint status
     UO_CanEditFG            = 0x2000    // This Admin can edit FingerPrints
 };
 
@@ -69,7 +69,7 @@ static_assert(sizeof(TouchSetup) < 32, "TouchSetup structure overflow");
 // Global setup option (on bit flags)
 enum GlobalOptions {
     GO_HideRTC      = 0x0001,   // Do not show RTC time
-    GO_HiteTemp     = 0x0002,   // Hide temperature
+    GO_HideTemp     = 0x0002,   // Hide temperature
 };
 
 static constexpr const uint8_t EEPROM_LAYOUT_TAG = 2;
@@ -129,30 +129,14 @@ struct WorkingState {
     WorkingStatus state; // Current status of Play Round
     uint8_t load_state[8]; // State of loading of all doors: <position-in-queue:3 bit><user-index:5 bit>. Value of FF means 'unloaded'
 
-    uint8_t  guard; // We writes here 0xFF - if we extand this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
+    uint8_t  guard; // We writes here 0xFF - if we extend this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
     
     void sync() const; // Save me to RTC
+    int get_loaded_gift(int user_index); // Returns Door index with gift fot User, or -1 if no gift loaded
 };
 static_assert(sizeof(WorkingState) <= 56, "RTC RAM Overflow");
 ////////////////////////////////////////////////
 
-// Global run-time state
-enum SystemState {
-    SS_NotActive,   // Play Round not active
-    SS_Pending,     // Play Round scheduled
-    
-    SS_Active,      // Play Round activated (this state not used by itself)
-    
-    SS_NotLoggedIn, // No user currently logged in by fingerprint
-    SS_InvalidUser, // User logged in (if any) not valid here - not enabled, not included in Play Round, Play Rond done)
-    SS_NotATime,    // Time of Round not come for logged in user
-    SS_NotLoaded,   // No gift loiaded for logged in user yet
-    
-    SS_Challenge,   // Challenge activated for logged in user
-    SS_Done         // Challenge end, door opened. Waiting for logout
-};
-
-extern SystemState system_state;
 extern TouchSetup touch_setup;
 extern int logged_in_user;
 extern UserSetup current_user;
@@ -171,3 +155,15 @@ inline void login_user(int usr_index)
     assert(usr_index >= 0 && usr_index < max_users);
     current_user.load(usr_index, current_user_name);
 }
+
+inline void login_superuser()
+{
+    logged_in_user = -2;
+    strcpy((char*)current_user_name, "Supervisor");
+    memset(&current_user, 0, sizeof(current_user));
+    current_user.options = 0xFFFF;
+    current_user.priority = 0xFF;
+}
+
+bool override_switch_active();
+int total_users();

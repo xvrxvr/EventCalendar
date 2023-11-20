@@ -18,6 +18,7 @@ set(srcs
     bg_image.cpp
     box_draw.cpp
     text_draw.cpp
+    interactive.cpp
     main.cpp
 )
 

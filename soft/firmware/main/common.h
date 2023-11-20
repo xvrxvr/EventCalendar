@@ -82,7 +82,8 @@ enum SetupConsts {
     SC_HW_INPUT_AUTO_OFF = 1000, // Time (in MS) to automatically passivating HW Input
     SC_TouchTrackInterval = 5, // Time between Touch Track samples (in ticks)
     SC_TouchTrackDeadZone = 5, // Minimal distance in Touch Track to report move
-    SC_DebounceTime = 2     // Debounce time (in ticks)
+    SC_DebounceTime = 2,    // Debounce time (in ticks)
+    SC_TurnoffDelay = 10*60,  // Delay before automatically turn off LCD (in seconds)
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1

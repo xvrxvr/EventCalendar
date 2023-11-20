@@ -4,7 +4,6 @@
 #include "hadrware.h"
 #include "ILI9327_Shield.h"
 
-SystemState system_state = SS_NotActive;
 int logged_in_user = -1;
 
 UserSetup current_user;
@@ -99,6 +98,20 @@ void init_or_load_setup()
     }
 
     current_user.clear();
+}
+
+int WorkingState::get_loaded_gift(int user_index) // Returns Door index with gift fot User, or -1 if no gift loaded
+{
+    int pos = -1;
+    uint8_t ord = 0xFF;
+    for(int idx=0; idx < 8; ++idx)
+    {
+        uint8_t v = load_state[idx];
+        if (v==0xFF) continue;
+        if ((v&0x1F) != user_index) continue;
+        if (v < ord) {pos = idx; ord = v;}
+    }
+    return pos;
 }
 
 /////////////////////
