@@ -262,7 +262,15 @@ static int fge_allocate_user();
 static void fge_activate_user(int user_index, const char* name, int age);
 
 // Return bit scale of filled templates for this user
-static uint8_t fge_get_filled_tpls(int usr_index);
+static uint8_t fge_get_filled_tpls(int usr_index)
+{
+    uint8_t buf[32];
+    int err = Activity::FPAccess(NULL).access().readIndexTable(buf);
+    if (err) return 0;// this is error, what to do?
+    uint8_t result = buf[(usr_index>>1)&31];
+    if (usr_index&1) result >>= 4;
+    return result & 15;
+}
 
 static char* get_user_name_utf8(int user_index);
 
@@ -428,5 +436,104 @@ static void fg_edit(int user_index)
         }
     }
 }
+
+static uint32_t get_eeprom_users();
+
+static void fg_view()
+{
+    if (!(current_user.options & UO_CanViewFG)) return;
+
+    uint8_t buf[32];
+    uint32_t users = get_eeprom_users();
+    Prn prn;
+
+    MsgActivity act(AT_Fingerprint1|AT_WEBEvent);
+    act.setup_watchdog(SC_TurnoffDelay);
+    act.setup_web_ping_type("ping-fgview");
+
+    {
+        Activity::FPAccess fpa(&act);
+        auto& fp = fpa.access();
+        int err = fp.readIndexTable(buf);
+        if (err) return;// this is error, what to do?
+        fp.active_page = 1;
+    }
+
+    lcd_message("Просмотр отпечатков пальцев\nЗавершение через WEB страницу");
+
+    for(;;)
+    {
+        Action a = act.get_action();
+        if (a.type & AT_Fingerprint)
+        {
+            prn.strcat("[");
+
+            bool add_comma = false;
+            const auto p = [&]() -> Prn& {if (add_comma) prn.strcat(","); add_comma=true; return prn;};
+
+            if (a.fp_index == -1 && a.fp_error)
+            {
+                p().cat_printf("{'cmd':'alert','msg':'Ошибка - %s'}", a.fp_error);
+            }
+            Activity::FPAccess fpa(&act);
+            auto& fp = fpa.access();
+            for(int outer_idx = 0; outer_idx < 16; ++outer_idx)
+            {
+                uint8_t fps = buf[outer_idx];
+                if (!fps) continue;
+                int from, to;
+                switch((users >> (outer_idx*2)) & 3)
+                {
+                    case 0: continue;
+                    case 1: from = 0; to = 4; break;
+                    case 2: from = 4; to = 8; break;
+                    default: from = 0; to = 8; break;
+                }
+                for(int i=from; i<to; ++i)
+                {
+                    if ((fps >> i) & 1)
+                    {
+                        int tpl_index = outer_idx * 8 + i;
+                        if (fp.loadTemplate(2, tpl_index))
+                        {
+                            p().cat_printf("{'cmd':'fgview-box-msg','msg':'Error','dst':'%d-%d'}", tpl_index>>2, tpl_index & 3);
+                            continue;
+                        }
+                        uint16_t score;
+                        if (!fp.matchFinger(score))
+                        {
+                            double pc = double(score) / SC_FPScope100;
+                            p().cat_printf("{'cmd':'fgview-box-msg','dst':'%d-%d', 'msg':'%d%%','hlt':%f}", 
+                                tpl_index>>2, tpl_index & 3,
+                                int(pc*100+0.5), pc);
+                        }
+                    }
+                }                
+            }
+            if (add_comma)
+            {
+                prn.strcat("]");
+                web_send_cmd(prn.c_str());
+            }
+        }
+        else // WEB
+        {
+            switch(a.web.event)
+            {
+                case WE_FGDel:
+                {
+                    if (!(current_user.options & UO_CanEditFG)) break;
+                    do_fg_del(a.web.p1);
+                    restart_web_page("web/fg_viewer.html");
+                    break;
+                }
+                case WE_Logout: case WE_FGE_Done: return;
+                case WE_FGEdit: restart_web_page(prn.printf("act/fg_edit.html?index=%d", a.web.p1).c_str()); return;
+                default: break;
+            }
+        }
+    }
+}
+
 
 } // namespace Interactive
