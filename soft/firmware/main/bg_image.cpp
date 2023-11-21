@@ -98,7 +98,7 @@ static unsigned int jpeg_decode_out_cb(JDEC *dec, void *bitmap, JRECT *rect)
 
 #define JPEG_WORK_BUF_SIZE  3100    /* Recommended buffer size; Independent on the size of the image */
 
-void BGImage::draw(Activity* act)
+void BGImage::draw(LCD& lcd)
 {
     init();
     if (bg_img_index == -1)
@@ -118,13 +118,12 @@ void BGImage::draw(Activity* act)
         return;
     }
 
-    Activity::LCDAccess acc(act);
     JDEC JDEC;
     std::unique_ptr<uint8_t[]> workbuf(new uint8_t[JPEG_WORK_BUF_SIZE]);
 
     JPEGData data {
         .stream = stream.get(),
-        .lcd = &acc.access()
+        .lcd = &lcd
     };
 
     /* Prepare image */

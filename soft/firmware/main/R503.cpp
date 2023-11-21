@@ -415,8 +415,8 @@ int R503::storeTemplate(uint8_t characterBuffer, uint16_t location) {
     SEND_CMD(0x06, characterBuffer, uint8_t(location >> 8), uint8_t(location));
 }
 
-int R503::deleteTemplate(uint16_t location) {
-    SEND_CMD(0x0C, uint8_t(location >> 8), uint8_t(location), 0x00, 0x01);
+int R503::deleteTemplate(uint16_t location, uint8_t count) {
+    SEND_CMD(0x0C, uint8_t(location >> 8), uint8_t(location), 0x00, count);
 }
 
 int R503::emptyLibrary() {

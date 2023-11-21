@@ -35,9 +35,12 @@ enum WebEvents {
     WE_Logout,    // logout_tag
     WE_GameStart, // No params
     WE_GameEnd,   // No params
-    WE_FGDel,     // p1 - <User-index>*4 + <FG-index-in-lib>
+    WE_FGDel,     // p1 - <User-index>*4 + <FG-index-in-lib> or p1 - <FG-index-in-lib> | 0x1000
     WE_FGEdit,    // p1 - User index
-    WE_FGView
+    WE_FGView,
+
+    // FG Editor only events
+    WE_FGE_Done,  // Done editor. p1 - new user age (or -1), p2 - new user name (UTF8) or NULL
 };
 
 struct Action {
@@ -46,13 +49,18 @@ struct Action {
         struct {
             int x, y;
         } touch;
-        int fp_index;
+        struct {
+            int16_t fp_index;
+            uint16_t fp_score;
+            const char* fp_error;
+        };
         struct {
             WebEvents event;
             union {
                 int p1;
                 const char* logout_tag;
             };
+            const char* p2;
         } web;
         struct {
             int code;
@@ -76,7 +84,7 @@ class Activity {
     std::atomic<uint32_t> borrowed = 0; // Set of Actions that was really borrowed
     uint32_t locked_out = 0; // Set of indexes of other Activities that was locked out by this one (by AF_Override option)
     std::atomic<bool> suspended = false; // Set to true if this Activity was locked out by another
-    uint32_t custom_fg_color = 0; // Custom color for AT_Fingerprint2 Action
+    uint32_t custom_fg_color = auraLEDCode(ALC_Breathing, ALC_Purpule); // Custom color for AT_Fingerprint2 Action
     const char* web_ping_tag = NULL;
     int web_ping_counter = 0; // Incremented on each 'ping' send to WEB, reset on each 'ping' echo from web. If this counter reached threshold limit - WEB timeout fired
     bool update_scene_req = true; // Set to true to update Scene before waiting for Action
@@ -142,7 +150,7 @@ public:
     virtual void on_resume() {} // You should restore LCD screen in this callback
 
     // Scene updater
-    virtual void update_scene(LCD&) {}
+    virtual void update_scene(LCD&) =0;
 
     // Initialize all Activity system, starts background tasks which handles Touch/LCD and FG
     // After this call all access to LCD/Touch/FG only through LCDAccess/FPAccess

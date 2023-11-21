@@ -1,6 +1,6 @@
 #pragma once
 
-class Activity;
+class LCD;
 
 class BGImage {
     std::vector<bool> bg_list, usr_bg_list;
@@ -11,7 +11,7 @@ class BGImage {
 public:
 
     void peek_next_bg_image();
-    void draw(Activity*);
+    void draw(LCD&);
     int scan_bg_images(int& state);
     int create_new_bg_image();
 };

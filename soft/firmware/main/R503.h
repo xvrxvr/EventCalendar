@@ -164,6 +164,8 @@ class R503 {
     uint16_t data_package_size;
         
 public:
+    int active_page = 1;
+    
     /*
      * @return a null terminated string containing the error message for the confirmation code @code
      */
@@ -326,7 +328,7 @@ public:
     int storeTemplate(uint8_t characterBuffer, uint16_t location);
     
     // deletes template located at @location
-    int deleteTemplate(uint16_t location);
+    int deleteTemplate(uint16_t location, uint8_t count=1);
     
     // deletes all the templates
     int emptyLibrary();

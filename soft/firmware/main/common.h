@@ -84,6 +84,8 @@ enum SetupConsts {
     SC_TouchTrackDeadZone = 5, // Minimal distance in Touch Track to report move
     SC_DebounceTime = 2,    // Debounce time (in ticks)
     SC_TurnoffDelay = 10*60,  // Delay before automatically turn off LCD (in seconds)
+    SC_MaxFPScope = 99,     // Maximum FP match scope that not considered as duplication
+    SC_FPScope100 = 100     // What value of Scope equeal to 100% ?
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
