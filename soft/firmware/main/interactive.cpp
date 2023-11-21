@@ -258,7 +258,7 @@ static void game()
 // Preallocate new user, returns index. Returns -1 if no more users
 static int fge_allocate_user();
 
-// Activate new user
+// Activate (create) new user
 static void fge_activate_user(int user_index, const char* name, int age);
 
 // Return bit scale of filled templates for this user
@@ -316,14 +316,14 @@ static void fg_edit(int user_index)
     const auto msg_flash = [&](Action& a) {
         if ((a.fp_index >> 2) == user_index) // Match in me
         {
-            double pc = double(a.fp_score) / SC_FPScope100;
+            double pc = double(a.fp_score) / int(SC_FPScope100);
             web_send_cmd("[{'cmd':'fgedit-box-msg', 'msg':'%.1f%%','dst':%d,'hlt':%f},"
                           "{'cmd':'alert', 'msg':'Уже есть такой палец'}]", 
                            pc*100, a.fp_index & 3, pc);
         }
         else // Not me
         {
-            double pc = double(a.fp_score) / SC_FPScope100;
+            double pc = double(a.fp_score) / int(SC_FPScope100);
             web_send_cmd("{'cmd':'alert', 'msg':'Уже есть такой палец у \"%s\" - %.1f%% совпадения'}", 
                            get_user_name_utf8(a.fp_index>>2), pc*100);
 
@@ -401,7 +401,7 @@ static void fg_edit(int user_index)
                     web_send_cmd("{'cmd':'fgedit-switch', 'usr':'%s','usrindex':%d,'percent':%f}", 
                         get_user_name_utf8(a.fp_index>>2),
                         a.fp_index>>2,
-                        double(a.fp_score) / SC_FPScope100);
+                        double(a.fp_score) / int(SC_FPScope100));
                 }
             }
         }
@@ -502,7 +502,7 @@ static void fg_view()
                         uint16_t score;
                         if (!fp.matchFinger(score))
                         {
-                            double pc = double(score) / SC_FPScope100;
+                            double pc = double(score) / int(SC_FPScope100);
                             p().cat_printf("{'cmd':'fgview-box-msg','dst':'%d-%d', 'msg':'%d%%','hlt':%f}", 
                                 tpl_index>>2, tpl_index & 3,
                                 int(pc*100+0.5), pc);
@@ -528,7 +528,7 @@ static void fg_view()
                     break;
                 }
                 case WE_Logout: case WE_FGE_Done: return;
-                case WE_FGEdit: restart_web_page(prn.printf("act/fg_edit.html?index=%d", a.web.p1).c_str()); return;
+                case WE_FGEdit: web_send_cmd("{'cmd':'goto','href':'act/fg_edit.html?index=%d'}", a.web.p1); return;
                 default: break;
             }
         }
