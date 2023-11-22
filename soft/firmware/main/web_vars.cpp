@@ -83,12 +83,12 @@ void  WebOptions::LoadedGiftDoors(Ans &ans)     // JSON list of titles on Doors
 
 void  WebOptions::MsgTitle(Ans &ans)            // Title of Message page
 {
-
+  ans << UTF8 << buf_msg_title.c_str();
 }
 
 void  WebOptions::Message(Ans &ans)             // Message in Message page
 {
-
+  ans << UTF8 << buf_message.c_str();
 }
 
 /*
@@ -141,5 +141,25 @@ void  WebOptions::HTMLFGLibrary(Ans &ans)   // FingerPrints Library Viewer HTML 
 
 void  WebOptions::FGEditorUser(Ans &ans)    // User for new FG ('нового пользователя' or 'пользователя XXXX')
 {
+  if (fg_editor_user == -1) ans << UTF8 << "нового пользователя";
+  else ans << UTF8 << "пользователя " << DOS << EEPROMUserName(fg_editor_user).dos();
+}
 
+void WebOptions::set_fg_editor_user(int user_index)
+{
+  fg_editor_user = user_index;
+  if (user_index == -1)
+  {
+    FGEditorFilledBoxes = 0;
+    FGEditorFilledCircs = 0;
+  }
+  else
+  {
+    int x = FGEditorFilledBoxes = fge_get_filled_tpls(user_index);
+    x = (x & (x<<2)) & 0x33;  // ....abcd -> ..ab..cd
+    x = (x | (x<<1)) & 0x55;  // ..ab..cd -> .a.b.c.d
+    FGEditorFilledCircs = x | (x<<1); // .a.b.c.d -> aabbccdd
+  }
+  FGEditorFillingBox = -1;  // Index of filling now box (or -1)
+  FGEditorFillingCirc = -1; // Index of circle filled rigth now
 }

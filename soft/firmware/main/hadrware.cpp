@@ -1314,3 +1314,8 @@ esp_lcd_panel_handle_t esp_lcd_new_panel_my()
 
 LCD& Activity::LCDAccess::access() {return lcd;}
 R503& Activity::FPAccess::access() {return fp_sensor;}
+
+bool override_switch_active()
+{
+    return !gpio_get_level(PIN_NUM_DIPSW_AUX);
+}

@@ -85,7 +85,8 @@ enum SetupConsts {
     SC_DebounceTime = 2,    // Debounce time (in ticks)
     SC_TurnoffDelay = 10*60,  // Delay before automatically turn off LCD (in seconds)
     SC_MaxFPScope = 99,     // Maximum FP match scope that not considered as duplication
-    SC_FPScope100 = 100     // What value of Scope equeal to 100% ?
+    SC_FPScope100 = 100,    // What value of Scope equeal to 100% ?
+    SC_MaxWS = 16           // Maximum number of simulteniously opened Websockets
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1

@@ -525,3 +525,19 @@ void AnsStream::run()
         }
     } while(!eof);
 }
+
+// Send command through WebSocket
+// Replace all "'" inside resultring page to '"" (and vise versa)
+void web_send_cmd(const char* json, ...)
+{
+    Prn buf;
+
+    va_list l;
+    va_start(l, json);
+    buf.vprintf(json, l);
+    va_end(l);
+
+    char* p = buf.c_str();
+    while( (p = strpbrk(p, "'\"")) != NULL) *p++ ^= '"' ^ '\'';
+    websock_send(buf.c_str());
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "prnbuf.h"
+
 // This module contains various setup data thet holds in EEPROM and RTC RAM
 
 static constexpr int max_users = 32;
@@ -165,5 +167,19 @@ inline void login_superuser()
     current_user.priority = 0xFF;
 }
 
-bool override_switch_active();
-int total_users();
+// Return bitset of all filled Users (from EEPROM)
+// If mask_to_test not zero bitset will be filtered by field UserSetup::status - if will be masked by mask_to_test and compared with 'value_to_compare'
+//  Only entries passed test will be included in output bitset
+uint32_t get_eeprom_users(int mask_to_test=0, int value_to_compare=0);
+
+class EEPROMUserName {
+    Prn buf;
+public:
+    EEPROMUserName(int user_index);
+
+    const char* utf8();
+    const char* dos() {return buf.c_str();}
+};
+
+// Return bit scale of filled templates for this user
+uint8_t fge_get_filled_tpls(int usr_index);

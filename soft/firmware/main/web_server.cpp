@@ -1,8 +1,11 @@
 #include "common.h"
 
+#include <array>
+
 #include "hadrware.h"
 #include "setup_data.h"
 #include "web_gadgets.h"
+#include "activity.h"
 
 #include "web_ajax_classes.h"
 
@@ -11,14 +14,28 @@ static const char *TAG = "web_server";
 #define G(id, args) static esp_err_t send_ajax_##id(httpd_req_t *req) {AJAXDecoder_##id(req).run(); return ESP_OK;}
 #include "web_actions.inc"
 
+static const char* web_root_url = NULL;
+static httpd_handle_t server = NULL;
+
+void set_web_root(const char* url) {web_root_url = url;}
+
 static esp_err_t send_string(httpd_req_t *req)
 {
     return httpd_resp_sendstr(req, (const char*)req->user_ctx);
 }
 
-static const char* data_root_page = R"___(<HTML><TITLE>Event Calendar</TITLE>
-<BODY>Hello!</HTML>
-)___";
+static esp_err_t send_root(httpd_req_t *req)
+{
+    if (!web_root_url)
+    {
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Entry page not set");
+        return ESP_FAIL;
+    }
+    httpd_resp_set_status(req, "303 See Other");
+    httpd_resp_set_hdr(req, "Location", web_root_url);
+    httpd_resp_sendstr(req, "Redirecting ...");
+    return ESP_OK;
+}
 
 static esp_err_t send_cdn(httpd_req_t *req)
 {
@@ -38,9 +55,137 @@ static esp_err_t send_cdn(httpd_req_t *req)
     return ESP_OK;
 }
 
+class FDArray {
+    std::array<int, SC_MaxWS> fds;
+    SemaphoreHandle_t fds_lock;
+
+public:
+    class FDIterator {
+        const FDArray* owner;
+        int index;
+
+        bool eof() {return index >= owner->fds.size();}
+        void adv()
+        {
+            while(!eof() && owner->fds[index] == -1) ++ index;
+        }
+    public:
+        FDIterator(const FDArray* o, int i) : owner(o), index(i) {adv();}
+
+        int operator*() {return eof() ? -1 : owner->fds[index];}
+
+        void operator ++() {if (!eof()) {++index; adv();}}
+
+        bool operator != (const FDIterator& other) {assert(owner == other.owner); return index != other.index;}
+    };
+
+    FDArray()
+    {
+        fds.fill(-1);
+        fds_lock = xSemaphoreCreateMutex();
+    }
+
+    void add_fd(int fd)
+    {
+        if (fd == -1) return;
+        xSemaphoreTake(fds_lock, portMAX_DELAY);
+        for(auto& dst: fds)
+        {
+            if (dst == -1) {dst = fd; fd=-1; break;}
+        }
+        xSemaphoreGive(fds_lock);
+        if (fd != -1)
+        {
+            ESP_LOGE(TAG, "WS: FD pool overflow");
+        }
+    }
+    void remove_fd(int fd)
+    {
+        if (fd == -1) return;
+        xSemaphoreTake(fds_lock, portMAX_DELAY);
+        for(auto& dst: fds)
+        {
+            if (dst == fd) {dst = -1; break;}
+        }
+        xSemaphoreGive(fds_lock);
+    }
+    bool has_fd() const {return begin() != end();}
+
+    FDIterator begin() const {return FDIterator(this, 0);}
+    FDIterator end() const {return FDIterator(this, fds.size());}
+};
+
+static FDArray fd_array;
+
+static void ws_async_send(void *arg)
+{
+    httpd_ws_frame_t ws_pkt{};
+    ws_pkt.payload = (uint8_t*)arg;
+    ws_pkt.len = strlen((const char*)arg);
+    ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+
+    for(int fd: fd_array)
+    {
+        auto err = httpd_ws_send_frame_async(server, fd, &ws_pkt);
+        if (err != ESP_OK)
+        {
+            assert(err == ESP_FAIL);
+            fd_array.remove_fd(fd);
+        }
+    }
+
+    free(arg);
+
+    if (!fd_array.has_fd())
+    {
+        Activity::push_action(Action{.type=AT_WEBEvent, .web={.event=WE_Logout}});
+    }
+}
+
+void websock_send(const char* msg)
+{
+    char* m = strdup(msg);
+    esp_err_t ret = httpd_queue_work(server, ws_async_send, m);
+    if (ret != ESP_OK) 
+    {
+        free(m);
+        ESP_LOGE(TAG, "WS: fail to queue data");
+    }
+}
+
+
+static esp_err_t ws_handler(httpd_req_t *req)
+{
+    if (req->method == HTTP_GET) {
+        ESP_LOGI(TAG, "WS: Login");
+        Activity::push_action(Action{.type=AT_WEBEvent, .web={.event=WE_Login}});
+        fd_array.add_fd(httpd_req_to_sockfd(req));
+        return ESP_OK;
+    }
+    // We do not expected anything from our WS - it 'send only', But we still need to read out data from socket.
+    httpd_ws_frame_t ws_pkt{};
+    ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+    esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
+        return ret;
+    }
+    if (ws_pkt.len) 
+    {
+        ws_pkt.payload = (uint8_t*)malloc(ws_pkt.len);
+        if (ws_pkt.payload == NULL) 
+        {
+            ESP_LOGE(TAG, "Failed to calloc memory for buf");
+            return ESP_ERR_NO_MEM;
+        }
+        httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
+        free(ws_pkt.payload);
+    }
+    return ESP_OK;
+}
+
 static esp_err_t start_http_data_server()
 {
-    httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.ctrl_port++;
     config.max_uri_handlers = 32;
@@ -61,8 +206,7 @@ static esp_err_t start_http_data_server()
         httpd_uri_t index = {
             .uri       = "/",
             .method    = HTTP_GET,
-            .handler   = send_string,
-            .user_ctx  = (void*)data_root_page
+            .handler   = send_root
         };
         httpd_register_uri_handler(server, &index);
     }
@@ -72,6 +216,16 @@ static esp_err_t start_http_data_server()
             .uri       = "/web/*",
             .method    = HTTP_GET,
             .handler   = send_cdn,
+        };
+        httpd_register_uri_handler(server, &index);
+    }
+
+    {
+        httpd_uri_t index = {
+            .uri        = "/notify",
+            .method     = HTTP_GET,
+            .handler    = ws_handler,
+            .is_websocket = true
         };
         httpd_register_uri_handler(server, &index);
     }

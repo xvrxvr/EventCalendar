@@ -129,7 +129,6 @@ struct TouchConfig {
     bool raw_touch_read() {return raw_touch_read(x, y);}
 };
 
-
 int get_temperature();
 
 struct RTC {
@@ -189,7 +188,6 @@ struct EEPROM {
     template<class Data>
     static void read(int page_address, Data& data) {read_pg(page_address, &data, sizeof(data));}
     
-    
 private:
     static void poll4ready();
 };
@@ -200,4 +198,5 @@ void fade_in();
 
 bool test_wakeup();
 
-//esp_lcd_panel_handle_t esp_lcd_new_panel_my();
+// Return true if Hardware SV Override switch in ON position
+bool override_switch_active();

@@ -4,6 +4,7 @@
 #include "input_hw.h"
 #include "input_hw_touch.h"
 #include "input_hw_fg.h"
+#include "web_gadgets.h"
 
 static constexpr int MAX_ACTIVITIES = 4;
 
@@ -189,7 +190,11 @@ void Activity::on_web_ping_echo(const char* tag) // Global entry - dispatched to
     }
 }
 
-void send_web_ping_to_ws(const char*);
+void send_web_ping_to_ws(const char* tag)
+{
+    static int rcount;
+    web_send_cmd("{'cmd':'%s','cnt':%d}", tag, rcount++);
+}
 
 void Activity::send_web_ping() // Internal function - called by WEB ping thread in this module.
 {

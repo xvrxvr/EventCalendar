@@ -67,6 +67,8 @@ public:
     // Return raw buffer (as char*)
     char* c_str() {return buffer;}
 
+    char& operator[](int idx) {assert(idx < length()); return buffer[idx];}
+
     // Returns right part of string in buffer
     const char* right(size_t len) {return c_str() + std::max<std::ptrdiff_t>(0, size - len);}
 

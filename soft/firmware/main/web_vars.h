@@ -1,6 +1,7 @@
 #pragma once
 
 #include "web_gadgets.h"
+#include "prnbuf.h"
 
 struct WebOptions {
     void CurrentUser(Ans&);         // Name of currently logged on user
@@ -68,9 +69,20 @@ struct WebOptions {
     void decode_inline(const char* ptr, Ans&);
     uint32_t get_condition(const char* ptr, Ans&);
 
+    // Vars MsgTitle and Message, both in UTF8
+    void set_title_and_message(const char* title, const char* message)
+    {
+      buf_msg_title.strcpy(title);
+      buf_message.strcpy(message);
+    }
+
+    void set_fg_editor_user(int user_index=-1);
 private:
     void err_novar(const char*);
     void err_type_wrong(const char*);
+
+    Prn buf_msg_title, buf_message;
+    int fg_editor_user = -1;
 };
 
 extern WebOptions web_options;

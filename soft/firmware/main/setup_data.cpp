@@ -3,6 +3,7 @@
 #include "setup_data.h"
 #include "hadrware.h"
 #include "ILI9327_Shield.h"
+#include "activity.h"
 
 int logged_in_user = -1;
 
@@ -142,3 +143,54 @@ void UserSetup::save(int usr_index, uint8_t name[32]) const
     EEPROM::write((ES_UName + usr_index) * EEPROM::page_size, name, 32);
 }
 
+uint32_t get_eeprom_users(int mask_to_test, int value_to_compare)
+{
+    uint32_t result = 0;
+    for(int i=0; i<32; ++i)
+    {
+        uint8_t nm;
+        EEPROM::read( (ES_UName + i) *  EEPROM::page_size, nm);
+        if (nm == 0xFF || nm == 0) continue;
+        if (mask_to_test)
+        {
+            EEPROM::read(ES_User*EEPROM::page_size + offsetof(UserSetup, status), nm);
+            if ( (nm & mask_to_test) != value_to_compare) continue;
+        }
+        result |= 1 << i;
+    }
+    return result;
+}
+
+EEPROMUserName::EEPROMUserName(int user_index)
+{
+    user_index &= 31;
+    buf.fill(0, 33);
+    EEPROM::read((ES_UName + user_index) *  EEPROM::page_size, buf.c_str(), 32);
+}
+
+const char* EEPROMUserName::utf8()
+{
+    if (buf.length() == 33)
+    {        
+        for(int idx = 0; idx < 32; ++idx)
+        {
+            char s = buf[idx];
+            if (!s) break;
+            buf.strcat(dos_to_utf8(s).b);
+        }
+        if (buf.length() == 33) buf.cat_fill(0, 1);
+    }
+    return buf.c_str() + 33;
+
+}
+
+// Return bit scale of filled templates for this user
+uint8_t fge_get_filled_tpls(int usr_index)
+{
+    uint8_t buf[32];
+    int err = Activity::FPAccess(NULL).access().readIndexTable(buf);
+    if (err) return 0;// this is error, what to do?
+    uint8_t result = buf[(usr_index>>1)&31];
+    if (usr_index&1) result >>= 4;
+    return result & 15;
+}

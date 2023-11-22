@@ -211,3 +211,12 @@ public:
 
     virtual size_t consume_stream(uint8_t* buffer, size_t size, bool eof) = 0;
 };
+
+//// These functions in 'web_server.cpp' file
+// Setup WEB root page
+void set_web_root(const char*);
+void websock_send(const char*);
+
+// Send command through WebSocket
+// Replace all "'" inside resultring page to '"" (and vise versa)
+void web_send_cmd(const char* json, ...); // Wrapper around 'websock_send'

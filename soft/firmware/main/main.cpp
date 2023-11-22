@@ -9,6 +9,7 @@
 
 void start_http_servers();
 
+#if 0
 void cross(uint16_t x, uint16_t y, uint16_t color);
     
 static constexpr int RED   = 0xF800;  // BLUE?
@@ -127,8 +128,6 @@ void test1()
     }
 }
 
-void send_web_ping_to_ws(const char*) {}
-
 static constexpr int R1   = 0x0800;  // BLUE?
 static constexpr int G1   = 0x0020;  // RED?
 static constexpr int B1   = 0x0001;  // GREEN?
@@ -153,6 +152,7 @@ static void test_colors()
     test_color1(y+35, "G:", G1, 6);
     test_color1(y+70, "B:", B1, 5);
 }
+#endif
 
 #include "rom/tjpgd.h"
 

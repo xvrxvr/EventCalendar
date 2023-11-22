@@ -4,9 +4,33 @@
 #include "prnbuf.h"
 #include "text_draw.h"
 #include "bg_image.h"
+#include "web_vars.h"
+#include "web_gadgets.h"
+
 namespace Interactive {
 
 BGImage bg_images;
+
+// Preallocate new user, returns index. Returns -1 if no more users
+static int fge_allocate_user()
+{
+    uint32_t sc = ~get_eeprom_users();
+    if (sc == 0) return -1;
+    // __builtin_ctz - Returns the number of trailing 0-bits in x, starting at the least significant bit position.
+    return __builtin_ctz(sc);
+}
+
+// Activate (create) new user. 'name' in UTF8
+static void fge_activate_user(int user_index, const char* name, int age)
+{
+    char b[66]; // UTF8 string can be 2x length of DOS version (in Russian CP) + 1 extra symbol for compensate possible half of last symbol
+    strncpy(b, name, sizeof(b)-1);
+    b[65] = b[64] = 0;
+    UserSetup usr = current_user;
+    usr.age = age;
+    utf8_to_dos(b);
+    usr.save(user_index, (uint8_t*)b);
+}
 
 // Draw message (in UTF8) to LCD in centered Box
 static void lcd_message(const char* msg, ...)
@@ -61,17 +85,11 @@ static const char* ts_to_string(uint32_t tm)
     return result;
 }
 
-// Send command through WebSocket
-// Replace all "'" inside resultring page to '"" (and vise versa)
-static void web_send_cmd(const char* json, ...);
-
-// Setup WEB root page
-static void set_web_root(const char*);
 // Restart WEB page
-static void restart_web_page(const char* url) {web_send_cmd("{'cmd':'goto','href':'%s'}", url);}
+inline void restart_web_page(const char* url) {web_send_cmd("{'cmd':'goto','href':'%s'}", url);}
 
 // Setup WEB root as Mesage with 'message' and 'title'
-static void set_web_message(const char* title, const char* message);
+inline void set_web_message(const char* title, const char* message) {web_options.set_title_and_message(title, message);}
 
 // Delete FG. index is <User-index>*4 + <FG-index-in-lib>
 inline void do_fg_del(int index, uint8_t count=1)
@@ -99,12 +117,12 @@ void entry()
         //case WS_NotActive: 
         default: break;
     }
-    if (override_switch_active() || !total_users())
+    if (override_switch_active() || !get_eeprom_users())
     {
         login_superuser();
         set_web_root("web/admin.html");
         lcd_message("Ждите настройки");
-        do {MsgActivity(AT_WEBEvent).get_action();} while(working_state.state == WS_NotActive && (override_switch_active() || !total_users()));
+        do {MsgActivity(AT_WEBEvent).get_action();} while(working_state.state == WS_NotActive && (override_switch_active() || !get_eeprom_users()));
         return;
     }
     set_web_message("Waiting for login", "Пожалуста, войдите в систему с помощью отпечатка пальца");
@@ -255,29 +273,11 @@ static void game()
     }
 }
 
-// Preallocate new user, returns index. Returns -1 if no more users
-static int fge_allocate_user();
-
-// Activate (create) new user
-static void fge_activate_user(int user_index, const char* name, int age);
-
-// Return bit scale of filled templates for this user
-static uint8_t fge_get_filled_tpls(int usr_index)
-{
-    uint8_t buf[32];
-    int err = Activity::FPAccess(NULL).access().readIndexTable(buf);
-    if (err) return 0;// this is error, what to do?
-    uint8_t result = buf[(usr_index>>1)&31];
-    if (usr_index&1) result >>= 4;
-    return result & 15;
-}
-
-static char* get_user_name_utf8(int user_index);
-
 static void fg_edit(int user_index)
 {
     if (!(current_user.options & UO_CanEditFG)) return;
 
+    web_options.set_fg_editor_user(user_index);
     bool new_user = (user_index == -1);
     uint8_t filled_tpls;
     MsgActivity act(AT_Fingerprint1|AT_WEBEvent);
@@ -325,7 +325,7 @@ static void fg_edit(int user_index)
         {
             double pc = double(a.fp_score) / int(SC_FPScope100);
             web_send_cmd("{'cmd':'alert', 'msg':'Уже есть такой палец у \"%s\" - %.1f%% совпадения'}", 
-                           get_user_name_utf8(a.fp_index>>2), pc*100);
+                           EEPROMUserName(a.fp_index>>2).utf8(), pc*100);
 
         }
     };
@@ -399,7 +399,7 @@ static void fg_edit(int user_index)
                 if (!filled_tpls) // but nothing was entered yet - suggest to edit another user
                 {
                     web_send_cmd("{'cmd':'fgedit-switch', 'usr':'%s','usrindex':%d,'percent':%f}", 
-                        get_user_name_utf8(a.fp_index>>2),
+                        EEPROMUserName(a.fp_index>>2).utf8(),
                         a.fp_index>>2,
                         double(a.fp_score) / int(SC_FPScope100));
                 }
@@ -436,8 +436,6 @@ static void fg_edit(int user_index)
         }
     }
 }
-
-static uint32_t get_eeprom_users();
 
 static void fg_view()
 {
