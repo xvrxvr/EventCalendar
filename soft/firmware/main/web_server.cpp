@@ -119,6 +119,8 @@ static FDArray fd_array;
 
 static void ws_async_send(void *arg)
 {
+    if (!fd_array.has_fd()) return;
+    
     httpd_ws_frame_t ws_pkt{};
     ws_pkt.payload = (uint8_t*)arg;
     ws_pkt.len = strlen((const char*)arg);
