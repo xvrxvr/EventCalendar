@@ -19,6 +19,7 @@ set(srcs
     box_draw.cpp
     text_draw.cpp
     interactive.cpp
+    challenge_mgr.cpp
     main.cpp
 )
 

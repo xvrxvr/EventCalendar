@@ -7,13 +7,14 @@
 #include "web_vars.h"
 #include "web_gadgets.h"
 
-namespace Interactive {
-
 BGImage bg_images;
+
+namespace Interactive {
 
 // Preallocate new user, returns index. Returns -1 if no more users
 static int fge_allocate_user()
 {
+    if (!(current_user.options & (UO_CanAddRemoveUser|UO_CanAddRemoveAdmin))) return -1;
     uint32_t sc = ~get_eeprom_users();
     if (sc == 0) return -1;
     // __builtin_ctz - Returns the number of trailing 0-bits in x, starting at the least significant bit position.
@@ -23,10 +24,12 @@ static int fge_allocate_user()
 // Activate (create) new user. 'name' in UTF8
 static void fge_activate_user(int user_index, const char* name, int age)
 {
+    if (!(current_user.options & (UO_CanAddRemoveUser|UO_CanAddRemoveAdmin))) return;
     char b[66]; // UTF8 string can be 2x length of DOS version (in Russian CP) + 1 extra symbol for compensate possible half of last symbol
     strncpy(b, name, sizeof(b)-1);
     b[65] = b[64] = 0;
     UserSetup usr = current_user;
+    if (!(current_user.options & UO_CanAddRemoveAdmin)) usr.options = 0;
     usr.age = age;
     utf8_to_dos(b);
     usr.save(user_index, (uint8_t*)b);
@@ -67,23 +70,6 @@ public:
 inline void lcd_teardown() {fade_out();}
 // Turn on LCD background
 inline void lcd_turnon() {fade_in();}
-
-// November 1, 2023 0:00:00
-static constexpr time_t timestamp_shift = 1698796800ull;
-
-// Convert time stamp to UTC time
-inline time_t ts2utc(uint32_t tm) {return tm+timestamp_shift;}
-// Convert UTC to timestamp
-inline uint32_t utc2ts(time_t ts) {return ts-timestamp_shift;}
-
-// Convert time stamp value to text (in UTF8)
-static const char* ts_to_string(uint32_t tm)
-{
-    time_t ts = ts2utc(tm) + global_setup.tz_shift*(15*60);
-    char* result = asctime(gmtime(&ts));
-    if (char* e=strchr(result, '\n')) *e=0;
-    return result;
-}
 
 // Restart WEB page
 inline void restart_web_page(const char* url) {web_send_cmd("{'cmd':'goto','href':'%s'}", url);}
@@ -126,7 +112,7 @@ void entry()
         return;
     }
     set_web_message("Waiting for login", "Пожалуста, войдите в систему с помощью отпечатка пальца");
-    lcd_message("Раздача подарков ещё не начатаб ждите");
+    lcd_message("Раздача подарков ещё не начата, ждите");
     no_game();
 }
 

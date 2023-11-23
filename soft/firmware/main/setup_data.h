@@ -44,7 +44,7 @@ struct UserSetup {
     uint8_t     age;    // User Age (for customizing challenges)
     uint8_t     reserved[3+8];
     
-    void load(int usr_index, uint8_t name[32]);
+    bool load(int usr_index, uint8_t name[33]); // Return true if *this is not empty
     void save(int usr_index, uint8_t name[32]) const;
 
     bool empty() const {return options == 0xFFFF && status == 0xFF && priority == 0xFF && age == 0xFF;}
@@ -135,6 +135,7 @@ struct WorkingState {
     
     void sync() const; // Save me to RTC
     int get_loaded_gift(int user_index); // Returns Door index with gift fot User, or -1 if no gift loaded
+    int total_loaded_gift(int user_index);
 };
 static_assert(sizeof(WorkingState) <= 56, "RTC RAM Overflow");
 ////////////////////////////////////////////////
@@ -142,7 +143,7 @@ static_assert(sizeof(WorkingState) <= 56, "RTC RAM Overflow");
 extern TouchSetup touch_setup;
 extern int logged_in_user;
 extern UserSetup current_user;
-extern uint8_t current_user_name[32];
+extern uint8_t current_user_name[33];
 extern WorkingState working_state;
 extern GolbalSetup global_setup;
 extern uint8_t ssid[33];
@@ -183,3 +184,21 @@ public:
 
 // Return bit scale of filled templates for this user
 uint8_t fge_get_filled_tpls(int usr_index);
+
+// November 1, 2023 0:00:00
+static constexpr time_t timestamp_shift = 1698796800ull;
+
+// Convert time stamp to UTC time
+inline time_t ts2utc(uint32_t tm) {return tm+timestamp_shift;}
+// Convert UTC to timestamp
+inline uint32_t utc2ts(time_t ts) {return ts-timestamp_shift;}
+
+// Convert time stamp value to text (in UTF8)
+inline const char* ts_to_string(uint32_t tm)
+{
+    time_t ts = ts2utc(tm) + global_setup.tz_shift*(15*60);
+    char* result = asctime(gmtime(&ts));
+    if (char* e=strchr(result, '\n')) *e=0;
+    return result;
+}
+

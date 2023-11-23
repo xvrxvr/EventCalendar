@@ -8,7 +8,7 @@
 int logged_in_user = -1;
 
 UserSetup current_user;
-uint8_t current_user_name[32];
+uint8_t current_user_name[33];
 TouchSetup touch_setup;
 WorkingState working_state;
 GolbalSetup global_setup;
@@ -115,6 +115,18 @@ int WorkingState::get_loaded_gift(int user_index) // Returns Door index with gif
     return pos;
 }
 
+int WorkingState::total_loaded_gift(int user_index)
+{
+    int result = 0;
+    for(int idx=0; idx < 8; ++idx)
+    {
+        uint8_t v = load_state[idx];
+        if (v != 0xFF && (v&0x1F) == user_index) ++result;
+    }
+    return result;
+}
+
+
 /////////////////////
 void TouchSetup::sync() const // Save me to EEPROM
 {
@@ -131,10 +143,12 @@ void WorkingState::sync() const // Save me to RTC
     RTC().write_ram(this, 0, sizeof(*this));
 }
 
-void UserSetup::load(int usr_index, uint8_t name[32])
+bool UserSetup::load(int usr_index, uint8_t name[33])
 {
     EEPROM::read(ES_User * EEPROM::page_size + sizeof(UserSetup)*usr_index, this, sizeof(UserSetup));
     EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, name, 32);
+    name[32]=0;
+    return !empty() && name[0] != 0 && name[0] != 0xFF;
 }
 
 void UserSetup::save(int usr_index, uint8_t name[32]) const

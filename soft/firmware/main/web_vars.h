@@ -77,6 +77,10 @@ struct WebOptions {
     }
 
     void set_fg_editor_user(int user_index=-1);
+
+    void write_done_users(Ans&);
+    void write_active_users(Ans&);
+    
 private:
     void err_novar(const char*);
     void err_type_wrong(const char*);

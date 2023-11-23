@@ -118,3 +118,5 @@ public:
     void operator <<(bool sw) {shift_reg <<= 2; shift_reg |= sw ? 1 : 2;}
     void clear() {shift_reg = 0;}
 };
+
+inline constexpr uint32_t bit(int idx) {return 1 << idx;}

@@ -1,8 +1,5 @@
 ﻿Text format (line oriented):
 
-[<global options>]
-... strings ...
-
 String contents: { ... text ... | <control option> }
 
 Control-option:
@@ -16,28 +13,6 @@ Control-option:
     \c<color>\ - Set FG color for next text
     \b<color>\ - Set background color for next text
     \\ - \
-
-
-
-Global options (line started with \!)
-
-    m:<pixels> - Marging (between Boxes)
-    mv:<pixels> - Vertical margings
-    mh:<pixels> - Horisontal margins
-    p:<pixels> - Padding (between text and box/border)
-    pv:<pixels> - Padding vertical
-    ph:<pixels> - Pading horisontal
-    b:<width>[:<color>] - Border
-    s:<pixels>[:<color>] - Shadow
-    r:<radius>  - Round corner for Box
-    bg:<color>  - Background color for Box
-    fg:<color>  - Default text color for Box
-    1           - Set default letter size to 1 (and turn off autosizing)
-    2           - Set default letter size to 2 (and turn off autosizing)
-    w           - Enable word wrap (by spaces)
-    d:(v|h)     - Direction for multiple Boxes (Vertical/Horizontal). By default - auto select
-    st:[e][r][d][c] -  Selection type (keyboard): English/Russina/Digits/Choise (no keyboard but list of alternatives)
-    dist:<num>  - Max text distance for fuzzy compare
 
 Global options wroten in dedicated line (1st) as series of HEX strings.
 First string defines bit options. Each letter represents 4 bit (in HEX) or 6 bits (in BASE64 alphabete).
@@ -121,9 +96,19 @@ FFFF - Text foreground color
 ------------------------------------------------------------------------------
 File format (text, line oriented, DOS coding):
 
-<user-who-load-this-question>
+{prefix-lines...}
 <header line>
 <body lines> ...
 <answers lines> ...
 
+Prefix lines:
+<id><value>
 
+'id' is:
+    'u' - User, who creates this file
+    't' - Name of challenge
+
+'id' can't start with 'V'
+
+Challenge file name format: "ch.<N>"
+Max 256 files
