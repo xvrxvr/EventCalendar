@@ -299,36 +299,6 @@ void AnsPost::read_body()
     assert(total >= 0 && total <= remaining);
     buf[total] = 0;
     decode_body();
-
-/*
------------------------------175182572837905947281560249645
-Content-Disposition: form-data; name="min-age"
-
-18
------------------------------175182572837905947281560249645
-Content-Disposition: form-data; name="max-age"
-
-99
------------------------------175182572837905947281560249645
-Content-Disposition: form-data; name="text"
-
-sasasasa
------------------------------175182572837905947281560249645
-Content-Disposition: form-data; name="answer"
-
-;ldasldsald
-
------------------------------175182572837905947281560249645--
-*/    
-
-/*
------------------------------128025039635182347591461528223
-Content-Disposition: form-data; name="file"
-
-iVBORw0KGgoAAAANSUhEUgAAAZAAAADwCAYAAAAuPDIiAAAgAElEQVR4Xpy995dd2XXfeQEUC.....
------------------------------128025039635182347591461528223--
-*/
-
 }
 
 void AnsPost::decode_body()
@@ -413,13 +383,13 @@ size_t AnsStream::read(size_t shift, size_t rest)
 {
     int total, total_read = 0;
     do {
-        if (rest > BufSize - shift - dlm_size) rest = BufSize - shift - dlm_size;
+        if (rest > BufSize - shift) rest = BufSize - shift;
         do {total = httpd_req_recv(req, buf_start() + shift, rest);} while (total ==  HTTPD_SOCK_ERR_TIMEOUT);
         assert(total >= 0 && total <= rest);
 
         shift += total;
         rest -= total;
-    } while(rest && shift < BufSize - dlm_size);
+    } while(rest && shift < BufSize);
     return total_read;
 }
 
@@ -446,17 +416,6 @@ bool AnsStream::chop(int keep)
     return read_pack(size());
 }
 
-void AnsStream::extract_dlm()
-{
-    char* e = (char*)memchr(ptr, '\n', size());
-    assert(e!=NULL);
-    *e++ = 0;
-
-    dlm = ptr;
-    ptr = e;
-    dlm_size = ptr - dlm;
-}
-
 void AnsStream::skip_after_headers()
 {
     for(;;)
@@ -478,27 +437,6 @@ void AnsStream::skip_after_headers()
     }
 }
 
-size_t AnsStream::find_eof(bool& eof)
-{
-    eof = false;
-    char* e = (char*)memrchr(ptr, '\n', size());
-    if (!e) return size();
-    size_t may_be_retrun = e-ptr;
-    ++e;
-    size_t trailer_len = end-e;
-    if (trailer_len >= dlm_size-1) // Whole trailer should fit
-    {
-        if (memcmp(e, dlm, dlm_size-1)!=0) return size(); // Not delimiter
-        // Delimiter
-        eof = true;
-        return may_be_retrun;
-    }
-    // Partial delimiter (may be)
-    if (memcmp(e, dlm, trailer_len)!=0) return size(); // Not delimiter
-    // May be delimiter, test for it later
-    return may_be_retrun;
-}
-
 void AnsStream::run()
 {
     remaining = req->content_len; // Total number of unread yet data
@@ -507,14 +445,16 @@ void AnsStream::run()
     
     ptr = buf_start(); // Current position in buffer
     read_pack(0); // Read first buffer
-    extract_dlm(); // Extract first line - this is delimiter
     skip_after_headers(); // Skip all headrs
 
     // Now file body starts
     chop(); // Discard header from buffer and load file contents (if any)
-    bool eof;
+
+    consume_stream(NULL, 0, false); // Start stream
+
     do {
-        size_t buf_size = find_eof(eof);
+        bool eof = !remaining;
+        size_t buf_size = size();
         assert(buf_size || eof);
         if (buf_size)
         {
@@ -523,7 +463,9 @@ void AnsStream::run()
             chop();
             assert(processed < buf_size ? !eof : true);
         }
-    } while(!eof);
+    } while(remaining);
+    
+    consume_stream(NULL, 0, true); // End stream
 }
 
 // Send command through WebSocket

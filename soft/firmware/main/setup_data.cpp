@@ -4,6 +4,7 @@
 #include "hadrware.h"
 #include "ILI9327_Shield.h"
 #include "activity.h"
+#include "web_gadgets.h"
 
 int logged_in_user = -1;
 
@@ -101,6 +102,13 @@ void init_or_load_setup()
     current_user.clear();
 }
 
+void zap_configs()
+{
+    init_rtc_data();
+    init_eeprom_data();
+    init_user_eeprom_data();
+}
+
 int WorkingState::get_loaded_gift(int user_index) // Returns Door index with gift fot User, or -1 if no gift loaded
 {
     int pos = -1;
@@ -126,6 +134,24 @@ int WorkingState::total_loaded_gift(int user_index)
     return result;
 }
 
+// Emit user name with gift order (if any). No quotes (just <User (N)>), Return true
+// If requested slot is empty emit nothing and return false
+bool WorkingState::write_user_name(Ans& ans, int index, bool add_quotes)
+{
+    uint8_t state = load_state[index];
+    if (state == 0xFF)
+    {
+        if (add_quotes) ans << UTF8 << "null";
+        return false;
+    }
+    auto uidx = state & 31;
+    if (add_quotes) ans << UTF8 << "\"";
+    ans << DOS << EEPROMUserName(uidx).dos();
+    state >>= 5;
+    if (state || working_state.get_loaded_gift(uidx) > 1) ans << UTF8 << " (" << (state+1) << ")";
+    if (add_quotes) ans << UTF8 << "\"";
+    return true;
+}
 
 /////////////////////
 void TouchSetup::sync() const // Save me to EEPROM
@@ -146,15 +172,24 @@ void WorkingState::sync() const // Save me to RTC
 bool UserSetup::load(int usr_index, uint8_t name[33])
 {
     EEPROM::read(ES_User * EEPROM::page_size + sizeof(UserSetup)*usr_index, this, sizeof(UserSetup));
-    EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, name, 32);
-    name[32]=0;
-    return !empty() && name[0] != 0 && name[0] != 0xFF;
+    if (name)
+    {
+        EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, name, 32);
+        name[32]=0;
+    }
+    return !empty() && (!name || (name[0] != 0 && name[0] != 0xFF));
 }
 
 void UserSetup::save(int usr_index, uint8_t name[32]) const
 {
     EEPROM::write(ES_User * EEPROM::page_size + sizeof(UserSetup)*usr_index, this, sizeof(UserSetup));
-    EEPROM::write((ES_UName + usr_index) * EEPROM::page_size, name, 32);
+    if (name)  EEPROM::write((ES_UName + usr_index) * EEPROM::page_size, name, 32);
+}
+
+// Write user name with prefix/suffix, as directed by its rights (not implemented now)
+void UserSetup::write_usr_name(Ans& ans, uint8_t name[33])
+{
+    ans << DOS << name;
 }
 
 uint32_t get_eeprom_users(int mask_to_test, int value_to_compare)

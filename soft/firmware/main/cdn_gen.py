@@ -86,9 +86,8 @@ def scan_dir(dir_name, outf):
 
 def generate_dir(out_base_name, dir_to_scan):
     with open(f'{out_base_name}.cpp', 'w') as f:
-        print(f"""#include "{out_base_name}.h"
-#include <string.h>
-#include <stdint.h>
+        print(f"""#include "common.h"
+#include "{out_base_name}.h"
 
 CDNDef decode_{out_base_name}_function(const char* key)
 {{""", file=f);
@@ -154,12 +153,90 @@ def load_vars_file(fname, outf):
         trie.gen_switch(outf)
         print("}\n", file=outf)
         VarsTrie.is_string = False
+#################################################################################################################################################################
+def load_ajax_def(file_n):
+    srcs = {}
+    with open(file_n, "r") as f:
+        for line in f:
+            mtch = re.match(r'^[SGP]\(\s*(\w+)', line)
+            if mtch:
+                assert mtch.group(1) not in srcs
+                srcs[mtch.group(1)] = line.strip()
+                continue
+    return srcs
 
+def load_ajax_imp_file(file_n):
+    srcs = {}
+    sig = None
+    sig_id = None
+
+    def add_line(line, id, subsig):
+        nonlocal srcs, sig, sig_id
+        assert sig, f"Signature not found for line {line}"
+        assert id == sig_id, f"ID in signature and line doesn't matched: {line}"
+        assert (sig[0] == 'S') == (subsig == 'S'), f"Type of signature not matches type of line: {line}/{sig} - {subsig}"
+        assert id not in srcs
+        srcs[id] = sig
+        sig = None
+
+    with open(file_n, "r") as f:
+        for line in f:
+            line = line.strip()
+            mtch = re.match(r'^\s*//\s*([SGP]\((\w+).*)$', line)
+            if mtch:
+                sig = mtch.group(1)
+                sig_id = mtch.group(2)
+                continue
+            mtch = re.match(r'^void\s+AJAXDecoder_(\w+)::run\(\)', line)
+            if mtch:
+                add_line(line, mtch.group(1), 'G')
+                continue
+            mtch = re.match(r'^size_t\s+AJAXDecoder_(\w+)::consume_stream\(uint8_t\*\s+data,\s*size_t\s+size,\s*bool\s+eof\)', line)
+            if mtch:
+                add_line(line, mtch.group(1), 'S')
+    return srcs
+
+
+def test_ajax(source_file, out_file):
+    srcs = load_ajax_def(source_file)
+    outs = load_ajax_imp_file(out_file)
+
+    src_ids = set(srcs.keys())
+    out_ids = set(outs.keys())
+
+    both = src_ids & out_ids
+    srcs_only = src_ids - out_ids
+    outs_only = out_ids - src_ids
+
+    for id in both:
+        s = srcs[id]
+        o = outs[id]
+
+        if s.replace(' ', '') != o.replace(' ', ''):
+            print(f"Signature for {id} not matched: {s}/{o}")
+
+    if outs_only:
+        print("Extra action (remove them):", outs_only)
+
+    if srcs_only:
+        print("Not implemented accessors (will be added):", srcs_only)
+        with open(out_file, "a") as f:
+            for id in srcs_only:
+                print(file=f)
+                tpl = srcs[id]
+                print(f'// {tpl}', file=f)
+                if tpl[0] == 'S':
+                    print(f"size_t AJAXDecoder_{id}::consume_stream(uint8_t* data, size_t size, bool eof)\n{{\n    return 0;\n}}", file=f)
+                else:
+                    print(f"void AJAXDecoder_{id}::run()\n{{\n\n}}", file=f)
+
+    
+#################################################################################################################################################################
 
 parser = argparse.ArgumentParser(prog='TextGen', description='Generates source codes for different parts of EventCalendar system')
 
 parser.add_argument('action', 
-    choices=['webswitch','dirscan'], 
+    choices=['webswitch','dirscan', 'test_ajax'], 
     help='Defines action to do: webswitch - Generates source code for WEB pages substitution switch, dirscan - Scan directory with WEB pages and generates access source code'
 )
 parser.add_argument('source', help="Source file or dir")
@@ -173,6 +250,8 @@ elif args.action == 'webswitch':
     with open(args.output+".cpp", "w") as f:
         print(f'#include "common.h"\n#include "{args.source}"\n', file=f)
         load_vars_file(args.source, f)
+elif args.action == 'test_ajax':
+    test_ajax(args.source, args.output)
 else:
     assert False, f"Unknown command {args.action}"
 

@@ -89,7 +89,9 @@ void WebOptions::HTMLUserList(Ans &ans)        // HTML block with all Users avai
     UserSetup usr; ;
     if (usr.load(uidx, name) && usr.priority <= current_user.priority)
     {
-      ans << DOS << "<option value='" << uidx << "'>" << name << "</option>";
+      ans << UTF8 << "<option value='" << uidx << "'>";
+      usr.write_usr_name(ans, name);
+      ans << UTF8 << "</option>";
     }
   }
 }
@@ -187,14 +189,7 @@ void  WebOptions::LoadedGiftDoors(Ans &ans)     // JSON list of titles on Doors
   ans << UTF8 << "[";
   for(int i=0; i<8; ++i)
   {
-    uint8_t state = working_state.load_state[i]; // State of loading of all doors: <position-in-queue:3 bit><user-index:5 bit>. Value of FF means 'unloaded'
-    if (state == 0xFF) ans << UTF8 << "null"; else
-    {
-      auto uidx = state & 31;
-      ans << DOS << "\"" << EEPROMUserName(uidx).dos();
-      state >>= 5;
-      if (state || working_state.get_loaded_gift(uidx) > 1) ans << UTF8 << " (" << (state+1) << ")";      
-    }
+    working_state.write_user_name(ans, i, true);
     if (i < 7) ans << UTF8 << ",";
   }
   ans << UTF8 << "]";

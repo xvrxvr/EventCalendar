@@ -1,5 +1,4 @@
 #include "common.h"
-
 #include "web_files_access.h"
 
 CDNDef decode_web_files_access_function(const char* key)
@@ -32,6 +31,8 @@ CDNDef decode_web_files_access_function(const char* key)
     extern const char start_game_html_end[] asm("_binary_start_game_html_end");
     extern const char styles_css_start[] asm("_binary_styles_css_start");
     extern const char styles_css_end[] asm("_binary_styles_css_end");
+    extern const char text_lib_js_start[] asm("_binary_text_lib_js_start");
+    extern const char text_lib_js_end[] asm("_binary_text_lib_js_end");
 
     switch(key[0])
     {
@@ -89,6 +90,7 @@ CDNDef decode_web_files_access_function(const char* key)
                     }
                 default: return CDNDef{};
             }
+        case 't': if (strcmp(key+1, "ext_lib.js") == 0) {return CDNDef{text_lib_js_start, text_lib_js_end};} else {return CDNDef{};}
         default: return CDNDef{};
     }
 }

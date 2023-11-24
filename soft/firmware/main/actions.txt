@@ -40,14 +40,6 @@ Param:
     value - Time
 -----------------------
 
-add_challenge.html - Add new empty challenge
-
-Param:
-    value - Name of challenge
-Return (int):
-    Index of new challenge
------------------------
-
 del_challenge.html - Delete challenge
 
 Param:
@@ -58,12 +50,7 @@ get_challenge.html - Load challenge contents
 
 Param:
     index - Index of challenge
-Result (JSON):
-    Object with challenge contents:
-        text   : str - Text of challenge (multiline text)
-        answer : str - Answers (multiline text)
-        min_age: int - Minimum age
-        max_age: int - Maximum age
+Result: text with challenge definition
 -----------------------
 
 get_user_opts.html - get User definition
@@ -108,6 +95,18 @@ Params:
     id  - Ping command (ping-fgview or ping-fgedit)
     cnt - Counter from command
 
+-----------------------
+update_challenge.html (POST as text) - Update challenge
+
+Param - challenge text (with 'i' tag prepended)
+Answer - index of challenge (or -1 if challenge save/creation failed)
+-----------------------
+
+bg_add.html (POST as binary) - Add new background image
+
+Param - blob with JPG image
+Answer - index of added BG image (or -1 if can't add)
+
 ================================================================================
 
 List of Actions called directly from WEB Pages (parameters post by default by GET):
@@ -136,29 +135,11 @@ add_user.html - Add new user (no name). Pass through fingerprint addition, that 
 -> /action/fg_edit.html (no params) -> edit_user.html
 -----------------------
 
-bg_add.html (POST) - Add new background image
--> set_bg_images.html
-
-Param:
-    file - base64 encoded PNG image
------------------------
-
 bg_remove.html - Remove BG image
 -> set_bg_images.html
 
 Param:
     index - BG image index
------------------------
-
-update_challenge.html (POST) - Update challenge
--> set_challenge.html
-
-Param:
-    index - Challenge index
-    min_age - Min age
-    max_age - Max age
-    text - Text of challenge
-    answer - Answers for challenge
 -----------------------
 
 recalibrate_touch.html - Recalibrate touch pannel
@@ -219,12 +200,12 @@ $[LoadedGiftDoors] - JSON list of titles on Doors
 $[MsgTitle] - Title of Message page
 $[Message] - Message in Message page
 $[HTMLBGImageList] - HTML block for background Images list
-  <img id="i1" class="img-box" onclick="select(1)" src="../bg/1.png">
-  <img id="i2" class="img-box" onclick="select(2)" src="../bg/2.png">
-  <img id="i3" class="img-box" onclick="select(3)" src="../bg/3.png">
-  <img id="i4" class="img-box" onclick="select(4)" src="../bg/4.png">
-  <img id="i5" class="img-box" onclick="select(5)" src="../bg/5.png">
-  <img id="i6" class="img-box" onclick="select(6)" src="../bg/6.png">
+  <img id="i1" class="img-box" onclick="select(1)" src="../bg/1.jpg">
+  <img id="i2" class="img-box" onclick="select(2)" src="../bg/2.jpg">
+  <img id="i3" class="img-box" onclick="select(3)" src="../bg/3.jpg">
+  <img id="i4" class="img-box" onclick="select(4)" src="../bg/4.jpg">
+  <img id="i5" class="img-box" onclick="select(5)" src="../bg/5.jpg">
+  <img id="i6" class="img-box" onclick="select(6)" src="../bg/6.jpg">
 $[HTMLChallengeOptions] - HTML block with challenges list
   <option value="1">Задача 1</option>
   <option value="2">Задача 2</option>

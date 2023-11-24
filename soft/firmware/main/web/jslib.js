@@ -198,6 +198,32 @@ function send_ajax_request(url, callback = null, as_json = false)
 //    console.log('AJAX: ' + url);
 }
 
+function send_ajax_update_challenge(url, data, callback)
+{
+    let req = new XMLHttpRequest();
+    req.onload = () => {callback(this.responseText);};
+    req.open("POST", "../action/update_challenge.html");
+    req.send(data);
+}
+
+function send_ajax_update_challenge(data, callback)
+{
+    let req = new XMLHttpRequest();
+    req.onload = () => {callback(this.responseText);};
+    req.open("POST", "../action/update_challenge.html");
+    req.send(data);
+}
+
+
+function send_ajax_bg_add(data, callback)
+{
+    let req = new XMLHttpRequest();
+    req.onload = () => {callback(this.responseText);};
+    req.open("POST", "../action/bg_add.html");
+    req.setRequestHeader("contentType", "application/octet-stream");
+    req.send(data);
+}
+
 // callback argument - new user name to put on door
 function send_gift_load_msg(door_index, user_index, callback)
 {
@@ -226,21 +252,15 @@ function send_set_interround_time(time)
     send_ajax_request(`set_interround_time.html?value=${time}`);
 }
 
-// Callback called with new challenge index
-function send_add_challenge(text, callback)
-{
-    send_ajax_request(`add_challenge.html?value=${encodeURIComponent(text)}`, callback);
-}
-
 function send_del_challenge(index)
 {
     send_ajax_request(`del_challenge.html?index=${index}`);
 }
 
-// Callback called with JSON object with challenge data
+// Callback called with text of challenge definition
 function send_get_challenge(index, callback)
 {
-    send_ajax_request(`get_challenge.html?index=${index}`, callback, true);
+    send_ajax_request(`get_challenge.html?index=${index}`, callback);
 }
 
 // Callback called with JSON data with User options

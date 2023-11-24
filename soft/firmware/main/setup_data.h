@@ -49,6 +49,7 @@ struct UserSetup {
 
     bool empty() const {return options == 0xFFFF && status == 0xFF && priority == 0xFF && age == 0xFF;}
     void clear() {memset(this, 0xFF, sizeof(*this));}
+    void write_usr_name(class Ans&, uint8_t name[33]);
 };
 static_assert(sizeof(UserSetup) == 16, "UserSetup size wrong");
 
@@ -136,6 +137,11 @@ struct WorkingState {
     void sync() const; // Save me to RTC
     int get_loaded_gift(int user_index); // Returns Door index with gift fot User, or -1 if no gift loaded
     int total_loaded_gift(int user_index);
+
+    // Emit user name with gift order (if any). Return true
+    // If requested slot is empty - emit nothing and return false
+    // If 'add_quotes' is true writes JSON complaint representation (quotes around name and 'null' if slot is empty)
+    bool write_user_name(class Ans&, int slot_index, bool add_quotes);
 };
 static_assert(sizeof(WorkingState) <= 56, "RTC RAM Overflow");
 ////////////////////////////////////////////////
@@ -150,6 +156,7 @@ extern uint8_t ssid[33];
 extern uint8_t passwd[64];
 
 void init_or_load_setup();
+void zap_configs();
 
 inline void login_user(int usr_index) 
 {

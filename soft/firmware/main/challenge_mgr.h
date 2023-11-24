@@ -21,6 +21,9 @@ class ChallengeMgr {
 
     const char* find_hdr(FILE*, char);
 
+    // Returns file name fo Challenge file. Use 'buf'
+    char* ch_name(int ch_index);
+
 public:
     ChallengeMgr() {scan(); fill_user();}
 
@@ -32,6 +35,16 @@ public:
         return idx == -1 ? -1 : files[idx].second;
     }
     const char* get_dos_name(int ch_index);
+
+    void delete_challenge(int ch_index);
+    void send_challenge(class Ans&, int ch_index);
+    
+    struct ChUpd {
+        FILE* file;
+        int ch_index;
+        size_t processed_size;
+    };
+    ChUpd update_challenge(uint8_t* first_pack, size_t first_pack_size);
 };
 
 ChallengeMgr& challenge_mgr();

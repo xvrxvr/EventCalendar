@@ -190,12 +190,6 @@ void Activity::on_web_ping_echo(const char* tag) // Global entry - dispatched to
     }
 }
 
-void send_web_ping_to_ws(const char* tag)
-{
-    static int rcount;
-    web_send_cmd("{'cmd':'%s','cnt':%d}", tag, rcount++);
-}
-
 void Activity::send_web_ping() // Internal function - called by WEB ping thread in this module.
 {
     L lock;

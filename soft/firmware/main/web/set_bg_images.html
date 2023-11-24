@@ -46,7 +46,7 @@ $<!DOCTYPE html>
 
 <body>
 
-<div class="grid-box">
+<div id="bg_img_grid" class="grid-box">
 $[HTMLBGImageList]
 </div>
 
@@ -59,10 +59,6 @@ $[HTMLBGImageList]
 <p><button type="button" onclick="G('setup')">Назад в setup</button></p>
 </form></td>
 </table>
-
-<form id="submit-form" action="../action/bg_add.html" method="POST" enctype="multipart/form-data">
-<input type="hidden" id="submit-data" name="file"></input>
-</form>
 
 <script>
 
@@ -109,13 +105,20 @@ function send_picture()
     canvas.width = 400;
 
     ctx.drawImage(image, 0, 0);
-    const image_url = canvas.toDataURL();
-
-    const pref = "data:image/png;base64,";
-
-    if (!image_url.startsWith(pref)) {alert(`Internal error: dataURL starts with invalid pattern : '${image_url.substr(0, 30)}', extected '${pref}'`); return;}
-    I("submit-data").value = image_url.substring(pref.length);
-    I("submit-form").submit();
+    const image_url = canvas.toBlob((blob) => {
+        send_ajax_bg_add(blob, (index) => {
+            if (index == "-1") alert("Не могу добавить картинку"); else
+            {
+                //   <img id="i1" class="img-box" onclick="select(1)" src="../bg/1.png">
+                let img = document.createElement("img");
+                img.id = `i${index}`;
+                img.className = "img-box"
+                img.src = `../bg/${index}.jpg`;
+                img.onclick = () => {select(index+0);};
+                I("bg_img_grid").append(img);
+            }
+        });
+    }, "image/jpeg");
 }
 
 </script>

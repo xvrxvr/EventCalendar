@@ -72,6 +72,13 @@ void WebOptions::decode_inline(const char* key, Ans& ans)
             }
         case 'T': if (strcmp(key+1, "imeToDoorsEnable") == 0) {ans.write_int(TimeToDoorsEnable()); return;} else {err_novar(key); return;}
         case 'U': if (strcmp(key+1, "serRights") == 0) {ans.write_int(UserRights()); return;} else {err_novar(key); return;}
+        case 'w': if (memcmp(key+1, "rite_", 5) != 0) {err_novar(key); return;}
+                  switch(key[6])
+                  {
+                      case 'a': if (strcmp(key+7, "ctive_users") == 0) {write_active_users(ans); return;} else {err_novar(key); return;}
+                      case 'd': if (strcmp(key+7, "one_users") == 0) {write_done_users(ans); return;} else {err_novar(key); return;}
+                      default: err_novar(key); return;
+                  }
         default: err_novar(key); return;
     }
 }
@@ -147,6 +154,13 @@ uint32_t WebOptions::get_condition(const char* key, Ans& ans)
             }
         case 'T': if (strcmp(key+1, "imeToDoorsEnable") == 0) {return TimeToDoorsEnable();} else {err_novar(key); return 0;}
         case 'U': if (strcmp(key+1, "serRights") == 0) {return UserRights();} else {err_novar(key); return 0;}
+        case 'w': if (memcmp(key+1, "rite_", 5) != 0) {err_novar(key); return 0;}
+                  switch(key[6])
+                  {
+                      case 'a': if (strcmp(key+7, "ctive_users") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
+                      case 'd': if (strcmp(key+7, "one_users") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
+                      default: err_novar(key); return 0;
+                  }
         default: err_novar(key); return 0;
     }
 }

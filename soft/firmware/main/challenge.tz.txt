@@ -105,7 +105,8 @@ Prefix lines:
 <id><value>
 
 'id' is:
-    'u' - User, who creates this file
+    'i' - Index of challenge (or -1 if new challenge) - temporary line (always first), used in 'update_challenge.html' AJAX action from GUI
+    'u' - User index, who creates this file
     't' - Name of challenge
 
 'id' can't start with 'V'

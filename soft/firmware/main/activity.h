@@ -29,6 +29,7 @@ enum ActionFlags {
 
 static_assert(uint32_t(AFLast) > uint32_t(ATLast), "ActionFlags and ActionType overlaped!");
 
+inline int operator|(ActionType at, ActionFlags af) {return int(at)|int(af);}
 
 enum WebEvents {
     WE_Login,     // No params
@@ -36,11 +37,11 @@ enum WebEvents {
     WE_GameStart, // No params
     WE_GameEnd,   // No params
     WE_FGDel,     // p1 - <User-index>*4 + <FG-index-in-lib> or p1 - <FG-index-in-lib> | 0x1000
-    WE_FGEdit,    // p1 - User index
+    WE_FGEdit,    // p1 - User index (-1 - new user)
     WE_FGView,
 
     // FG Editor only events
-    WE_FGE_Done,  // Done editor. p1 - new user age (or -1), p2 - new user name (UTF8) or NULL
+    WE_FGE_Done,  // Done editor. p1 - new user age (or -1), p2 - new user name (DOS) or NULL
 };
 
 struct Action {
@@ -150,7 +151,7 @@ public:
     virtual void on_resume() {} // You should restore LCD screen in this callback
 
     // Scene updater
-    virtual void update_scene(LCD&) =0;
+    virtual void update_scene(LCD&) {}
 
     // Initialize all Activity system, starts background tasks which handles Touch/LCD and FG
     // After this call all access to LCD/Touch/FG only through LCDAccess/FPAccess

@@ -36,7 +36,7 @@ class Ans {
         memcpy(var_name, ptr, len); var_name[len] = 0;
     }
 protected:
-    static constexpr size_t BufSize = 1024;
+    static constexpr size_t BufSize = SC_FileBufSize;
     httpd_req_t *req;
     std::unique_ptr<char> request_string;
 
@@ -137,7 +137,7 @@ public:
     ArgSU   decode_SU(const char* tag);
     ArgSD   decode_SD(const char* tag);
     ArgOSU  decode_OSU(const char* tag);
-    ArgOSU  decode_OSD(const char* tag);
+    ArgOSD  decode_OSD(const char* tag);
     ArgU    decode_U(const char* tag);
     ArgOV   decode_OV(const char* tag);
 };
@@ -178,8 +178,6 @@ class AnsStream : public Ans {
     
     char* ptr; // Current position in buffer
     char* end; // End of filled part of buffer
-    char* dlm; // Delimiter line will be here
-    size_t dlm_size = 0; // Size of delimiter - initial part of buffer of this size will be preserved
 
     // Total number of bytes in unprocessed buffer (from 'ptr' to 'end')
     size_t size() {return end-ptr;}
@@ -187,7 +185,7 @@ class AnsStream : public Ans {
 
     size_t read(size_t shift, size_t rest);
 
-    char* buf_start() {return alloc_buf() + dlm_size;}
+    char* buf_start() {return alloc_buf();}
 
     // Try to read pack of data. retrun true if something was read (updates 'end' and 'remaining')
     bool read_pack(size_t shift);
@@ -198,12 +196,10 @@ class AnsStream : public Ans {
     // Returns true if somethig was read
     bool chop(int keep=0);
 
-    void extract_dlm();
-
     void skip_after_headers();
-
-    size_t find_eof(bool& eof);
-
+protected:
+    FILE* opaque_1 = NULL;
+    int opaque_2 = -1;
 public:
     AnsStream(httpd_req_t *req) : Ans(req) {}
 

@@ -17,6 +17,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "atomic": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "*.inc": "cpp"
     }
 }

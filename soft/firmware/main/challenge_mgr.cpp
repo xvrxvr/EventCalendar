@@ -1,10 +1,9 @@
 #include "common.h"
 
-#include <miniz.h>
-
 #include "challenge_mgr.h"
 #include "hadrware.h"
 #include "setup_data.h"
+#include "web_gadgets.h"
 
 static const char* TAG = "challenge";
 
@@ -14,38 +13,24 @@ ChallengeMgr& challenge_mgr()
     return ret;
 }
 
+char* ChallengeMgr::ch_name(int ch_index) {return buf.printf("/ch.%d", ch_index).c_str();}
+
 void ChallengeMgr::fill_user()
 {
-    uint32_t crcs[32] = {};
-
-    const auto find = [&](const char* usr_name) {
-        uint32_t my_crc = mz_crc32(0, (const unsigned char *)usr_name, strlen(usr_name));
-        for(int i=0; i<32; ++i) if (crcs[i] == my_crc) return i;
-        return -1;
-    };
-
-    for(int idx=0; idx<32; ++idx)
-    {
-        EEPROMUserName name(idx);
-        const char* n = name.dos();
-        if (n[0] && n[0] != 0xFF) crcs[idx] = mz_crc32(0, (const unsigned char *)n, strlen(n));
-    }
-
     for(auto& fl: files)
     {
         char* fname = buf.printf("/ch.%d", fl.first).c_str();
         FILE* f = fopen(fname, "r");
         if (!f) continue;
         const char* usr = find_hdr(f, 'u');
-        fl.second = find(usr);
+        if (usr) fl.second = atoi(usr);
         fclose(f);
     }
 }
 
 const char* ChallengeMgr::get_dos_name(int ch_index)
 {
-    char* fname = buf.printf("/ch.%d", ch_index).c_str();
-    FILE* f = fopen(fname, "r");
+    FILE* f = fopen(ch_name(ch_index), "r");
     if (!f) return "";
     const char* title = find_hdr(f, 't');
     fclose(f);
@@ -92,4 +77,78 @@ void ChallengeMgr::scan()
 #undef PREF        
     }
     closedir(dir);
+}
+
+void ChallengeMgr::delete_challenge(int ch_index)
+{
+    unlink(ch_name(ch_index));
+    for(size_t i=0; i<files.size(); ++i)
+    {
+        if (files[i].first == ch_index)
+        {
+            files.erase(files.begin()+i);
+            break;
+        }
+    }
+}
+
+void ChallengeMgr::send_challenge(class Ans& ans, int ch_index)
+{
+    FILE* f = fopen(ch_name(ch_index), "r");
+    if (!f) return;
+    char* b = buf.fill(0, SC_FileBufSize).c_str();
+    for(;;)
+    {
+        int sz = fread(b, 1, SC_FileBufSize, f);
+        if (sz <= 0) break;
+        ans.write_string_utf8(b, sz);
+        if (sz < SC_FileBufSize) break;
+    }
+    fclose(f);
+}
+
+ChallengeMgr::ChUpd ChallengeMgr::update_challenge(uint8_t* first_pack, size_t first_pack_size)
+{
+    int ch_index = -1;
+    size_t delta = 0;
+    if (first_pack[0] == 'i') // It should be
+    {
+        ch_index = strtol((char*)first_pack+1, NULL, 10);
+        uint8_t* e = (uint8_t*)memchr(first_pack, '\n', first_pack_size);
+        if (e)
+        {
+            ++e;
+            size_t delta = e-first_pack;
+            first_pack_size -= delta;
+            first_pack = e;
+        }
+    }
+    if (ch_index == -1)
+    {
+        if (!files.empty())
+        {
+            std::sort(files.begin(), files.end());
+            if (files.back().first != files.size() - 1) // We have some unused indexes inside - try to find them
+            {
+                for(int i=0; i<files.size(); ++i)
+                {
+                    if (files[i].first != i) // Index 'i' not occupied. We sort array before, so Ch indexes in filled part will be the same as array index
+                    {
+                        ch_index = i;
+                        break;
+                    }
+                }
+            }
+        }
+        if (ch_index == -1)
+        {
+            ch_index = files.size();
+            files.push_back({ch_index, logged_in_user});
+        }
+    }
+    FILE* f = fopen(ch_name(ch_index), "w");
+    if (!f) return {NULL, -1, 0};
+    fprintf(f, "u%d\n", logged_in_user);
+    files[ch_index].second = logged_in_user;
+    return {f, ch_index, fwrite(first_pack,1,first_pack_size, f) + delta};
 }

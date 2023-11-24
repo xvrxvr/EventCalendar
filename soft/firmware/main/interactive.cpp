@@ -7,8 +7,6 @@
 #include "web_vars.h"
 #include "web_gadgets.h"
 
-BGImage bg_images;
-
 namespace Interactive {
 
 // Preallocate new user, returns index. Returns -1 if no more users
@@ -21,17 +19,18 @@ static int fge_allocate_user()
     return __builtin_ctz(sc);
 }
 
-// Activate (create) new user. 'name' in UTF8
+// Activate (create) new user. 'name' in DOS
 static void fge_activate_user(int user_index, const char* name, int age)
 {
+    char b[33];
+
     if (!(current_user.options & (UO_CanAddRemoveUser|UO_CanAddRemoveAdmin))) return;
-    char b[66]; // UTF8 string can be 2x length of DOS version (in Russian CP) + 1 extra symbol for compensate possible half of last symbol
-    strncpy(b, name, sizeof(b)-1);
-    b[65] = b[64] = 0;
     UserSetup usr = current_user;
+    
+    strncpy(b, name, 32);
+    b[32] = 0;
     if (!(current_user.options & UO_CanAddRemoveAdmin)) usr.options = 0;
     usr.age = age;
-    utf8_to_dos(b);
     usr.save(user_index, (uint8_t*)b);
 }
 

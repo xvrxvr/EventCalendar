@@ -181,15 +181,15 @@ function new_challenge()
     {
         if (opts[x].text == name) {alert(`Загадка '${name}' уже есть`); return;}
     }
-    send_add_challenge(name, (new_idx) => {
-        let opt = document.createElement("option");
-        opt.value = new_idx.toString();
-        opt.text = name;
-        opts.add(opt);
-        opts.selectedIndex = opts.length - 1;
-        I("text").value = "?";
-        I("answer").value = "?";
-    });
+    let opt = document.createElement("option");
+    opt.value = "-1";
+    opt.text = name;
+    opts.add(opt);
+    opts.selectedIndex = opts.length - 1;
+    I("text").value = "?";
+    I("answer").value = "?";
+    modified = true;
+    preview();
 }
 
 function del_challenge()
@@ -202,6 +202,28 @@ function del_challenge()
     opts.remove(opts.selectedIndex);
     upd_challenge();
     clr();
+}
+
+function decode_challenge(text)
+{
+    const spl = text.split('\n');
+    let idx = 0;
+
+    while(idx < len(spl) && !spl[idx].startsWith('V')) ++idx;
+
+    let hdr = spl[idx++].split(/\s+/);  // V1 <lines-in-body> <header....>
+    if (hdr.length < 3 || hdr[0] != 'V1')
+    {
+        alert("Неожиданный ответ от сервера - загадка сломанна");
+        clr();
+    }
+    const lines = hdr[1] + 0;
+    gl.hdr = hdr.slice(2).join(" ");
+    
+    I("text").value = spl.slice(idx, idx+lines).join('\n') + '\n';
+    idx+=lines;
+    I("answer").value = spl.slice(idx).join('\n') + '\n';
+    preview();
 }
 
 function upd_challenge()
@@ -217,15 +239,13 @@ function upd_challenge()
         clr();
         return;
     }
-    send_get_challenge(opts[opts.selectedIndex].value, (json) => {
-        I("text").value = json.text;       // !!! Pack/unpack full definition
-        I("answer").value = json.answer;        
-        preview();
-    });
+    send_get_challenge(opts[opts.selectedIndex].value, decode_challenge);
 }
 
 function update_current_challenge()
 {
+    if (current_challenge_index == -1) return;
+
     let challenge = I("text").value;
     const answers = I("answer").value;
 
@@ -233,8 +253,13 @@ function update_current_challenge()
     challenge += '\n';
     const total = challenge.match(/\n/g).length;
     
-    const data_to_send = 'V1 ${total} ${gl.header}\n' + challenge + answers;
-//  action="../action/update_challenge.html" method="post" enctype="multipart/form-data"
+    let opt = I("index").options[current_challenge_index];
+    const set_opt = opt.value == "-1";
+    const data_to_send = `i${opt.value}\nt${opt.text}\nV1 ${total} ${gl.header}\n` + challenge + answers;
+    send_ajax_update_challenge(data_to_send, (text) => {
+        if (text == "-1") alert("Не могу обновить загадку - кончилось место"); else
+        if (set_opt) opt.value = text;
+    });
     modified = false;
     preview();
 }

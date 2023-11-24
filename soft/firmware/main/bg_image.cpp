@@ -4,6 +4,8 @@
 
 #include <rom/tjpgd.h>
 
+BGImage bg_images;
+
 static const char* TAG = "BgImages";
 
 void BGImage::init()
@@ -66,7 +68,7 @@ void BGImage::peek_next_bg_image()
     {
         if (bg_list[i] && !usr_bg_list[i])
         {
-            if (!idx--) {bg_img_index = i; return;}
+            if (!idx--) {usr_bg_list[i] = true; bg_img_index = i; return;}
         }
     }
     assert(false && "BG index is lost???");
@@ -96,6 +98,8 @@ static unsigned int jpeg_decode_out_cb(JDEC *dec, void *bitmap, JRECT *rect)
     return 1;
 }
 
+static const char bg_fmt[] = "/bg.%d.jpg";
+
 #define JPEG_WORK_BUF_SIZE  3100    /* Recommended buffer size; Independent on the size of the image */
 
 void BGImage::draw(LCD& lcd)
@@ -108,7 +112,7 @@ void BGImage::draw(LCD& lcd)
     }
 
     Prn b;
-    b.printf("/bg.%d.jpg", bg_img_index);
+    b.printf(bg_fmt, bg_img_index);
 
     std::unique_ptr<FILE, decltype(&fclose)> stream(fopen(b.c_str(), "rb"), &fclose);
     
@@ -164,4 +168,19 @@ int BGImage::create_new_bg_image()
     bg_list.push_back(true);
     usr_bg_list.push_back(false);
     return bg_list.size() - 1;
+}
+
+void BGImage::delete_bg_image(int idx)
+{
+    unlink(Prn().printf(bg_fmt, idx).c_str());
+    if (idx < bg_list.size())
+    {
+        bg_list[idx] = false;
+        usr_bg_list[idx] = false;
+    }
+}
+
+FILE* BGImage::open_image(int idx, const char* mode)
+{
+    return fopen(Prn().printf(bg_fmt, idx).c_str(), mode);
 }

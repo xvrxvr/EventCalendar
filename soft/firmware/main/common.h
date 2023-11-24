@@ -86,7 +86,9 @@ enum SetupConsts {
     SC_TurnoffDelay = 10*60,  // Delay before automatically turn off LCD (in seconds)
     SC_MaxFPScope = 99,     // Maximum FP match scope that not considered as duplication
     SC_FPScope100 = 100,    // What value of Scope equeal to 100% ?
-    SC_MaxWS = 16           // Maximum number of simulteniously opened Websockets
+    SC_MaxWS = 16,          // Maximum number of simulteniously opened Websockets
+    SC_PingTimeout = 5,     // How much 'ping' signals can we wait for answer
+    SC_FileBufSize = 1024   // Size of buffers for internal file operations
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
@@ -94,6 +96,8 @@ enum SetupConsts {
 #define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 1
 
 void utf8_to_dos(char*);
+void reboot(); // Delayed reboot
+void send_web_ping_to_ws(const char* tag);
 
 struct U {
     char b[4];

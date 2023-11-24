@@ -17,23 +17,23 @@
 #endif
 
 #ifndef VP2
-    #define VP2(Type, Id, ...) VARG(Type, Id) VP1(__VA_ARGS__) 
-    #define CP2(Type, Id, ...) CARG(Type, Id) CP1(__VA_ARGS__)
+    #define VP2(Type, Id, p1, p2) VARG(Type, Id) VP1(p1, p2) 
+    #define CP2(Type, Id, p1, p2) CARG(Type, Id) CP1(p1, p2)
 #endif
 
 #ifndef VP3
-    #define VP3(Type, Id, ...) VARG(Type, Id) VP2(__VA_ARGS__)
-    #define CP3(Type, Id, ...) CARG(Type, Id) CP2(__VA_ARGS__)
+    #define VP3(Type, Id, p1, p2, p3, p4) VARG(Type, Id) VP2(p1, p2, p3, p4)
+    #define CP3(Type, Id, p1, p2, p3, p4) CARG(Type, Id) CP2(p1, p2, p3, p4)
 #endif
 
 #ifndef VP4
-    #define VP4(Type, Id, ...) VARG(Type, Id) VP3(__VA_ARGS__)
-    #define CP4(Type, Id, ...) CARG(Type, Id) CP3(__VA_ARGS__)
+    #define VP4(Type, Id, p1, p2, p3, p4, p5, p6) VARG(Type, Id) VP3(p1, p2, p3, p4, p5, p6)
+    #define CP4(Type, Id, p1, p2, p3, p4, p5, p6) CARG(Type, Id) CP3(p1, p2, p3, p4, p5, p6)
 #endif
 
 #ifndef VP5
-    #define VP5(Type, Id, ...) VARG(Type, Id) VP4(__VA_ARGS__)
-    #define CP5(Type, Id, ...) CARG(Type, Id) CP4(__VA_ARGS__)
+    #define VP5(Type, Id, p1, p2, p3, p4, p5, p6, p7, p8) VARG(Type, Id) VP4(p1, p2, p3, p4, p5, p6, p7, p8)
+    #define CP5(Type, Id, p1, p2, p3, p4, p5, p6, p7, p8) CARG(Type, Id) CP4(p1, p2, p3, p4, p5, p6, p7, p8)
 #endif
 
 G(gift_load, P2(I, door, I, user))
@@ -41,7 +41,6 @@ G(unload_gift, P1(I, door))
 G(open_door, P1(I, door))
 G(done_user, P1(I, user))
 G(set_interround_time, P1(I, value))
-G(add_challenge, P1(SD, value))
 G(del_challenge, P1(I, index))
 G(get_challenge, P1(I, index))
 G(get_user_opts, P1(I, index))
@@ -55,7 +54,7 @@ G(start_game, P1(U, users))
 G(add_user, P0)
 S(bg_add)
 G(bg_remove, P1(I, index))
-P(update_challenge, P5(I, index, I, min_age, I, max_age, TD, text, TD, answer))
+S(update_challenge)
 G(recalibrate_touch, P0)
 G(reset, P0)
 G(zap, P0)

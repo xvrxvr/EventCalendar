@@ -120,7 +120,7 @@ static FDArray fd_array;
 static void ws_async_send(void *arg)
 {
     if (!fd_array.has_fd()) return;
-    
+
     httpd_ws_frame_t ws_pkt{};
     ws_pkt.payload = (uint8_t*)arg;
     ws_pkt.len = strlen((const char*)arg);
@@ -293,18 +293,23 @@ static esp_err_t process_setup(httpd_req_t *req)
         free(buf);
         httpd_resp_sendstr(req, setup_ans_page);
 
-        esp_task_wdt_config_t twdt_config = {
-            .timeout_ms = 5000,
-            .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,    // Bitmask of all cores
-            .trigger_panic = true
-        };
-        ESP_ERROR_CHECK(esp_task_wdt_init(&twdt_config));
-        esp_task_wdt_add(NULL);
+        reboot();
 
         return ESP_OK;
     } while(false);
     if (buf) free(buf);
     return httpd_resp_sendstr(req, setup_ans_error);
+}
+
+void reboot()
+{
+    esp_task_wdt_config_t twdt_config = {
+        .timeout_ms = 5000,
+        .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,    // Bitmask of all cores
+        .trigger_panic = true
+    };
+    ESP_ERROR_CHECK(esp_task_wdt_init(&twdt_config));
+    esp_task_wdt_add(NULL);
 }
 
 static esp_err_t start_http_management_server()
