@@ -32,6 +32,12 @@ void FGInput::press()
         ESP_LOGE(TAG, "extractFeatures failed: %s", R503::errorMsg(ret));
         return;
     }
+    if (fp_sensor.active_page > 1) // Do not find anything
+    {
+        fp_sensor.active_page = 1;
+        push_action(Action{.type=AT_Fingerprint, .fp_index = -1, .fp_score = R503_NO_MATCH_IN_LIBRARY});
+        return;
+    }
     uint16_t location, score;
     ret = fp_sensor.searchFinger(fp_sensor.active_page, location, score);
     switch(ret)

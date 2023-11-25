@@ -287,15 +287,15 @@ static void fg_edit(int user_index)
         filled_tpls = fge_get_filled_tpls(user_index);
     }
 
-    int tpl_to_fill = -1; // <index>*2 + <is-second-circle-to-fill>, or -1 if nothing to be filled
+    int tpl_to_fill = -1; // <index>*8 + <circle-index-to-fill>, or -1 if nothing to be filled
 
     const auto unhighlight = [&]() {
         if (tpl_to_fill == -1) return;
         web_send_cmd(R"([
             {'cmd':'fgedit-box-state','dst':%d,'state':'%s'},
             {'cmd':'fgedit-circle-state', 'dst':'%d-%d','state':'empty'}
-        ])", tpl_to_fill >> 1, (filled_tpls >> (tpl_to_fill >> 1)) & 1 ? "filled" : "empty",
-        tpl_to_fill >> 1, tpl_to_fill&1);
+        ])", tpl_to_fill >> 3, (filled_tpls >> (tpl_to_fill >> 3)) & 1 ? "filled" : "empty",
+        tpl_to_fill >> 3, tpl_to_fill&7);
     };
 
     const auto msg_flash = [&](Action& a) {
@@ -322,17 +322,17 @@ static void fg_edit(int user_index)
         if (tpl_to_fill == -1 && filled_tpls != 15) // Not all filled - send filling indicator
         {
             // __builtin_ctz - Returns the number of trailing 0-bits in x, starting at the least significant bit position.
-            tpl_to_fill = __builtin_ctz(~filled_tpls)*2;
+            tpl_to_fill = __builtin_ctz(~filled_tpls)*8;
         }
         if (tpl_to_fill != -1)
         {
             web_send_cmd(R"([
                 {'cmd':'fgedit-box-state','dst':%d,'state':'filling'},
-                {'cmd':'fgedit-circle-state', 'dst':'%d-%d','state':'%s'}
-            ])", tpl_to_fill >> 1, tpl_to_fill >> 1, tpl_to_fill&1, circle_state_override);
+                {'cmd':'fgedit-circle-state', 'dst':%d,'state':'%s'}
+            ])", tpl_to_fill >> 3, (tpl_to_fill >> 3)*SC_MAX_CH+(tpl_to_fill&7), circle_state_override);
         }
         circle_state_override = "filling";
-        Activity::FPAccess(&act).access().active_page = (tpl_to_fill&1) + 1;
+        Activity::FPAccess(&act).access().active_page = (tpl_to_fill&7) + 1;
         Action a = act.get_action();
         if (a.type == AT_Fingerprint)
         {
@@ -345,9 +345,10 @@ static void fg_edit(int user_index)
             if (a.fp_index == -1 && a.fp_score == R503_NO_MATCH_IN_LIBRARY) // This is ok
             {
                 unhighlight();
-                if (!(tpl_to_fill & 1)) {tpl_to_fill |= 1; continue;} // 1st part was filled - fill second
+                auto cbox = tpl_to_fill >> 3;
+                web_send_cmd("{'cmd':'fgedit-circle-state', 'dst':%d,'state':'filled'}", cbox*SC_MAX_CH+(tpl_to_fill&7));
+                if ((tpl_to_fill & 7) != SC_MAX_CH-1) {++tpl_to_fill; continue;}// 1st part was filled - fill seconds
 
-                auto cbox = tpl_to_fill >> 1;
                 tpl_to_fill = -1;
 
                 Activity::FPAccess fpa(&act);
@@ -365,11 +366,7 @@ static void fg_edit(int user_index)
                     continue;
                 }
                 filled_tpls |= 1 << cbox;
-                web_send_cmd(R"([
-                    {'cmd':'fgedit-box-state','dst':%d,'state':'filled'},
-                    {'cmd':'fgedit-circle-state', 'dst':'%d-%d','state':'filled'},
-                    {'cmd':'fgedit-circle-state', 'dst':'%d-%d','state':'filled'}
-                ])", cbox, cbox, cbox);
+                web_send_cmd("{'cmd':'fgedit-box-state','dst':%d,'state':'filled'}", cbox);
                 continue;
             }
             if (a.fp_index == -1) // This is some error
@@ -407,9 +404,13 @@ static void fg_edit(int user_index)
                     tpl_to_fill = -1;
                     web_send_cmd(R"([
                         {'cmd':'fgedit-box-state','dst':%d,'state':'empty'},
-                        {'cmd':'fgedit-circle-state', 'dst':'%d-0','state':'empty'},
-                        {'cmd':'fgedit-circle-state', 'dst':'%d-1','state':'empty'}
-                    ])", box_idx, box_idx, box_idx);
+                        {'cmd':'fgedit-circle-state', 'dst':'%d','state':'empty'},
+                        {'cmd':'fgedit-circle-state', 'dst':'%d','state':'empty'},
+                        {'cmd':'fgedit-circle-state', 'dst':'%d','state':'empty'},
+                        {'cmd':'fgedit-circle-state', 'dst':'%d','state':'empty'},
+                        {'cmd':'fgedit-circle-state', 'dst':'%d','state':'empty'},
+                        {'cmd':'fgedit-circle-state', 'dst':'%d','state':'empty'}
+                    ])", box_idx, box_idx*SC_MAX_CH, box_idx*SC_MAX_CH+1, box_idx*SC_MAX_CH+2, box_idx*SC_MAX_CH+3, box_idx*SC_MAX_CH+4, box_idx*SC_MAX_CH+5);
                     break;
                 }
                 case WE_Logout: return;

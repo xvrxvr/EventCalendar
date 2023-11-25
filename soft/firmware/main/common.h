@@ -88,7 +88,8 @@ enum SetupConsts {
     SC_FPScope100 = 100,    // What value of Scope equeal to 100% ?
     SC_MaxWS = 16,          // Maximum number of simulteniously opened Websockets
     SC_PingTimeout = 5,     // How much 'ping' signals can we wait for answer
-    SC_FileBufSize = 1024   // Size of buffers for internal file operations
+    SC_FileBufSize = 1024,   // Size of buffers for internal file operations
+    SC_MAX_CH = 6           // Maximum number of Characters in FP template
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
