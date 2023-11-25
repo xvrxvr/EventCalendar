@@ -154,6 +154,7 @@ static void test_colors()
 }
 #endif
 
+#if 0
 #include "rom/tjpgd.h"
 
 #define JPEG_WORK_BUF_SIZE  3100    /* Recommended buffer size; Independent on the size of the image */
@@ -207,7 +208,11 @@ void test_jpeg(const void* img, size_t size)
     err = jd_decomp(&JDEC, jpeg_decode_out_cb, 0);
     printf("jd_decomp -> %d\n", err);
 }
+#endif
 
+namespace Interactive {
+void entry();
+}
 
 extern "C" void app_main(void)
 {
@@ -215,32 +220,35 @@ extern "C" void app_main(void)
     init_or_load_setup();
     wifi_init();
     start_http_servers();
-//    Activity::start();
+    Activity::start();
 
 //    touch_setup.calibrate();
 //    printf("Setup=%ld,%ld,%ld,%ld,%ld,%ld\n", touch_setup.A, touch_setup.B, touch_setup.C, touch_setup.D, touch_setup.E, touch_setup.F);
 
-    lcd.text("Hello!", 100, 100);
+//    lcd.text("Hello!", 100, 100);
 
  //   simple_test();
 //    test1();
 
  //   test_colors();
 
+/*
     extern const char test_bg_start[] asm("_binary_test_bg_jpg_start");
     extern const char test_bg_end[] asm("_binary_test_bg_jpg_end");
     test_jpeg(test_bg_start, test_bg_end-test_bg_start);
+*/
 
 //     BoxCreator(int width, int height, int r, int border_width, int shadow_width);
  //   BoxCreator box(200, 100, 15, 2, 5);
 
 //    static const uint16_t pallete[] = {0, rgb(0x04, 0xAA, 0x6D), 0, rgb(0x66,0x66,0x66)};
 //    box.draw(lcd, 50, 50, pallete, true);
-
+/*
     TextBoxDraw::TextGlobalDefinition gd;
     TextBoxDraw::TextsParser pars(gd);
     pars.parse_text("Hello world!\n\\2\\#Hi!");
     pars.draw_one_box_centered(lcd);
+*/
 
-    for(;;);
+    for(;;) Interactive::entry();
 }

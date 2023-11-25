@@ -26,7 +26,7 @@ static void fge_activate_user(int user_index, const char* name, int age)
 
     if (!(current_user.options & (UO_CanAddRemoveUser|UO_CanAddRemoveAdmin))) return;
     UserSetup usr = current_user;
-    
+
     strncpy(b, name, 32);
     b[32] = 0;
     if (!(current_user.options & UO_CanAddRemoveAdmin)) usr.options = 0;
@@ -85,7 +85,7 @@ inline void do_fg_del(int index, uint8_t count=1)
 
 static void game();
 static void no_game();
-static void challenge();
+static void challenge() {}
 
 static void fg_edit(int user_index);
 static void fg_view();
