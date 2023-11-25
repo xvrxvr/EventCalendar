@@ -229,6 +229,24 @@ void send_web_ping_to_ws(const char* tag)
     }
 }
 
+// Enable/Disable users to participate in game
+static void setup_active_users(uint32_t scale)
+{
+    for(int i=0; i<32; ++i)
+    {
+        UserSetup usr;
+        if (!usr.load(i, NULL)) continue;
+        if (!(usr.status & US_Enabled)) continue;
+        bool req_enabled = (scale & bit(i)) != 0;
+        bool has_enabled = (usr.status & US_Paricipated) != 0;
+        if (req_enabled != has_enabled)
+        {
+            usr.status ^= US_Paricipated;
+            usr.save(i, NULL);
+        }
+    }
+}
+
 // update_users.html - Update list of Users which participated in Game.
 // -> load_gifts.html or admin.html
 // 
@@ -239,8 +257,7 @@ void send_web_ping_to_ws(const char* tag)
 // G(update_users, P2(U, users, OV, load_gifts))
 void AJAXDecoder_update_users::run()
 {
-    working_state.enabled_users = arg_users;
-    working_state.sync();
+    setup_active_users(arg_users);
     if (arg_load_gifts) redirect("/web/load_gifts.html");
     else redirect("/web/admin.html");
 }
@@ -266,8 +283,7 @@ void AJAXDecoder_end_game::run()
 // G(start_game, P1(U, users))
 void AJAXDecoder_start_game::run()
 {
-    if (arg_users) working_state.enabled_users = arg_users;
-    working_state.sync();
+    if (arg_users) setup_active_users(arg_users);
     Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameStart}});
     redirect("/web/admin.html");
 }

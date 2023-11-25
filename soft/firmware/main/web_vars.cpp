@@ -176,7 +176,8 @@ void  WebOptions::HTMLOptionsUserList(Ans &ans) // HTML block with list of Users
 {
   for(int i=0; i<32; ++i)
   {
-    if (working_state.enabled_users & bit(i))
+    UserSetup usr;
+    if (usr.load(i, NULL) && (usr.status & (US_Enabled | US_Paricipated)) == (US_Enabled | US_Paricipated))
     {
       ans << DOS << "<option value='" << i << "'>" << EEPROMUserName(i).dos() << "</option>";
     }

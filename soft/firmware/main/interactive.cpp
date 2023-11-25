@@ -193,6 +193,7 @@ static void game()
         if (test_user)
         {
             test_user = false;
+            bg_images.draw(Activity::LCDAccess(NULL).access());
             if (current_user.options) set_web_root("web/admin.html"); 
             else set_web_message("Access denied", "У вас недостаточно прав для входа сюда");
             if ((current_user.status & (US_Enabled|US_Paricipated)) != (US_Enabled|US_Paricipated))
@@ -205,7 +206,7 @@ static void game()
                 lcd_message("Вам уже вручили все подарки");
                 continue;
             }
-            if (!((working_state.enabled_users >> logged_in_user) & 1))
+            if (!(working_state.enabled_users & bit(logged_in_user)))
             {
                 lcd_message("Вы уже получили свой подарок\nПриходите %s за следующим", ts_to_string(working_state.last_round_time + round));
                 continue;
@@ -225,7 +226,7 @@ static void game()
                 {
                     case AT_WatchDog: passivate(); return;
                     case AT_Fingerprint: 
-                        if (a.fp_index == -1 || logged_in_user == a.fp_index>>2) break;
+                        if (a.fp_index == -1 || logged_in_user == (a.fp_index>>2)) break;
                         login_user(a.fp_index>>2);
                         test_user = true;
                         break;
