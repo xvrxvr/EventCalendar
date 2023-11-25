@@ -59,7 +59,7 @@ function loaded_gifts_to_disabled(second_names)
     return result;
 }
 
-let _time_to_doors_enable = $[TimeToDoorsEnable];
+var _time_to_doors_enable = $[TimeToDoorsEnable];
 
 function _msg_time_to_doors()
 {
@@ -105,7 +105,7 @@ function set_html_with_timeout(cmd, element_name, msg = undefined)
     if (m) call_later(cmd, () => {element.innerHTML="";});
 }
 
-let websock = null;
+var websock = null;
 
 // Setup callback handler for WebSocket. Callback got Array of Objects with comands
 // Generic commands processed right here, but it still be included in callback argument
@@ -142,7 +142,7 @@ window.onload = () => {if (!websock) set_async_handler();};
 window.onunload = () => {if (websock) {websock.close(); websock = null;}};
 
 
-let _popup_data = null;
+var _popup_data = null;
 
 function show_popup(parent, msg, popup_data)
 {

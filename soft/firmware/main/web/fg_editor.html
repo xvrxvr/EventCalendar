@@ -22,7 +22,7 @@ $<!DOCTYPE html>
   border: 2px solid black;
   border-radius: 7px;
   box-shadow: 3px 3px #999;
-  width: 100px;
+  width: 300px;
   height: 40px;
   transition: background-color 1s;
   white-space: nowrap;
@@ -89,10 +89,10 @@ $<!DOCTYPE html>
 <div id='alert-target'><div>
 
 <table><tr>
-<td><div id="b0" class="fgl-ebox" onclick="del_fg(this, 0)"><span id="t0"></span><span id='c0' class="fgl-circle"></span><span id='c1' class="fgl-circle"></span></div><span id='c2' class="fgl-circle"></span><span id='c3' class="fgl-circle"></span></div><span id='c4' class="fgl-circle"></span><span id='c5' class="fgl-circle"></span></div>
-<td><div id="b1" class="fgl-ebox" onclick="del_fg(this, 1)"><span id="t1"></span><span id='c6' class="fgl-circle"></span><span id='c7' class="fgl-circle"></span></div><span id='c8' class="fgl-circle"></span><span id='c9' class="fgl-circle"></span></div><span id='c10' class="fgl-circle"></span><span id='c11' class="fgl-circle"></span></div>
-<td><div id="b2" class="fgl-ebox" onclick="del_fg(this, 2)"><span id="t2"></span><span id='c12' class="fgl-circle"></span><span id='c13' class="fgl-circle"></span></div><span id='c14' class="fgl-circle"></span><span id='c15' class="fgl-circle"></span></div><span id='c16' class="fgl-circle"></span><span id='c17' class="fgl-circle"></span></div>
-<td><div id="b3" class="fgl-ebox" onclick="del_fg(this, 3)"><span id="t3"></span><span id='c18' class="fgl-circle"></span><span id='c19' class="fgl-circle"></span></div><span id='c20' class="fgl-circle"></span><span id='c21' class="fgl-circle"></span></div><span id='c22' class="fgl-circle"></span><span id='c23' class="fgl-circle"></span></div>
+<td><div id="b0" class="fgl-ebox" onclick="del_fg(this, 0)"><span id="t0"></span><span id="T0"></span> </div>
+<td><div id="b1" class="fgl-ebox" onclick="del_fg(this, 1)"><span id="t1"></span><span id="T1"></span> </div>
+<td><div id="b2" class="fgl-ebox" onclick="del_fg(this, 2)"><span id="t2"></span><span id="T2"></span> </div>
+<td><div id="b3" class="fgl-ebox" onclick="del_fg(this, 3)"><span id="t3"></span><span id="T3"></span> </div>
 </tr></table>
 
 <div class="fgl-popuptext" id="popup-text" onclick="popup_clicked()"></div>
@@ -111,6 +111,21 @@ let spc_circ_type = 'filling';
 const CIRCLES = 6;
 
 const new_user = (filled_boxes == 0);
+
+function fill_circles()
+{
+    let cidx = 0;
+    for(let tidx=0; tidx<4;++tidx)
+    {
+        const tpl_span = I(`T${tidx}`);
+        let acc = '';
+        for(let circ=0; circ<CIRCLES; ++circ) acc += `<span id='c${cidx++}' class="fgl-circle"></span>`;
+        tpl_span.innerHTML = acc;
+    }
+}
+
+fill_circles();
+
 
 function mark_can_finish()
 {
@@ -139,7 +154,7 @@ function update_all_state()
         const circ = I(`c${i}`);
         circ.classList.remove('fgl-c-filled', 'fgl-c-bad', 'fgl-c-quality', 'fgl-c-filling');
         if (i == special_circ) circ.classList.add(`fgl-c-${spc_circ_type}`); else
-        if ((filled_circ >> i) & 1) circ.classList.add('fgl-c-filled');
+        if ((filled_circs >> i) & 1) circ.classList.add('fgl-c-filled');
     }
 }
 if (!new_user) mark_can_finish();
