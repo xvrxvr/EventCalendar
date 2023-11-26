@@ -21,6 +21,7 @@ set(srcs
     interactive.cpp
     challenge_mgr.cpp
     main.cpp
+    challenges/equest.cpp
 )
 
 file(GLOB web_srcs "web/*")

@@ -101,7 +101,7 @@ void ChallengeMgr::send_challenge(class Ans& ans, int ch_index)
     {
         int sz = fread(b, 1, SC_FileBufSize, f);
         if (sz <= 0) break;
-        ans.write_string_utf8(b, sz);
+        ans.write_string_dos(b, sz);
         if (sz < SC_FileBufSize) break;
     }
     fclose(f);

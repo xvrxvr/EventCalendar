@@ -15,13 +15,34 @@ static const uint8_t s_f0_ff[] = {
     0xC2, 0xB0, 0x00, 0xE2, 0x88, 0x99, 0xC2, 0xB7, 0x00, 0xE2, 0x88, 0x9A, 0xE2, 0x84, 0x96, 0xC2, 0xA4, 0x00, 0xE2, 0x96, 0xA0, 0x20, 0x00, 0x00
 };
 
-void utf8_to_dos(char* sym)
+std::pair<size_t, size_t> utf8_to_dos(char* sym, int length)
 {
     uint8_t* p = (uint8_t*)sym;
     uint8_t* dst = p;
+    int org_len = length;
+    if (length == -1) length = strlen(sym);
+
+    if (length && (p[length-1] & 0x80)) // check for last symbol
+    {
+        for(int l=length-1; l>=0; --l)
+        {
+            auto byte = p[l];
+            if ((byte & 0xC0) == 0xC0) // found
+            {
+                int req_len;
+                if ( (byte & 0xE0) == 0xC0 ) req_len = 2; else
+                if ( (byte & 0xF0) == 0xE0 ) req_len = 3; 
+                else req_len = 4;
+                if (req_len > length - l) length = l;
+                break;
+            }
+        }
+    }
+
+    uint8_t* end = p+length;
 #define S(from, to) case 0x##from: *dst++ = 0x##to; break
 #define U default: *dst++ = '?'; while(*p & 0x80) ++p; break
-    while(*p)
+    while(p<end)
     {
         if (*p < 0x80) *dst++ = *p++; else
         switch(*p++)
@@ -60,7 +81,8 @@ void utf8_to_dos(char* sym)
             U;
         }
     }
-    *dst = 0;
+    if (org_len > 0 && dst-(uint8_t*)sym < org_len) *dst = 0;
+    return {dst-(uint8_t*)sym, length};
 }
 #undef U
 #undef S

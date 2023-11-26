@@ -96,7 +96,10 @@ enum SetupConsts {
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
 #define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 1
 
-void utf8_to_dos(char*);
+// Converts to DOS encode. Returns <encoded-size, original-size>
+// <original-size> can be less than 'length' if text to encode terminated inside UTF8 symbol
+// If decoded text ended outside 'length' end character not added
+std::pair<size_t, size_t> utf8_to_dos(char*, int length=-1);
 void reboot(); // Delayed reboot
 void send_web_ping_to_ws(const char* tag);
 
