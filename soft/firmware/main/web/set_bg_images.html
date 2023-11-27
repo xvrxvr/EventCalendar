@@ -73,8 +73,11 @@ function select(index)
         if (x.id == tgt_id) x.classList.add("selected");
         else x.classList.remove("selected");
     }
-    I("main").src = `../bg/${index}.gif`;
-    if (index != -1) I("image-file").value = "";
+    if (index != -1) 
+    {
+        I("main").src = `../bg/${index}.jpg`;
+        I("image-file").value = "";
+    }
 }
 
 function bg_remove()

@@ -88,7 +88,7 @@ class Activity {
     uint32_t custom_fg_color = auraLEDCode(ALC_Breathing, ALC_Purpule); // Custom color for AT_Fingerprint2 Action
     const char* web_ping_tag = NULL;
     int web_ping_counter = 0; // Incremented on each 'ping' send to WEB, reset on each 'ping' echo from web. If this counter reached threshold limit - WEB timeout fired
-    bool update_scene_req = true; // Set to true to update Scene before waiting for Action
+    bool update_scene_req = false; // Set to true to update Scene before waiting for Action
 
     uint32_t setup_alarm_time;
     uint32_t setup_watchdog_time = 0;

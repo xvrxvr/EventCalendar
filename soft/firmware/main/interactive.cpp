@@ -7,6 +7,7 @@
 #include "web_vars.h"
 #include "web_gadgets.h"
 
+static const char TAG[] = "interactive";
 namespace Interactive {
 
 // Preallocate new user, returns index. Returns -1 if no more users
@@ -35,10 +36,13 @@ static void fge_activate_user(int user_index, const char* name, int age)
 }
 
 // Draw message (in UTF8) to LCD in centered Box
+// If 'msg' is NULL draws last box + mesage on already locked LCD instance
 static void lcd_message(const char* msg, ...)
 {
     static TextBoxDraw::TextGlobalDefinition gd;
     static Prn buf;
+    static TickType_t last_draw_time;
+
     TextBoxDraw::TextsParser pars(gd);
     va_list l;
 
@@ -47,11 +51,22 @@ static void lcd_message(const char* msg, ...)
         va_start(l, msg);
         buf.vprintf(msg, l);
         va_end(l);
+        if (bg_images.is_durty()) 
+        {
+            auto delta = xTaskGetTickCount() - last_draw_time;
+            if (delta < ms2ticks(SC_MinMsgTime)) vTaskDelay(ms2ticks(SC_MinMsgTime) - delta);
+            bg_images.draw(lcd);
+        }
+        utf8_to_dos(buf.c_str());
     }
 
-    utf8_to_dos(buf.c_str());
     pars.parse_text(buf.c_str());
-    pars.draw_one_box_centered(Activity::LCDAccess(NULL).access());
+
+    if (msg) pars.draw_one_box_centered(Activity::LCDAccess(NULL).access());
+    else pars.draw_one_box_centered(lcd);
+
+    bg_images.set_durty();
+    last_draw_time = xTaskGetTickCount();
 }
 
 class MsgActivity : public Activity {
@@ -90,6 +105,8 @@ static void challenge() {}
 static void fg_edit(int user_index);
 static void fg_view();
 
+static void web_event_process(const Action& act);
+
 void entry()
 {
     bg_images.peek_next_bg_image();
@@ -107,7 +124,7 @@ void entry()
         login_superuser();
         set_web_root("web/admin.html");
         lcd_message("Ждите настройки");
-        do {MsgActivity(AT_WEBEvent).get_action();} while(working_state.state == WS_NotActive && (override_switch_active() || !get_eeprom_users()));
+        do {web_event_process(MsgActivity(AT_WEBEvent).get_action());} while(working_state.state == WS_NotActive && (override_switch_active() || !get_eeprom_users()));
         return;
     }
     set_web_message("Waiting for login", "Пожалуста, войдите в систему с помощью отпечатка пальца");
@@ -337,6 +354,8 @@ static void fg_edit(int user_index)
         Action a = act.get_action();
         if (a.type == AT_Fingerprint)
         {
+            ESP_LOGI(TAG, "FG Editor: Got finger (tpl buffer = %d), index=%d, score=%d (msg=%s)", 
+                (tpl_to_fill&7) + 1, a.fp_index, a.fp_score, a.fp_error ? a.fp_error : "");
             if (a.fp_index != -1 && a.fp_score < SC_MaxFPScope) // This is acceptable duplicate
             {
                 msg_flash(a);
@@ -350,6 +369,8 @@ static void fg_edit(int user_index)
                 web_send_cmd("{'cmd':'fgedit-circle-state', 'dst':%d,'state':'filled'}", cbox*SC_MAX_CH+(tpl_to_fill&7));
                 if ((tpl_to_fill & 7) != SC_MAX_CH-1) {++tpl_to_fill; continue;}// 1st part was filled - fill seconds
 
+                ESP_LOGI(TAG, "FG Editor: Create FG library entry");
+
                 tpl_to_fill = -1;
 
                 Activity::FPAccess fpa(&act);
@@ -358,16 +379,19 @@ static void fg_edit(int user_index)
                 if (err)
                 {
                     web_send_cmd("{'cmd':'popup','msg':'%s'}", fp.errorMsg(err));
+                    ESP_LOGE(TAG, "FG Editor: CreateTemplate Error - %s", fp.errorMsg(err));
                     continue;
                 }
                 err = fp.storeTemplate(1, user_index*4 + cbox);
                 if (err)
                 {
                     web_send_cmd("{'cmd':'popup','msg':'%s'}", fp.errorMsg(err));
+                    ESP_LOGE(TAG, "FG Editor: StoreTemplate Error - %s", fp.errorMsg(err));
                     continue;
                 }
                 filled_tpls |= 1 << cbox;
                 web_send_cmd("{'cmd':'fgedit-box-state','dst':%d,'state':'filled'}", cbox);
+                ESP_LOGI(TAG, "FP Editor: Box %d filled", cbox);
                 continue;
             }
             if (a.fp_index == -1) // This is some error
@@ -451,7 +475,7 @@ static void fg_view()
         Action a = act.get_action();
         if (a.type & AT_Fingerprint)
         {
-            prn.strcat("[");
+            prn.strcpy("[");
 
             bool add_comma = false;
             const auto p = [&]() -> Prn& {if (add_comma) prn.strcat(","); add_comma=true; return prn;};
@@ -498,7 +522,7 @@ static void fg_view()
             if (add_comma)
             {
                 prn.strcat("]");
-                web_send_cmd(prn.c_str());
+                web_send_cmd("%s", prn.c_str());
             }
         }
         else // WEB

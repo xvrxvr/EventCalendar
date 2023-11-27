@@ -22,17 +22,20 @@ using String = std::string_view;
 using Align3 = std::array<int, 3>;
 using Align3P = std::array<std::pair<int,int>, 3>;
 
-class WordWrapError : public std::exception {
+
+class TextModuleErrors: public std::exception {};
+
+class WordWrapError : public TextModuleErrors {
 public:
     WordWrapError(const char*) {}
 };
 
-class OutOfBounds : public std::exception {
+class OutOfBounds : public TextModuleErrors {
 public:
     OutOfBounds(const char*) {}    
 };
 
-class Error : public std::exception {
+class Error : public TextModuleErrors {
 public:
     Error(const char*) {}    
 };
@@ -66,7 +69,7 @@ struct TextGlobalDefinition {
     uint16_t shadow_color = rgb(0x66,0x66,0x66);
     uint16_t fg_color = 0;  // FG color (rgb565 hex string)
     uint16_t bg_color = 0xAFD5;  // BG color (rgb565 hex string)
-    GlobOptions glob_options = GlobOptions(GO_FuzzyPercent|GO_CentrVert|GO_CentrHor|GO_EqSizeHor|GO_EqSizeVert);
+    GlobOptions glob_options = GlobOptions(GO_FuzzyPercent|GO_CentrVert|GO_CentrHor|GO_EqSizeHor|GO_EqSizeVert|GO_WordWrap);
 
     uint8_t marging_v = 5;
     uint8_t marging_h = 5;

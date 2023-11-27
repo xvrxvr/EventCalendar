@@ -72,7 +72,7 @@ enum TasksPriority {
 
 // task stack sizes
 enum TaskStackSize {
-    TSS_WEBPing = 1024 // WEB Ping task
+    TSS_WEBPing = 8192 // WEB Ping task
 };
 
 // Generic consts
@@ -89,7 +89,8 @@ enum SetupConsts {
     SC_MaxWS = 16,          // Maximum number of simulteniously opened Websockets
     SC_PingTimeout = 5,     // How much 'ping' signals can we wait for answer
     SC_FileBufSize = 1024,   // Size of buffers for internal file operations
-    SC_MAX_CH = 6           // Maximum number of Characters in FP template
+    SC_MAX_CH = 6,          // Maximum number of Characters in FP template
+    SC_MinMsgTime = 5000,   // Minimum time to display message (in ms)
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1

@@ -67,8 +67,9 @@ esp_err_t Ans::set_ans_type(const char* filename)
 #define IS_FILE_EXT(filename, ext) (strcasecmp(&filename[strlen(filename) - sizeof(ext) + 1], ext) == 0)
 #define FE(ext, tp) if (IS_FILE_EXT(filename, ext)) return httpd_resp_set_type(req, tp)
     FE(".html", "text/html");
-    FE(".htm", "text/html");
+    FE(".htm",  "text/html");
     FE(".jpeg", "image/jpeg");
+    FE(".jpg",  "image/jpeg");
     FE(".ico",  "image/x-icon");
     FE(".png",  "image/png");
     FE(".css", 	"text/css");
@@ -96,6 +97,7 @@ void Ans::redirect(const char* path)
 {
     httpd_resp_set_status(req, "303 See Other");
     httpd_resp_set_hdr(req, "Location", path);
+    *this << UTF8 << "Redirected";
 }
 
 
@@ -389,6 +391,7 @@ size_t AnsStream::read(size_t shift, size_t rest)
 
         shift += total;
         rest -= total;
+        total_read += total;
     } while(rest && shift < BufSize);
     return total_read;
 }
@@ -445,10 +448,13 @@ void AnsStream::run()
     
     ptr = buf_start(); // Current position in buffer
     read_pack(0); // Read first buffer
+
+/*    No header found ?
     skip_after_headers(); // Skip all headrs
 
     // Now file body starts
     chop(); // Discard header from buffer and load file contents (if any)
+*/
 
     consume_stream(NULL, 0, false); // Start stream
 

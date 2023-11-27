@@ -109,6 +109,7 @@ char const *R503::errorMsg(int code) {
         case R503_NO_MATCH: return "features do not match template";
         case R503_NO_MATCH_IN_LIBRARY: return "no matching template in fingerprint library";
         case R503_SENSOR_ABNORMAL: return "sensor abnormal";
+        case R503_FAIL_TO_COMBINE: return "fail to combine the character files";
         default:
             // reserve enough memory to print signed 16 bit or 32 bit integer
             static char str[sizeof("unknown error code ") + 1 + sizeof(int) * 8 / 3]; 

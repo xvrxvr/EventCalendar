@@ -217,7 +217,7 @@ void  WebOptions::Message(Ans &ans)             // Message in Message page
 void  WebOptions::HTMLBGImageList(Ans &ans)     // HTML block for background Images list
 {
   extern BGImage bg_images;
-  int state = -1;
+  int state = 0;
   int idx;
   while( (idx = bg_images.scan_bg_images(state)) != -1)
   {

@@ -177,7 +177,11 @@ bool UserSetup::load(int usr_index, uint8_t name[33])
         EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, name, 32);
         name[32]=0;
     }
-    return !empty() && (!name || (name[0] != 0 && name[0] != 0xFF));
+    if (empty()) return false;
+    if (name) return (name[0] != 0 && name[0] != 0xFF);
+    uint8_t n;
+    EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, &n, 1);
+    return (n != 0 && n != 0xFF);
 }
 
 void UserSetup::save(int usr_index, uint8_t name[32]) const
@@ -197,14 +201,9 @@ uint32_t get_eeprom_users(int mask_to_test, int value_to_compare)
     uint32_t result = 0;
     for(int i=0; i<32; ++i)
     {
-        uint8_t nm;
-        EEPROM::read( (ES_UName + i) *  EEPROM::page_size, nm);
-        if (nm == 0xFF || nm == 0) continue;
-        if (mask_to_test)
-        {
-            EEPROM::read(ES_User*EEPROM::page_size + offsetof(UserSetup, status), nm);
-            if ( (nm & mask_to_test) != value_to_compare) continue;
-        }
+        UserSetup usr;
+        if (!usr.load(i, NULL)) continue;
+        if (mask_to_test && (usr.status & mask_to_test) != value_to_compare) continue;
         result |= 1 << i;
     }
     return result;
@@ -214,7 +213,7 @@ EEPROMUserName::EEPROMUserName(int user_index)
 {
     user_index &= 31;
     buf.fill(0, 33);
-    EEPROM::read((ES_UName + user_index) *  EEPROM::page_size, buf.c_str(), 32);
+    EEPROM::read((ES_UName + user_index) * EEPROM::page_size, buf.c_str(), 32);
 }
 
 const char* EEPROMUserName::utf8()

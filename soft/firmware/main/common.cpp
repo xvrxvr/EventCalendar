@@ -81,7 +81,7 @@ std::pair<size_t, size_t> utf8_to_dos(char* sym, int length)
             U;
         }
     }
-    if (org_len > 0 && dst-(uint8_t*)sym < org_len) *dst = 0;
+    if (org_len < 0 || dst-(uint8_t*)sym < org_len) *dst = 0;
     return {dst-(uint8_t*)sym, length};
 }
 #undef U

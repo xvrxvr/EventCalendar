@@ -192,24 +192,16 @@ function popup_clicked()
 function send_ajax_request(url, callback = null, as_json = false)
 {
     let req = new XMLHttpRequest();
-    if (callback) req.onload = () => {callback(as_json ? JSON.parse(this.responseText) : this.responseText);};
+    if (callback) req.onload = () => {callback(as_json ? JSON.parse(req.responseText) : req.responseText);};
     req.open("GET", "../action/" + url);
     req.send();
 //    console.log('AJAX: ' + url);
 }
 
-function send_ajax_update_challenge(url, data, callback)
-{
-    let req = new XMLHttpRequest();
-    req.onload = () => {callback(this.responseText);};
-    req.open("POST", "../action/update_challenge.html");
-    req.send(data);
-}
-
 function send_ajax_update_challenge(data, callback)
 {
     let req = new XMLHttpRequest();
-    req.onload = () => {callback(this.responseText);};
+    req.onload = () => {callback(req.responseText);};
     req.open("POST", "../action/update_challenge.html");
     req.send(data);
 }
@@ -218,9 +210,8 @@ function send_ajax_update_challenge(data, callback)
 function send_ajax_bg_add(data, callback)
 {
     let req = new XMLHttpRequest();
-    req.onload = () => {callback(this.responseText);};
+    req.onload = () => {callback(req.responseText);};
     req.open("POST", "../action/bg_add.html");
-    req.setRequestHeader("contentType", "application/octet-stream");
     req.send(data);
 }
 

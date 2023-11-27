@@ -18,6 +18,12 @@
         "xutility": "cpp",
         "atomic": "cpp",
         "utility": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "chrono": "cpp",
+        "memory": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "system_error": "cpp",
+        "memory_resource": "cpp"
     }
 }

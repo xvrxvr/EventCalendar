@@ -86,7 +86,7 @@ $<!DOCTYPE html>
 
 <h1><center>Ввод Отпечатка Пальцев $[FGEditorUser]</center></h1>
 
-<div id='alert-target'><div>
+<div id='alert-target'></div>
 
 <table><tr>
 <td><div id="b0" class="fgl-ebox" onclick="del_fg(this, 0)"><span id="t0"></span><span id="T0"></span> </div>
@@ -202,11 +202,11 @@ function highlight(cmds)
             }
             case 'fgedit-circle-state':
             {
-                if (cms.dst == special_circ) special_circ = -1;
+                if (cmd.dst == special_circ) special_circ = -1;
                 switch(cmd.state)
                 {
-                    case 'empty': filled_circ&= ~(1<<cmd.dst); break;
-                    case 'filled': filled_circ |= 1<<cmd.dst; break;
+                    case 'empty': filled_circs&= ~(1<<cmd.dst); break;
+                    case 'filled': filled_circs |= 1<<cmd.dst; break;
                     default: special_circ = cmd.dst; spc_circ_type = cmd.state; break;
                 }
                 update_all_state();

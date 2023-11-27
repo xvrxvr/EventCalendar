@@ -8,6 +8,7 @@
 
 #include "web_ajax_classes.h"
 
+static const char TAG[] = "ajax";
 
 // gift_load.html - Load gift to user + door
 //
@@ -52,6 +53,7 @@ void AJAXDecoder_unload_gift::run()
 void AJAXDecoder_open_door::run()
 {
     sol_hit(arg_door);
+    *this << UTF8 << "Ok";
 }
 
 // done_user.html - Mark user as Done
@@ -85,6 +87,7 @@ void AJAXDecoder_set_interround_time::run()
 {
     global_setup.round_time = arg_value;
     global_setup.sync();
+    *this << UTF8 << "Ok";
 }
 
 // del_challenge.html - Delete challenge
@@ -96,6 +99,7 @@ void AJAXDecoder_set_interround_time::run()
 void AJAXDecoder_del_challenge::run()
 {
     challenge_mgr().delete_challenge(arg_index);
+    *this << UTF8 << "Ok";
 }
 
 // get_challenge.html - Load challenge contents
@@ -192,6 +196,7 @@ void AJAXDecoder_del_user::run()
     usr.clear();
     usr.save(arg_index, name);
     Activity::FPAccess(NULL).access().deleteTemplate(arg_index*4, 4);
+    *this << UTF8 << "Ok";
 }
 
 // del_user_fg.html - Delete user fingerprint from library
@@ -204,6 +209,7 @@ void AJAXDecoder_del_user::run()
 void AJAXDecoder_del_user_fg::run()
 {
     Activity::FPAccess(NULL).access().deleteTemplate(arg_usr_index*4 + arg_fg_index, 1);
+    *this << UTF8 << "Ok";
 }
 
 
@@ -221,6 +227,7 @@ void AJAXDecoder_ping::run()
 {
     if (last_ping_tag && strcmp(last_ping_tag, arg_id)==0) ping_count = SC_PingTimeout;
     // counter is ignored
+    *this << UTF8 << "Ok";
 }
 
 void send_web_ping_to_ws(const char* tag)
@@ -324,7 +331,7 @@ size_t AJAXDecoder_bg_add::consume_stream(uint8_t* data, size_t size, bool eof)
         if (!eof) // start
         {
             opaque_2 = bg_images.create_new_bg_image();
-            opaque_1 = bg_images.open_image(opaque_2, "w"); // Checkk for opaque_1 value for NULL
+            opaque_1 = bg_images.open_image(opaque_2, "w"); // Check for opaque_1 value for NULL
         }
         else
         {
@@ -349,6 +356,7 @@ size_t AJAXDecoder_bg_add::consume_stream(uint8_t* data, size_t size, bool eof)
 void AJAXDecoder_bg_remove::run()
 {
     bg_images.delete_bg_image(arg_index);
+    redirect("/web/set_bg_images.html");
 }
 
 // recalibrate_touch.html - Recalibrate touch pannel
@@ -360,6 +368,7 @@ void AJAXDecoder_recalibrate_touch::run()
     Activity act(AT_TouchDown|AF_Override);
     Activity::LCDAccess a(&act);
     touch_setup.calibrate();
+    redirect("/web/setup.html");
 }
 
 // reset.html - Restart system
@@ -368,6 +377,7 @@ void AJAXDecoder_recalibrate_touch::run()
 void AJAXDecoder_reset::run()
 {
     reboot();
+    *this << UTF8 << "System restarts in 5 seconds";
 }
 
 // zap.html - Erase whole EEPROM, Fingerprints and restart
@@ -377,6 +387,7 @@ void AJAXDecoder_zap::run()
 {
     zap_configs();
     reboot();
+    *this << UTF8 << "System restarts in 5 seconds";
 }
 
 // fg_view.html - Viewer FingerPrints library
@@ -399,6 +410,7 @@ void AJAXDecoder_fg_view::run()
 void AJAXDecoder_fg_edit::run()
 {
     int idx = arg_index ? *arg_index : -1;
+    ESP_LOGI(TAG, "FG Edit action: idx=%d", idx);
     web_options.set_fg_editor_user(idx);
     Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGEdit, .p1=idx}});
     redirect("/web/fg_editor.html");

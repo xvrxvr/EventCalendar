@@ -59,10 +59,10 @@ const char* ChallengeMgr::find_hdr(FILE* file, char tag)
 
 void ChallengeMgr::scan()
 {
-    DIR *dir = opendir("/");
+    DIR *dir = opendir("/data/");
     if (!dir)
     {
-        ESP_LOGE(TAG, "opendir('/') failed: %s", strerror(errno));
+        ESP_LOGE(TAG, "opendir('/data/') failed: %s", strerror(errno));
         return;
     }
     while (auto entry = readdir(dir))

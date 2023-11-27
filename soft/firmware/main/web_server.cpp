@@ -6,6 +6,7 @@
 #include "setup_data.h"
 #include "web_gadgets.h"
 #include "activity.h"
+#include "bg_image.h"
 
 #include "web_ajax_classes.h"
 
@@ -131,7 +132,10 @@ static void ws_async_send(void *arg)
         auto err = httpd_ws_send_frame_async(server, fd, &ws_pkt);
         if (err != ESP_OK)
         {
-            assert(err == ESP_FAIL);
+            if (err != ESP_FAIL)
+            {
+                ESP_LOGE(TAG, "WS failed: %d", err);
+            }
             fd_array.remove_fd(fd);
         }
     }
@@ -153,6 +157,22 @@ void websock_send(const char* msg)
         free(m);
         ESP_LOGE(TAG, "WS: fail to queue data");
     }
+}
+
+static esp_err_t send_bg(httpd_req_t *req)
+{
+    Ans ans(req);
+
+    const char* uri = req->uri;
+    const char* idx = strstr(uri, "/bg/");
+    if (!idx)
+    {
+        ans.send_error(HTTPD_404_NOT_FOUND, "Not found");
+        return ESP_OK;
+    }
+    ans.set_ans_type("*.jpg");
+    bg_images.send_bg_image(ans, strtol(idx+4, NULL, 10));
+    return ESP_OK;
 }
 
 
@@ -191,6 +211,7 @@ static esp_err_t start_http_data_server()
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.ctrl_port++;
     config.max_uri_handlers = 32;
+    config.max_open_sockets = 13;
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different
@@ -218,6 +239,15 @@ static esp_err_t start_http_data_server()
             .uri       = "/web/*",
             .method    = HTTP_GET,
             .handler   = send_cdn,
+        };
+        httpd_register_uri_handler(server, &index);
+    }
+
+    {
+        httpd_uri_t index = {
+            .uri       = "/bg/*",
+            .method    = HTTP_GET,
+            .handler   = send_bg,
         };
         httpd_register_uri_handler(server, &index);
     }

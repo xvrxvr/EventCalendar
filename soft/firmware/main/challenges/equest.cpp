@@ -304,7 +304,7 @@ public:
             } 
             catch(CantGenerate&) {}
         }
-        return NULL;
+        return {};
     }
 };
 

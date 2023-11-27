@@ -226,7 +226,7 @@ void Activity::start()
 
 Activity::LCDAccess::LCDAccess(Activity* a)
 {
-    assert(a || !touch_input.is_started());
+//    assert(a || !touch_input.is_started());
     touch_input.suspend();
 }
 
@@ -237,7 +237,7 @@ Activity::LCDAccess::~LCDAccess()
 
 Activity::FPAccess::FPAccess(Activity* a)
 {
-    assert(a || !fg_input.is_started());
+//    assert(a || !fg_input.is_started());
     fg_input.suspend();
 }
 

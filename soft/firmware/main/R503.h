@@ -56,6 +56,8 @@
 #define R503_NO_MATCH_IN_LIBRARY 0x09
 #define R503_SENSOR_ABNORMAL 0x29
 
+#define R503_FAIL_TO_COMBINE 0x10
+
 
 // package ID
 #define PID_COMMAND 0x01
@@ -77,7 +79,7 @@
 #define AURA_PURPLE 0x03
 
 // timeout in ms for receiving a package
-#define R503_RECEIVE_TIMEOUT 1000
+#define R503_RECEIVE_TIMEOUT 10000
 // timeout in ms for handshake sign after softreset
 #define R503_SOFTRESET_TIMEOUT 1000
 // default time in ms to wait for incoming packages before cleaning serial buffer

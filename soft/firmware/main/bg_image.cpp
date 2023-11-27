@@ -1,6 +1,7 @@
 #include "common.h"
 #include "bg_image.h"
 #include "activity.h"
+#include "web_gadgets.h"
 
 #include <rom/tjpgd.h>
 
@@ -13,10 +14,10 @@ void BGImage::init()
     if (initialized) return;
     initialized = true;
 
-    DIR *dir = opendir("/");
+    DIR *dir = opendir("/data/");
     if (!dir)
     {
-        ESP_LOGE(TAG, "opendir('/') failed: %s", strerror(errno));
+        ESP_LOGE(TAG, "opendir('/data/') failed: %s", strerror(errno));
         return;
     }
     while (auto entry = readdir(dir))
@@ -98,17 +99,22 @@ static unsigned int jpeg_decode_out_cb(JDEC *dec, void *bitmap, JRECT *rect)
     return 1;
 }
 
-static const char bg_fmt[] = "/bg.%d.jpg";
+static const char bg_fmt[] = "/data/bg.%d.jpg";
 
 #define JPEG_WORK_BUF_SIZE  3100    /* Recommended buffer size; Independent on the size of the image */
 
 void BGImage::draw(LCD& lcd)
 {
     init();
+    durty=false;
     if (bg_img_index == -1)
     {
         peek_next_bg_image();
-        if (bg_img_index) return;
+        if (bg_img_index == -1)
+        {
+            lcd.DRect(0, 0, LCD::MAX, LCD::MAX, 0);
+            return;
+        } 
     }
 
     Prn b;
@@ -180,7 +186,23 @@ void BGImage::delete_bg_image(int idx)
     }
 }
 
-FILE* BGImage::open_image(int idx, const char* mode)
+FILE* BGImage::open_image(int idx, const char* mode) const
 {
     return fopen(Prn().printf(bg_fmt, idx).c_str(), mode);
+}
+
+void BGImage::send_bg_image(class Ans& ans, int index) const
+{
+    FILE* f = open_image(index, "r");
+    if (!f) {ans.send_error(HTTPD_404_NOT_FOUND, "Picture not found?"); return;}
+    Prn buf;
+    char* b = buf.fill(0, SC_FileBufSize).c_str();
+    for(;;)
+    {
+        int sz = fread(b, 1, SC_FileBufSize, f);
+        if (sz <= 0) break;
+        ans.write_string_utf8(b, sz);
+        if (sz < SC_FileBufSize) break;
+    }
+    fclose(f);
 }
