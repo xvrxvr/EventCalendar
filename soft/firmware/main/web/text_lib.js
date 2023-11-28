@@ -143,7 +143,7 @@ class TextGlobalDefinition {
         this.border_width = unbase64_digit(value[4]);
         this.shadow_width = unbase64_digit(value[5]);
         this.corner_r     = unbase64_digit(value[6]);
-        this.fuzzy_dist   = unbase64_digit(value[7]);
+        this.fuzzy_dist   = unbase64_digit(value[7]) + '';
         this.min_age      = Number.parseInt(value.slice(8, 10), 16);
         this.max_age      = Number.parseInt(value.slice(10, 12), 16);
 
@@ -154,15 +154,15 @@ class TextGlobalDefinition {
         if (kb_sel & 4) this.keyb_type += 'n';
         if (kb_sel & 8) this.keyb_type += 'c';
 
-        let opt = Number.parseInt(value.slice(12, 14), 16);
-        this.boxes_dir = opts & 3;
+        let opt = Number.parseInt(value.slice(13, 15), 16);
+        this.boxes_dir = opt & 3;
         this.letter_size = (opt >> 2) & 3;
         this.word_wrap = (opt & 0x10)!=0;
         if (opt & 0x20) this.fuzzy_dist += '%';
         this.center_vertical = (opt & 0x40) != 0;
         this.center_horizontal = (opt & 0x80) !=0;
 
-        opt = Number.parseInt(value.slice(14, 15), 16);
+        opt = Number.parseInt(value.slice(15, 16), 16);
         this.equal_size_vertical = (opt & 1) != 0;
         this.equal_size_horizontal = (opt & 2) != 0;
 
@@ -170,7 +170,9 @@ class TextGlobalDefinition {
         this.bg_color     = colors[0] == '-' ? '' : colors[0];
         this.border_color = colors[1] == '-' ? '' : colors[1];
         this.shadow_color = colors[2] == '-' ? '' : colors[2];
-        this.fg_color     = colors[3] == '-' ? '' : colors[3];       
+        this.fg_color     = colors[3] == '-' ? '' : colors[3];
+
+        this.update_to_html();
     }
 
     new_text_segment()

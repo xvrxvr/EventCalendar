@@ -61,7 +61,7 @@ $<!DOCTYPE html>
   animation: 1s linear 1s infinite alternate borderColor;
 }
 
-.fgl-b-filled > .fgl-circle {
+.fgl-b-filled .fgl-circle {
   display: none;
 }
 
@@ -178,9 +178,9 @@ function highlight(cmds)
                 if ('hlt' in cmd)
                 {
                     const elem = I(`b${cmd.dst}`);
-                    const old_color = elem.style.backgroundColor;
+                    //const old_color = elem.style.backgroundColor;
                     elem.style.backgroundColor = `rgb(0, ${Math.round(80+176*cmd.hlt)}, 0)`;
-                    call_later(cmd, () => {elem.style.backgroundColor = old_color;});
+                    call_later(cmd, () => {elem.style.backgroundColor = "";});
                 }
                 set_html_with_timeout(cmd, `t${cmd.dst}`);
                 break;

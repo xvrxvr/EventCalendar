@@ -15,13 +15,10 @@ static const uint8_t s_f0_ff[] = {
     0xC2, 0xB0, 0x00, 0xE2, 0x88, 0x99, 0xC2, 0xB7, 0x00, 0xE2, 0x88, 0x9A, 0xE2, 0x84, 0x96, 0xC2, 0xA4, 0x00, 0xE2, 0x96, 0xA0, 0x20, 0x00, 0x00
 };
 
-std::pair<size_t, size_t> utf8_to_dos(char* sym, int length)
+int valid_utf8_size(const char* sym, int length)
 {
-    uint8_t* p = (uint8_t*)sym;
-    uint8_t* dst = p;
-    int org_len = length;
+    const uint8_t* p = (const uint8_t*)sym;
     if (length == -1) length = strlen(sym);
-
     if (length && (p[length-1] & 0x80)) // check for last symbol
     {
         for(int l=length-1; l>=0; --l)
@@ -38,6 +35,14 @@ std::pair<size_t, size_t> utf8_to_dos(char* sym, int length)
             }
         }
     }
+    return length;
+}
+
+int utf8_to_dos(char* sym, int length)
+{
+    uint8_t* p = (uint8_t*)sym;
+    uint8_t* dst = p;
+    if (length == -1) length = strlen(sym)+1; // Include zero terminate at end
 
     uint8_t* end = p+length;
 #define S(from, to) case 0x##from: *dst++ = 0x##to; break
@@ -81,8 +86,7 @@ std::pair<size_t, size_t> utf8_to_dos(char* sym, int length)
             U;
         }
     }
-    if (org_len < 0 || dst-(uint8_t*)sym < org_len) *dst = 0;
-    return {dst-(uint8_t*)sym, length};
+    return dst-(uint8_t*)sym;
 }
 #undef U
 #undef S

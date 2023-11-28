@@ -91,18 +91,21 @@ enum SetupConsts {
     SC_FileBufSize = 1024,   // Size of buffers for internal file operations
     SC_MAX_CH = 6,          // Maximum number of Characters in FP template
     SC_MinMsgTime = 5000,   // Minimum time to display message (in ms)
+    SC_ActivityQueueLength = 16 // Size of Activity Queue. It will holds all pending Actions when no active Activity exists.
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
 #define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 1
 
-// Converts to DOS encode. Returns <encoded-size, original-size>
-// <original-size> can be less than 'length' if text to encode terminated inside UTF8 symbol
-// If decoded text ended outside 'length' end character not added
-std::pair<size_t, size_t> utf8_to_dos(char*, int length=-1);
+// Converts to DOS encode. Returns encoded-size
+// Zero terminated encoded buffer if 'length' is -1
+int utf8_to_dos(char*, int length=-1);
 void reboot(); // Delayed reboot
 void send_web_ping_to_ws(const char* tag);
+
+// Detect size of valie UTF8 encoded buffer and returns it. Detect last splitted UTF8 symbol and substruct it from 'length'
+int valid_utf8_size(const char*, int length=-1);
 
 struct U {
     char b[4];

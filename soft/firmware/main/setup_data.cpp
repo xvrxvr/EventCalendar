@@ -138,7 +138,10 @@ int WorkingState::total_loaded_gift(int user_index)
 // If requested slot is empty emit nothing and return false
 bool WorkingState::write_user_name(Ans& ans, int index, bool add_quotes)
 {
+    uint8_t name[33];
+    UserSetup usr;
     uint8_t state = load_state[index];
+
     if (state == 0xFF)
     {
         if (add_quotes) ans << UTF8 << "null";
@@ -146,7 +149,10 @@ bool WorkingState::write_user_name(Ans& ans, int index, bool add_quotes)
     }
     auto uidx = state & 31;
     if (add_quotes) ans << UTF8 << "\"";
-    ans << DOS << EEPROMUserName(uidx).dos();
+
+    if (!usr.load(uidx, name)) ans << UTF8 << "??? #" << uidx;
+    else ans << DOS << (char*)name;
+    
     state >>= 5;
     if (state || working_state.get_loaded_gift(uidx) > 1) ans << UTF8 << " (" << (state+1) << ")";
     if (add_quotes) ans << UTF8 << "\"";

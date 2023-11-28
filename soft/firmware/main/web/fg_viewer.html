@@ -45,9 +45,9 @@ function highlight(cmds)
                 if ('hlt' in cmd)
                 {
                     const elem = I(id);
-                    const old_color = elem.style.backgroundColor;
+                    // const old_color = elem.style.backgroundColor;
                     elem.style.backgroundColor = `rgb(0, ${Math.round(80+176*cmd.hlt)}, 0)`;
-                    call_later(cmd, () => {elem.style.backgroundColor = old_color;});
+                    call_later(cmd, () => {elem.style.backgroundColor = "";});
                 }
                 set_html_with_timeout(cmd, id);
                 break;
@@ -68,7 +68,7 @@ function del_fg(self, user_idx, fg_idx, usr_name)
     show_popup(self, `Удалить отпечаток №${fg_idx+1} пользователя '${usr_name}'?`, () => {
         send_del_fg_user(user_idx, fg_idx);
         const elem = I(`u${user_idx}-${fg_idx}`);
-        elem.classList.remove("fgl-box-filled fgl-ptr");
+        elem.classList.remove("fgl-box-filled", "fgl-ptr");
         elem.onclick = null;
     });
 }

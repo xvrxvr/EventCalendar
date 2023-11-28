@@ -38,7 +38,7 @@ void AJAXDecoder_gift_load::run()
 // G(unload_gift, P1(I, door))
 void AJAXDecoder_unload_gift::run()
 {
-    sol_hit(arg_door);
+//    sol_hit(arg_door);
     working_state.load_state[arg_door] = 0xFF;
     working_state.sync();
     web_options.LoadedGiftDoors(*this);
@@ -164,19 +164,20 @@ void AJAXDecoder_set_user_opt::run()
     {
         case 'n': strncpy((char*)name, arg_value, 32); name[32]=0; break;
         case 'a': usr.age = atoi(arg_value); break;
-        case 'p': usr.priority = std::min<uint32_t>(current_user.priority, atoi(arg_value)); break;
+        case 'p': if (logged_in_user != arg_index) usr.priority = std::min<uint32_t>(current_user.priority, atoi(arg_value)); break;
         case 'd': 
             if (!(current_user.options & UO_CanDisableUser)) break;
             if (arg_value[0] == 't') usr.status &= ~US_Enabled; else usr.status |= US_Enabled; 
             break;
         case 'r': 
-            {
-                uint32_t opts = atoi(arg_value);
-                opts &= current_user.options;
-                opts |= ~current_user.options & usr.options;
-                usr.options = opts; break;
-                break;
-            }
+            if (logged_in_user != arg_index)
+                {
+                    uint32_t opts = atoi(arg_value);
+                    opts &= current_user.options;
+                    opts |= ~current_user.options & usr.options;
+                    usr.options = opts; break;
+                }
+            break;
         default: break;
     }
     usr.save(arg_index, name);
@@ -242,7 +243,7 @@ void send_web_ping_to_ws(const char* tag)
     if (ping_count && !--ping_count) // We got timeout
     {
         ping_count = SC_PingTimeout;
-        Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_Logout}});
+        Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_Logout}});
     }
 }
 
@@ -287,7 +288,7 @@ void AJAXDecoder_end_game::run()
 {
     working_state.state = WS_NotActive;
     working_state.sync();
-    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameEnd}});
+    Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameEnd}});
     redirect("/web/admin.html");
 }
 
@@ -304,7 +305,7 @@ void AJAXDecoder_start_game::run()
 
     if (arg_users) setup_active_users(arg_users);
     for(int i=0; i<32; ++i) EEPROM::write_pg(ES_UsedQ+i, z, 32);
-    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameStart}});
+    Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameStart}});
     redirect("/web/admin.html");
 }
 
@@ -396,7 +397,7 @@ void AJAXDecoder_zap::run()
 // G(fg_view, P0)
 void AJAXDecoder_fg_view::run()
 {
-    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGView}});
+    Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGView}});
     redirect("/web/fg_viewer.html");
 }
 
@@ -412,7 +413,7 @@ void AJAXDecoder_fg_edit::run()
     int idx = arg_index ? *arg_index : -1;
     ESP_LOGI(TAG, "FG Edit action: idx=%d", idx);
     web_options.set_fg_editor_user(idx);
-    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGEdit, .p1=idx}});
+    Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGEdit, .p1=idx}});
     redirect("/web/fg_editor.html");
 }
 
@@ -422,7 +423,7 @@ void AJAXDecoder_fg_edit::run()
 // G(fg_viewer_done, P0)
 void AJAXDecoder_fg_viewer_done::run()
 {
-    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_Logout}});
+    Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_Logout}});
     redirect("/web/setup.html");
 }
 
@@ -455,14 +456,16 @@ size_t AJAXDecoder_update_challenge::consume_stream(uint8_t* data, size_t size, 
         if (eof && opaque_1) {fclose(opaque_1); *this << opaque_2;}
         return size;
     }
-    auto sizes = utf8_to_dos((char*)data, size);
+    if (!eof) size = valid_utf8_size((const char*)data, size);
+
+    auto out_size = utf8_to_dos((char*)data, size);
     if (!opaque_1) // First entry - open file and write first pack to it directly by Challenge Manager
     {
-        auto def = challenge_mgr().update_challenge(data, sizes.first);
+        auto def = challenge_mgr().update_challenge(data, out_size);
         opaque_1 = def.file;
         opaque_2 = def.ch_index;
         return def.processed_size;
     }
-    fwrite(data, 1, sizes.first, opaque_1);
-    return sizes.second;
+    fwrite(data, 1, out_size, opaque_1);
+    return size;
 }

@@ -5,6 +5,8 @@
 #include "pins.h"
 #include "activity.h"
 
+static const char TAG[] = "HW";
+
 #define MY_SPI_HOST    HSPI_HOST
 
 static spi_device_handle_t lcd_spi, sol_spi;
@@ -892,6 +894,7 @@ void hw_init()
 void sol_hit(int index)
 {
     xTaskNotify(sol_task_handle, (index&7)+1, eSetValueWithOverwrite);
+    ESP_LOGI(TAG, "Sol: Signal %d", index);
 }
 
 /*
@@ -1041,6 +1044,7 @@ static void sol_task(void*)
     for(;;)
     {
         uint32_t index = ulTaskNotifyTake(pdTRUE, portMAX_DELAY); 
+        ESP_LOGI(TAG, "Sol: execute %lu", index-1);
         if (index > 0 && index <= 8)
         {
             --index;
@@ -1128,9 +1132,12 @@ void RTC::read_ram(void* dst, uint8_t shift, uint8_t size)
 
 void RTC::write_ram(const void* src, uint8_t shift, uint8_t size)
 {
-    uint8_t ptr = 8 + shift;
-    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xD0>>1, &ptr, 1, I2C_MASTER_TIMEOUT));
-    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xD0>>1, (const uint8_t*)src, size, I2C_MASTER_TIMEOUT));
+    uint8_t buf[57];
+    assert(size <= 56);
+
+    buf[0] = 8 + shift;
+    memcpy(buf+1, src, size);
+    ESP_ERROR_CHECK(i2c_master_write_to_device(i2c_master_port, 0xD0>>1, buf, size+1, I2C_MASTER_TIMEOUT));
 }
 
 #define I2C_TRANS_BUF_MINIMUM_SIZE 128

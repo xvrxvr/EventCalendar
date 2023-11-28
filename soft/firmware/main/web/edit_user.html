@@ -125,9 +125,10 @@ function upd_users()
 function upd(fld_name, value)
 {
     if (current_usr_index == -1) return;
+    const opts = I("index").options;
     const list_idx = current_usr_index;
-    send_set_user_option(I("index").options[current_usr_index].value, fld_name, value, (name) => {
-        opts.options[list_idx].text = name;
+    send_set_user_option(opts[current_usr_index].value, fld_name, value, (name) => {
+        opts[list_idx].text = name;
     });
 }
 

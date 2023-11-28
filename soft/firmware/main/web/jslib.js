@@ -60,6 +60,7 @@ function loaded_gifts_to_disabled(second_names)
 }
 
 var _time_to_doors_enable = $[TimeToDoorsEnable];
+var _timer_id = null;
 
 function _msg_time_to_doors()
 {
@@ -70,7 +71,7 @@ function activate_doors(second_names, disabled_scale, usr_callback, reset_timeou
 {
     if (reset_timeout) _time_to_doors_enable = 10;
     let doors = I("doors");
-    if (_time_to_doors_enable)
+    if (_time_to_doors_enable > 0)
     {
         doors.innerHTML = door_table(second_names, 255, "");
         _msg_time_to_doors();
@@ -78,10 +79,11 @@ function activate_doors(second_names, disabled_scale, usr_callback, reset_timeou
         {
             --_time_to_doors_enable;
             _msg_time_to_doors();
-            if (_time_to_doors_enable) setTimeout(cb, 1000); 
+            if (_time_to_doors_enable > 0) {clearTimeout(_timer_id); _timer_id = setTimeout(cb, 1000);}
             else activate_doors(second_names, disabled_scale, usr_callback);
         };
-        setTimeout(cb, 1000);
+        clearTimeout(_timer_id); 
+        _timer_id = setTimeout(cb, 1000);
     }
     else
     {
@@ -263,7 +265,7 @@ function send_get_user_opts(index, callback)
 // Callback called with new user name (to show in list nox)
 function send_set_user_option(index, opt_name, opt_value, callback)
 {
-    send_ajax_request(`set_user_opt.html?index=${index}&name=${opt_name}&value=${encodeURIComponent(opt_value)}`);
+    send_ajax_request(`set_user_opt.html?index=${index}&name=${opt_name}&value=${encodeURIComponent(opt_value)}`, callback);
 }
 
 function send_del_user(index)

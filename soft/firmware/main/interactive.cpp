@@ -33,6 +33,7 @@ static void fge_activate_user(int user_index, const char* name, int age)
     if (!(current_user.options & UO_CanAddRemoveAdmin)) usr.options = 0;
     usr.age = age;
     usr.save(user_index, (uint8_t*)b);
+    ESP_LOGI(TAG, "New user %d: %s", user_index, name);
 }
 
 // Draw message (in UTF8) to LCD in centered Box
@@ -55,7 +56,7 @@ static void lcd_message(const char* msg, ...)
         {
             auto delta = xTaskGetTickCount() - last_draw_time;
             if (delta < ms2ticks(SC_MinMsgTime)) vTaskDelay(ms2ticks(SC_MinMsgTime) - delta);
-            bg_images.draw(lcd);
+            bg_images.draw(Activity::LCDAccess(NULL).access());
         }
         utf8_to_dos(buf.c_str());
     }
@@ -148,9 +149,9 @@ static void web_event_process(const Action& act)
 {
     switch(act.web.event)
     {
-        case WE_FGDel: do_fg_del(act.web.p1); break;
-        case WE_FGEdit: fg_edit(act.web.p1); break;
-        case WE_FGView: fg_view(); break;
+        case WE_FGDel:  ESP_LOGI(TAG, "web_event_process: FG Del (%d)", act.web.p1); do_fg_del(act.web.p1); break;
+        case WE_FGEdit: ESP_LOGI(TAG, "web_event_process: FG Edit (%d)", act.web.p1); fg_edit(act.web.p1); break;
+        case WE_FGView: ESP_LOGI(TAG, "web_event_process: FG View"); fg_view(); break;
         default: break;
     }
 }
@@ -294,7 +295,7 @@ static void fg_edit(int user_index)
         if (user_index == -1)
         {
             web_send_cmd("{'cmd':'alert', 'msg':'Лимит пользователей исчерпан (максимум 32 штуки)'}");
-            restart_web_page("web/admin.html");
+            restart_web_page("/web/admin.html");
             return;
         }
         do_fg_del(user_index, 4);
@@ -364,7 +365,7 @@ static void fg_edit(int user_index)
             }
             if (a.fp_index == -1 && a.fp_score == R503_NO_MATCH_IN_LIBRARY) // This is ok
             {
-                unhighlight();
+                // unhighlight();
                 auto cbox = tpl_to_fill >> 3;
                 web_send_cmd("{'cmd':'fgedit-circle-state', 'dst':%d,'state':'filled'}", cbox*SC_MAX_CH+(tpl_to_fill&7));
                 if ((tpl_to_fill & 7) != SC_MAX_CH-1) {++tpl_to_fill; continue;}// 1st part was filled - fill seconds
@@ -438,9 +439,10 @@ static void fg_edit(int user_index)
                     ])", box_idx, box_idx*SC_MAX_CH, box_idx*SC_MAX_CH+1, box_idx*SC_MAX_CH+2, box_idx*SC_MAX_CH+3, box_idx*SC_MAX_CH+4, box_idx*SC_MAX_CH+5);
                     break;
                 }
-                case WE_Logout: return;
+                case WE_Logout: ESP_LOGI(TAG, "FG Editor - returns (no usr update)"); return;
                 case WE_FGE_Done: 
                     if (new_user && filled_tpls && a.web.p2) fge_activate_user(user_index, a.web.p2, a.web.p1);
+                    ESP_LOGI(TAG, "FG Editor - FGE_Done");
                     return;
                 default: break;
             }
@@ -468,7 +470,7 @@ static void fg_view()
         fp.active_page = 1;
     }
 
-    lcd_message("Просмотр отпечатков пальцев\nЗавершение через WEB страницу");
+    lcd_message("Просмотр отпечатков пальцев.\nЗавершение через WEB страницу");
 
     for(;;)
     {
@@ -533,11 +535,11 @@ static void fg_view()
                 {
                     if (!(current_user.options & UO_CanEditFG)) break;
                     do_fg_del(a.web.p1);
-                    restart_web_page("web/fg_viewer.html");
+                    restart_web_page("/web/fg_viewer.html");
                     break;
                 }
-                case WE_Logout: case WE_FGE_Done: return;
-                case WE_FGEdit: web_send_cmd("{'cmd':'goto','href':'act/fg_edit.html?index=%d'}", a.web.p1); return;
+                case WE_Logout: case WE_FGE_Done: ESP_LOGI(TAG, "FG Viewer returns"); return;
+                case WE_FGEdit: ESP_LOGI(TAG, "FG Viewer -> FG Editor"); Activity::queue_action(a); return;
                 default: break;
             }
         }

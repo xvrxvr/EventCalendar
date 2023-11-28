@@ -8,12 +8,16 @@
 
 static constexpr int MAX_ACTIVITIES = 4;
 
+static const char TAG[] = "activity";
+
 static TouchInput touch_input;
 static FGInput fg_input;
 
 static Activity* all_activities[MAX_ACTIVITIES];
 
 static SemaphoreHandle_t activity_lock;
+
+static QueueHandle_t pending_messages;
 
 class L {
 public:
@@ -123,10 +127,27 @@ Activity& Activity::setup_alarm_action(time_t time_to_hit)
     return *this;
 }
 
+// Global entry - push Action in pending queue. It will be retrieved by first Activity that enabled for this type of Action
+void Activity::queue_action(const Action& act)
+{
+    xQueueSend(pending_messages, &act, portMAX_DELAY);
+}
+
 Action Activity::get_action() //Return input action. Blocks until action will be available.
 {
     Action result;
     check();
+
+    auto actions = active_actions();
+    while(xQueuePeek(pending_messages, &result, 0))
+    {
+        if (result.type & actions) 
+        {
+            xQueueReceive(pending_messages, &result, 0);
+            return result;
+        }
+    }
+
     for(;;)
     {
         auto actions = active_actions();
@@ -219,6 +240,7 @@ static void web_ping_task(void*)
 void Activity::start()
 {
     activity_lock = xSemaphoreCreateMutex();
+    pending_messages = xQueueCreate(SC_ActivityQueueLength, sizeof(Action));
     touch_input.start();
     fg_input.start();
     xTaskCreate(web_ping_task, "WEB-Ping", TSS_WEBPing, NULL, TP_WEBPing, NULL);

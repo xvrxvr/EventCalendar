@@ -13,14 +13,13 @@ ChallengeMgr& challenge_mgr()
     return ret;
 }
 
-char* ChallengeMgr::ch_name(int ch_index) {return buf.printf("/ch.%d", ch_index).c_str();}
+char* ChallengeMgr::ch_name(int ch_index) {return buf.printf("/data/ch.%d", ch_index).c_str();}
 
 void ChallengeMgr::fill_user()
 {
     for(auto& fl: files)
     {
-        char* fname = buf.printf("/ch.%d", fl.first).c_str();
-        FILE* f = fopen(fname, "r");
+        FILE* f = fopen(ch_name(fl.first), "r");
         if (!f) continue;
         const char* usr = find_hdr(f, 'u');
         if (usr) fl.second = atoi(usr);
@@ -118,7 +117,7 @@ ChallengeMgr::ChUpd ChallengeMgr::update_challenge(uint8_t* first_pack, size_t f
         if (e)
         {
             ++e;
-            size_t delta = e-first_pack;
+            delta = e-first_pack;
             first_pack_size -= delta;
             first_pack = e;
         }

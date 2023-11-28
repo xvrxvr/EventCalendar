@@ -169,8 +169,8 @@ const text_area = document.getElementById('text');
 const answer_area = document.getElementById('answer');
 const color_picker = document.getElementById('dummy_color_picker');
 
-let modified = false;
-let current_challenge_index;
+var modified = false;
+var current_challenge_index = -1;
 
 function new_challenge()
 {
@@ -185,7 +185,7 @@ function new_challenge()
     opt.value = "-1";
     opt.text = name;
     opts.add(opt);
-    opts.selectedIndex = opts.length - 1;
+    opts.selectedIndex = current_challenge_index = opts.length - 1;
     I("text").value = "?";
     I("answer").value = "?";
     modified = true;
@@ -198,7 +198,7 @@ function del_challenge()
     if (opts.selectedIndex == -1) return;
     if (!confirm("Удалить загадку? Вы уверены?")) return;
     modified = false;
-    send_del_challenge(opts.options[opts.selectedIndex].value);
+    send_del_challenge(opts[opts.selectedIndex].value);
     opts.remove(opts.selectedIndex);
     upd_challenge();
     clr();
@@ -209,7 +209,7 @@ function decode_challenge(text)
     const spl = text.split('\n');
     let idx = 0;
 
-    while(idx < len(spl) && !spl[idx].startsWith('V')) ++idx;
+    while(idx < spl.length && !spl[idx].startsWith('V')) ++idx;
 
     let hdr = spl[idx++].split(/\s+/);  // V1 <lines-in-body> <header....>
     if (hdr.length < 3 || hdr[0] != 'V1')
@@ -217,8 +217,8 @@ function decode_challenge(text)
         alert("Неожиданный ответ от сервера - загадка сломанна");
         clr();
     }
-    const lines = hdr[1] + 0;
-    gl.hdr = hdr.slice(2).join(" ");
+    const lines = hdr[1] - 0;
+    gl.header = hdr.slice(2).join(" ");
     
     I("text").value = spl.slice(idx, idx+lines).join('\n') + '\n';
     idx+=lines;
@@ -249,7 +249,7 @@ function update_current_challenge()
     let challenge = I("text").value;
     const answers = I("answer").value;
 
-    while(challenge.length && challenge.at(-1) == '\n') challenge.trimEnd(1);
+    challenge = challenge.replace(/\n+$/, '')
     challenge += '\n';
     const total = challenge.match(/\n/g).length;
     
@@ -300,7 +300,7 @@ function preview(is_modification = false)
         p.draw_selection_of_boxes(answers_canvas, [0, 1, 2, 3]);
     }
     catch (e) {
-        if (msg) msg += '\n';
+        if (msg_str) msg_str += '\n';
         msg_str += e.toString();
     }
 
@@ -308,10 +308,10 @@ function preview(is_modification = false)
     msg.innerText = msg_str;
 }
 
-gl.update_from_html = preview;
+gl.update_from_html = () => {preview(true);};
 
-let active_area;
-let active_code;
+var active_area;
+var active_code;
 
 function text_area_keypress(area, event)
 {
@@ -332,7 +332,7 @@ function color_done()
 }
 
 text_area.onkeydown = (event) => text_area_keypress(text_area, event);
-answer_area.onkeydown = (event) => text_area_keypress(enswer_area, event);
+answer_area.onkeydown = (event) => text_area_keypress(answer_area, event);
 
 
 </script>
