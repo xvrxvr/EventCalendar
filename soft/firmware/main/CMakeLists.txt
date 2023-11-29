@@ -20,8 +20,10 @@ set(srcs
     text_draw.cpp
     interactive.cpp
     challenge_mgr.cpp
+    animation.cpp
     main.cpp
     challenges/equest.cpp
+    icons/fg_ico.cpp
 )
 
 file(GLOB web_srcs "web/*")

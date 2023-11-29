@@ -129,7 +129,8 @@ public:
     // Required Activity setup. Appropriate members must be called BEFORE call to get_action()
     // Multiple calls to these methods possible - later call will override setup from former.
     Activity& setup_alarm_action(time_t time_to_hit); // time_to_hit is UTC timestamp
-    Activity& setup_watchdog(uint32_t timeout) {setup_watchdog_time = timeout; return *this;} // time in seconds
+    Activity& setup_watchdog(uint32_t timeout) {setup_watchdog_time = s2ticks(timeout); return *this;} // time in seconds
+    Activity& setup_watchdog_ticks(uint32_t timeout) {setup_watchdog_time = timeout; return *this;} // time in seconds
     Activity& setup_web_ping_type(const char* tag) {web_ping_tag = tag; return *this;}
     Activity& set_special_color_feedback_code(uint32_t color) {custom_fg_color = color; return *this;}
 

@@ -6,6 +6,9 @@
 #include "bg_image.h"
 #include "web_vars.h"
 #include "web_gadgets.h"
+#include "animation.h"
+
+extern uint32_t fg_icon[];
 
 static const char TAG[] = "interactive";
 namespace Interactive {
@@ -40,11 +43,10 @@ static void fge_activate_user(int user_index, const char* name, int age)
 // If 'msg' is NULL draws last box + mesage on already locked LCD instance
 static void lcd_message(const char* msg, ...)
 {
-    static TextBoxDraw::TextGlobalDefinition gd;
     static Prn buf;
     static TickType_t last_draw_time;
 
-    TextBoxDraw::TextsParser pars(gd);
+    TextBoxDraw::TextsParser pars(TextBoxDraw::default_text_global_definition);
     va_list l;
 
     if (msg)
@@ -59,6 +61,7 @@ static void lcd_message(const char* msg, ...)
             bg_images.draw(Activity::LCDAccess(NULL).access());
         }
         utf8_to_dos(buf.c_str());
+        last_draw_time = xTaskGetTickCount();
     }
 
     pars.parse_text(buf.c_str());
@@ -67,7 +70,6 @@ static void lcd_message(const char* msg, ...)
     else pars.draw_one_box_centered(lcd);
 
     bg_images.set_durty();
-    last_draw_time = xTaskGetTickCount();
 }
 
 class MsgActivity : public Activity {
@@ -284,10 +286,18 @@ static void fg_edit(int user_index)
     web_options.set_fg_editor_user(user_index);
     bool new_user = (user_index == -1);
     uint8_t filled_tpls;
-    MsgActivity act(AT_Fingerprint1|AT_WEBEvent);
-    act.setup_watchdog(SC_TurnoffDelay);
+    MsgActivity act(AT_Fingerprint1|AT_WEBEvent|AT_WatchDog);
+    act.setup_watchdog_ticks(SC_FGEditAnimSpeed);
     act.setup_web_ping_type("ping-fgedit");
-    lcd_message("Ввод отпечатков для польэователя\nЗавершение через WEB страницу");
+
+    AnimatedPannel panel("Ввод отпечатков для польэователя", SizeDef{
+        .max_text_length = 19, // Палец №1 - заполнен
+        .max_text_lines = 3, // Max 4 lines, but no Icons in this case
+        .max_icons_lines = 1,
+        .max_icons_count = SC_MAX_CH
+    });
+
+//    lcd_message("Ввод отпечатков для польэователя\nЗавершение через WEB страницу");
 
     if (new_user)
     {
@@ -349,10 +359,26 @@ static void fg_edit(int user_index)
                 {'cmd':'fgedit-box-state','dst':%d,'state':'filling'},
                 {'cmd':'fgedit-circle-state', 'dst':%d,'state':'%s'}
             ])", tpl_to_fill >> 3, (tpl_to_fill >> 3)*SC_MAX_CH+(tpl_to_fill&7), circle_state_override);
+
+            panel.body_reset();
+            for(int i=0; i<4; ++i)
+            {
+                if (filled_tpls & bit(i)) panel.add_text_utf8("Палец №%d - заполнен", i+1); else
+                if ((tpl_to_fill >> 3) == i) panel.add_icons(fg_icon, SC_MAX_CH, rgb(FGEDIT_ICON_COLOR_NOT_FILLED)); 
+                else panel.add_text_utf8("Палец №%d - пусто", i+1);
+            }
+            panel.animate_icon(tpl_to_fill&7, FGEDIT_ICON_COLOR_FILLING_SETUP);
+            panel.body_draw(Activity::LCDAccess(&act).access());
         }
         circle_state_override = "filling";
         Activity::FPAccess(&act).access().active_page = (tpl_to_fill&7) + 1;
-        Action a = act.get_action();
+        Action a;
+        for(;;)
+        {
+            a = act.get_action();
+            if (a.type != AT_WatchDog) break;
+            panel.tick(Activity::LCDAccess(&act).access());
+        }
         if (a.type == AT_Fingerprint)
         {
             ESP_LOGI(TAG, "FG Editor: Got finger (tpl buffer = %d), index=%d, score=%d (msg=%s)", 
@@ -399,11 +425,14 @@ static void fg_edit(int user_index)
             {
                 web_send_cmd("{'cmd':'alert', 'msg':'Ошибка - %s'}", a.fp_error);
                 circle_state_override = a.fp_score == R503_IMAGE_MESSY || a.fp_score == R503_FEATURE_FAIL ? "quality" : "bad";
+                panel.animate_icon(tpl_to_fill&7, FGEDIT_ICON_COLOR_ERROR_SETUP, true);
+
             }
             else // Duplicate
             {
                 msg_flash(a);
                 circle_state_override = "bad";
+                panel.animate_icon(tpl_to_fill&7, FGEDIT_ICON_COLOR_ERROR_SETUP, true);
                 if (!filled_tpls) // but nothing was entered yet - suggest to edit another user
                 {
                     web_send_cmd("{'cmd':'fgedit-switch', 'usr':'%s','usrindex':%d,'percent':%f}", 

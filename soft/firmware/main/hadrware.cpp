@@ -700,6 +700,31 @@ void LCD::text(const char* text, int16_t x, int16_t y, int txt_len)
     wait4lcd_vacant();
 }
 
+// Draw B&W icon (32x32)
+void LCD::icon32x32(int16_t x, int16_t y, const uint32_t* icon, uint16_t color)
+{
+    LCDAccess lcd;
+    CS_EN cs_en;
+
+    const uint8_t fc_high = uint8_t(color >> 8);
+    const uint8_t fc_low = uint8_t(color);
+    
+    _SetWriteAreaDelta(x, y, 32, 32);
+    _WriteCommand(REG_WRITEMEM); //Write to RAM
+
+    for(int dy=0; dy<32; ++dy, ++y)
+    {
+        uint32_t bits = *icon++;
+        uint8_t cnt=32;
+        do {
+            if (bits&0x80000000) {_WriteData(fc_high); _WriteData(fc_low);}
+            else {_WriteData(bc_high); _WriteData(bc_low);}
+            bits <<= 1;
+        } while (--cnt);
+    }
+    wait4lcd_vacant();
+}
+
 void LCD::text2(const char* text, int16_t x, int16_t y, int txt_len)
 {
     LCDAccess lcd;
@@ -1048,8 +1073,8 @@ static void sol_task(void*)
         if (index > 0 && index <= 8)
         {
             --index;
-
-            write_sol(1<<index);
+            static const uint8_t enc[] = {5, 4, 6, 7, 3, 8, 1, 2};
+            write_sol(bit(enc[index-1]));
             delay(1000);
             write_sol(0);
             reengage_sol();

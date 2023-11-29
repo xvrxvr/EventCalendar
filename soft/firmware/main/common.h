@@ -91,12 +91,39 @@ enum SetupConsts {
     SC_FileBufSize = 1024,   // Size of buffers for internal file operations
     SC_MAX_CH = 6,          // Maximum number of Characters in FP template
     SC_MinMsgTime = 5000,   // Minimum time to display message (in ms)
-    SC_ActivityQueueLength = 16 // Size of Activity Queue. It will holds all pending Actions when no active Activity exists.
+    SC_ActivityQueueLength = 16,// Size of Activity Queue. It will holds all pending Actions when no active Activity exists.
+    SC_FGEditAnimSpeed = 10, // Animation speed in ticks
+    SC_AminPanelTitleGap = 8 // Gap between title line (in Animated panel) and body
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
 #define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 1
+
+#define FGEDIT_ICON_COLOR_NOT_FILLED 0x66,0x66,0x66
+#define FGEDIT_ICON_COLOR_FILLING_SETUP {               \
+    .type = AT_Triange,                                 \
+    .color_from = rgb(FGEDIT_ICON_COLOR_NOT_FILLED),    \
+    .color_to = 0,                                      \
+    .length = 10                                        \
+}
+
+#define FGEDIT_ICON_COLOR_FILLED_SETUP {                \
+    .type = AT_None,                                    \
+    .color_from = 0                                     \
+}
+
+#define FGEDIT_ICON_COLOR_ERROR_SETUP {                 \
+    .type = AT_Pulse,                                   \
+    .color_from = rgb(FGEDIT_ICON_COLOR_NOT_FILLED),    \
+    .color_to = rgb(0xFF, 0, 0),                        \
+    .length = 20                                        \
+}
+
+
+
+
+
 
 // Converts to DOS encode. Returns encoded-size
 // Zero terminated encoded buffer if 'length' is -1

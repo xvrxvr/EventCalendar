@@ -3,6 +3,8 @@
 
 namespace TextBoxDraw {
 
+const TextBoxDraw::TextGlobalDefinition default_text_global_definition;
+
 uint8_t unbase64_digit(const char val)
 {
     if (val >= '0' && val <= '9') return val - '0';
@@ -483,10 +485,19 @@ void TextsParser::eval_positions(int x, int y, int width, int height)
 }
 
 // How much space reserved between Box outside boundary and text inside
-Size TextsParser::reserved_space() const
+Size TextsParser::reserved_space() const {return global_definitions.reserved_space();}
+
+Size TextGlobalDefinition::reserved_space() const
 {
-    int gap = global_definitions.shadow_width + 2 * std::max<int>(global_definitions.border_width, global_definitions.corner_r ? global_definitions.corner_r + 1 : 0);
-    return {2*global_definitions.padding_h + gap, 2*global_definitions.padding_v + gap};
+    int gap = shadow_width + 2 * std::max<int>(border_width, corner_r ? corner_r + 1 : 0);
+    return {2*padding_h + gap, 2*padding_v + gap};
+}
+
+// Minimal distance from box top/left to internal text
+Size TextGlobalDefinition::min_dist_to_text() const
+{
+    int gap = std::max<int>(border_width, corner_r ? corner_r + 1 : 0);
+    return {padding_h + gap, padding_v + gap};
 }
 
 // Evaluate Box size and runs position evaluation

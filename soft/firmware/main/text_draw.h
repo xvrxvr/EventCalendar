@@ -98,7 +98,14 @@ struct TextGlobalDefinition {
 
     // Setup from header. Return true if ok. Invalid fields inside header will not fail load process, but set field to zero values
     bool setup(const char* value);
+
+    // How much space reserved between Box outside boundary and text inside
+    Size reserved_space() const;
+
+    // Minimal distance from box top/left to internal text
+    Size min_dist_to_text() const;
 };
+extern const TextGlobalDefinition default_text_global_definition;
 
 class TextSegment {
 

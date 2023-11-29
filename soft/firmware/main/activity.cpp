@@ -170,7 +170,7 @@ Action Activity::get_action() //Return input action. Blocks until action will be
             update_scene_req = false;
             update_scene(LCDAccess(this).access());
         }
-        if (!xQueueReceive(actions_queue, &result, setup_watchdog_time && !suspended ? s2ticks(setup_watchdog_time) : portMAX_DELAY))
+        if (!xQueueReceive(actions_queue, &result, setup_watchdog_time && !suspended ? setup_watchdog_time : portMAX_DELAY))
         {
             result = Action{.type = AT_WatchDog};
         }
