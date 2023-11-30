@@ -4,6 +4,7 @@
 #include "prnbuf.h"
 
 struct WebOptions {
+    uint8_t GameStarted();          // 1 if game started, 2 if not
     void CurrentUser(Ans&);         // Name of currently logged on user
     void MainStatus(Ans&);          // HTML block with current status of system
     void HTMLUserList(Ans&);        // HTML block with all Users available to edit by current

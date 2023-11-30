@@ -118,6 +118,7 @@ void Ans::write_cdn(const char* fname)
     set_hdr("Cache-Control", "no-store, no-cache, max-age=0, must-revalidate, proxy-revalidate");
     ++cdn.start;
     auto cdn_org = cdn.start;
+#define BOL (cdn.start == cdn_org || cdn.start[-1] == '\n')
     while(cdn.start < cdn.end)
     {
         const char* sym = (const char*)memchr(cdn.start, '$', cdn.size());
@@ -138,19 +139,25 @@ void Ans::write_cdn(const char* fname)
             cdn.start+=2;
             continue;
         }
-        if (cdn.start[1] == '?' && (cdn.start == cdn_org || cdn.start[-1] == '\n')) // Conditional block
+        if (cdn.start[1] == '?' && BOL) // Conditional block
         {
             bool is_active = test_cond(cdn);
             if (!is_active)
             {
-                const char* e = memstr(cdn.start, "\n$-", cdn.size());
-                if (!e) break;
-                cdn.start = e + 3;
+                int nest = 1;
+                while(nest > 0)
+                {
+                    const char* e = memstr(cdn.start, "\n$", cdn.size());
+                    assert(e);
+                    if (e[2] == '-') --nest; else
+                    if (e[2] == '?') ++nest;
+                    cdn.start = e + 3;
+                }
                 bump_to_eol(cdn);
-                continue;
             }
+            continue;
         }
-        if (cdn.start[1] == '-' && (cdn.start == cdn_org || cdn.start[-1] == '\n'))  // Termination line of conditional block. We can went here only if condition was evaluated to true. Skip this line.
+        if (cdn.start[1] == '-' && BOL)  // Termination line of conditional block. We can went here only if condition was evaluated to true. Skip this line.
         {
             bump_to_eol(cdn); 
             continue;
@@ -170,6 +177,7 @@ void Ans::write_cdn(const char* fname)
         web_options.decode_inline(var_name, *this);
     }
 }
+#undef BOL
 
 void Ans::flush()
 {

@@ -209,3 +209,4 @@ inline const char* ts_to_string(uint32_t tm)
     return result;
 }
 
+void start_game();

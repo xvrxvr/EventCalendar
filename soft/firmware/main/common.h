@@ -100,7 +100,7 @@ enum SetupConsts {
 #define FINGERPRINT_SENSOR_HIDDEN       ALC_Off,       ALC_Red
 #define FINGERPRINT_SENSOR_OOB_COLOR    ALC_Breathing, ALC_Red, 1
 
-#define FGEDIT_ICON_COLOR_NOT_FILLED 0x66,0x66,0x66
+#define FGEDIT_ICON_COLOR_NOT_FILLED 0xC0,0xC0,0xC0
 #define FGEDIT_ICON_COLOR_FILLING_SETUP {               \
     .type = AT_Triange,                                 \
     .color_from = rgb(FGEDIT_ICON_COLOR_NOT_FILLED),    \

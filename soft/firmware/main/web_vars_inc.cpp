@@ -44,6 +44,7 @@ void WebOptions::decode_inline(const char* key, Ans& ans)
                       case 'U': if (strcmp(key+9, "ser") == 0) {FGEditorUser(ans); return;} else {err_novar(key); return;}
                       default: err_novar(key); return;
                   }
+        case 'G': if (strcmp(key+1, "ameStarted") == 0) {ans.write_int(GameStarted()); return;} else {err_novar(key); return;}
         case 'H': if (memcmp(key+1, "TML", 3) != 0) {err_novar(key); return;}
                   switch(key[4])
                   {
@@ -126,6 +127,7 @@ uint32_t WebOptions::get_condition(const char* key, Ans& ans)
                       case 'U': if (strcmp(key+9, "ser") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
                       default: err_novar(key); return 0;
                   }
+        case 'G': if (strcmp(key+1, "ameStarted") == 0) {return GameStarted();} else {err_novar(key); return 0;}
         case 'H': if (memcmp(key+1, "TML", 3) != 0) {err_novar(key); return 0;}
                   switch(key[4])
                   {

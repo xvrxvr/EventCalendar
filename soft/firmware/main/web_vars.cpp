@@ -21,6 +21,11 @@ void  WebOptions::err_type_wrong(const char* var)
     ESP_LOGE(TAG, "WEB variable '%s' has wrong type (should be int)", var);
 }
 
+uint8_t WebOptions::GameStarted()
+{
+  return working_state.state == WS_Active ? 1 : 2;
+}
+
 void WebOptions::CurrentUser(Ans &ans)         // Name of currently logged on user
 {
     ans << DOS << (char*)current_user_name;
@@ -32,7 +37,7 @@ static void write_podarok(Ans& ans, int t)
     switch(t)
     {
       case 1: ans << UTF8 << "ок"; break;
-      case 3: case 4: ans << UTF8 << "ка"; break;
+      case 2: case 3: case 4: ans << UTF8 << "ка"; break;
       default: ans << UTF8 << "ков"; break;
     }
 }
@@ -62,8 +67,7 @@ void WebOptions::MainStatus(Ans &ans)          // HTML block with current status
           {
             int t = working_state.total_loaded_gift(i);
             if (!t) ans << UTF8 << "подарков не загружено";
-            else ans << UTF8 << "загружено " << t << " ";
-            write_podarok(ans, t);
+            else {ans << UTF8 << "загружено " << t << " "; write_podarok(ans, t);}
           }
           ans << UTF8 << " - " << (working_state.enabled_users & bit(i) ? "может забрать подарок" : "подарок в следующий раз");
         }

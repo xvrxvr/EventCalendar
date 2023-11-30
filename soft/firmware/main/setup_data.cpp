@@ -154,7 +154,7 @@ bool WorkingState::write_user_name(Ans& ans, int index, bool add_quotes)
     else ans << DOS << (char*)name;
     
     state >>= 5;
-    if (state || working_state.get_loaded_gift(uidx) > 1) ans << UTF8 << " (" << (state+1) << ")";
+    if (state || working_state.total_loaded_gift(uidx) > 1) ans << UTF8 << " (" << (state+1) << ")";
     if (add_quotes) ans << UTF8 << "\"";
     return true;
 }
@@ -247,4 +247,15 @@ uint8_t fge_get_filled_tpls(int usr_index)
     uint8_t result = buf[(usr_index>>1)&31];
     if (usr_index&1) result >>= 4;
     return result & 15;
+}
+
+void start_game()
+{
+    web_send_cmd("{'cmd':'started'}");
+    char z[32] = {0};
+    for(int i=0; i<32; ++i) EEPROM::write_pg(ES_UsedQ+i, z, 32);
+    working_state.enabled_users = -1;
+    working_state.state = WS_Active;
+    working_state.last_round_time = utc2ts(time(NULL));
+    working_state.sync();
 }

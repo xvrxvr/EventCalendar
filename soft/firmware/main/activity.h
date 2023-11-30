@@ -45,7 +45,7 @@ enum WebEvents {
 };
 
 struct Action {
-    ActionType type;
+    ActionType type = AT_Internal;
     union {
         struct {
             int x, y;

@@ -1,4 +1,4 @@
-#include "common.h"
+﻿#include "common.h"
 #include "hadrware.h"
 #include "setup_data.h"
 #include "web_vars.h"
@@ -22,9 +22,17 @@ static const char TAG[] = "ajax";
 void AJAXDecoder_gift_load::run()
 {
     sol_hit(arg_door);
-    int total = working_state.get_loaded_gift(arg_user);
+    int total = working_state.total_loaded_gift(arg_user);
     working_state.load_state[arg_door] = (total << 5) | arg_user;
     working_state.sync();
+
+    UserSetup usr;
+    if (usr.load(arg_user, NULL) && (usr.status & US_Done))
+    {
+        usr.status &= ~US_Done;
+        usr.save(arg_user, NULL);
+    }
+
     if (!working_state.write_user_name(*this, arg_door, false)) *this << UTF8 << "---";
 }
 
@@ -59,22 +67,30 @@ void AJAXDecoder_open_door::run()
 // done_user.html - Mark user as Done
 // 
 // Param:
-//     user - User index
+//     user - User index (or -1)
 // Return (JSON):
 //     Aray of 2 items: HTML text with list of still Active users, HTML text with list of Done users
 
 // G(done_user, P1(I, user))
 void AJAXDecoder_done_user::run()
 {
-    UserSetup usr; 
-    usr.load(arg_user, NULL);
-    usr.status |= US_Done;
-    usr.save(arg_user, NULL);
-    *this << UTF8 << "[" ;
+    if (arg_user != -1)
+    {
+        if (working_state.total_loaded_gift(arg_user)) // We can't terminate this user - so send an erorr
+        {
+            *this << UTF8 << "[\"<span class='error'>ÐÐµ Ð¼Ð¾Ð³Ñƒ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ:<br>Ð£ Ð½ÐµÐ³Ð¾ ÐµÑÑ‚ÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½Ð½Ñ‹Ðµ Ð¿Ð¾Ð´Ð°Ñ€ÐºÐ¸ - Ð¾Ð½ ÑÐ½Ð°Ñ‡Ð°Ð»Ð° Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¸Ñ… Ð·Ð°Ð±Ñ€Ð°Ñ‚ÑŒ</span>\", \"\"]";
+            return;
+        }
+        UserSetup usr; 
+        usr.load(arg_user, NULL);
+        usr.status |= US_Done;
+        usr.save(arg_user, NULL);
+    }
+    *this << UTF8 << "[\"" ;
     web_options.write_active_users(*this);
-    *this << UTF8 << ",";
+    *this << UTF8 << "\",\"";
     web_options.write_done_users(*this);
-    *this << UTF8 << "]" ;
+    *this << UTF8 << "\"]" ;
 }
 
 // set_interround_time.html - Set interround time (in minutes)
@@ -209,7 +225,10 @@ void AJAXDecoder_del_user::run()
 // G(del_user_fg, P2(I, usr_index, I, fg_index))
 void AJAXDecoder_del_user_fg::run()
 {
-    Activity::FPAccess(NULL).access().deleteTemplate(arg_usr_index*4 + arg_fg_index, 1);
+//    Activity::FPAccess(NULL).access().deleteTemplate(arg_usr_index*4 + arg_fg_index, 1);
+    int index = arg_usr_index == -1 ? (0x1000 | arg_fg_index) : arg_usr_index*4 + arg_fg_index;
+    Activity::queue_action(Action{.type=AT_WEBEvent, .web={.event=WE_FGDel, .p1=index}});
+
     *this << UTF8 << "Ok";
 }
 
@@ -250,6 +269,7 @@ void send_web_ping_to_ws(const char* tag)
 // Enable/Disable users to participate in game
 static void setup_active_users(uint32_t scale)
 {
+    bool ws_updated = false;
     for(int i=0; i<32; ++i)
     {
         UserSetup usr;
@@ -261,8 +281,14 @@ static void setup_active_users(uint32_t scale)
         {
             usr.status ^= US_Paricipated;
             usr.save(i, NULL);
+            if (req_enabled) // Turn on 'gift-right-now' for new user
+            {
+                working_state.enabled_users |= bit(i);
+                ws_updated = true;
+            }
         }
     }
+    if (ws_updated) working_state.sync();
 }
 
 // update_users.html - Update list of Users which participated in Game.
@@ -297,15 +323,34 @@ void AJAXDecoder_end_game::run()
 // 
 // Optional params (if not exists - do not change current selection):
 //     u<N> - Flag 'User take a part in game'
+//     start_time - Pending time
 
-// G(start_game, P1(U, users))
+// G(start_game, P2(U, users, OSU, start_time))
 void AJAXDecoder_start_game::run()
 {
-    char z[32] = {0};
-
     if (arg_users) setup_active_users(arg_users);
-    for(int i=0; i<32; ++i) EEPROM::write_pg(ES_UsedQ+i, z, 32);
-    Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameStart}});
+    if (arg_start_time) // This is pending game
+    {
+        char* e;
+        auto now = time(NULL);
+        auto stm = *gmtime(&now);
+
+        stm.tm_sec = 0;
+        stm.tm_hour = strtoul(arg_start_time, &e, 10);
+        stm.tm_min = strtoul(e+1, NULL, 10);
+
+        auto target = mktime(&stm);
+        if (target < now) target += 24*60*60;
+
+        working_state.last_round_time = utc2ts(target);
+        working_state.state = WS_Pending;
+        working_state.sync();
+    }
+    else
+    {
+        start_game();
+        Activity::queue_action(Action{.type = AT_WEBEvent, .web={.event=WE_GameStart}});
+    }
     redirect("/web/admin.html");
 }
 

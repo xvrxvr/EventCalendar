@@ -28,8 +28,10 @@ $[HTMLOptionsUserList]
 <table><tr><td>
 <p><button type="button" onclick="done_user()">Нет больше подарков для этого пользователя</button></p>
 <hr>
+$? GameStarted,2
 <p>Время, когда начать игру: <input type="time" name="start_time"></p>
 <p><button type="submit">Начать игру</button></p>
+$-
 <p><button type="button" onclick="G('admin')">Обратно в админку</button></p>
 </td><tr></table>
 </form>
@@ -48,6 +50,10 @@ function load_gift(door_index)
     send_gift_load_msg(door_index, opt.value - 0, (new_user_name) => {
         users[door_index] = new_user_name;
         activate_doors(users, loaded_gifts_to_disabled(users), "load_gift");
+        send_user_done(-1, (users_lists) => {
+            I("users_list_active").innerHTML = users_lists[0];
+            I("users_list_done").innerHTML = users_lists[1];
+        });
     } );
     users[door_index] = opt.text;
     activate_doors(users, loaded_gifts_to_disabled(users), "load_gift", true);
@@ -61,8 +67,8 @@ function done_user()
     const opt = sel.options[idx];
 
     send_user_done(opt.value - 0, (users_lists) => {
-        I("users_list_active").innerHTML = users_list[0];
-        I("users_list_done").innerHTML = users_list[1];
+        I("users_list_active").innerHTML = users_lists[0];
+        I("users_list_done").innerHTML = users_lists[1];
     });
 }
 

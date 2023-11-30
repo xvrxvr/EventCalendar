@@ -73,7 +73,7 @@ class AnimatedPannel {
     // Emit text in one/double size and return text size in pixels
     int lcd_text(class LCD& lcd, const char* msg, int x, int y);
 
-    void animate(class LCD&, Animation&);
+    void animate(class LCD&, Animation&, bool);
 
 public:
     AnimatedPannel(const char* title_utf8, const SizeDef&, const TextBoxDraw::TextGlobalDefinition* box_def = NULL);
@@ -83,7 +83,10 @@ public:
     void add_icons(uint32_t* icon, int count, uint16_t color); // Icons - 32x32 pixels
     void body_draw(class LCD&);
 
-    void animate_icon(int icon_index, const AnimationSetup& setup, bool override=false);
+    AnimatedPannel& animate_icon(int icon_index, const AnimationSetup& setup, bool override=false);
 
-    void tick(class LCD&);
+    void tick(class LCD&, bool step=true);
+
+    void body_draw();
+    void tick(bool step=true);
 };

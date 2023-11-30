@@ -14,8 +14,12 @@ $<!DOCTYPE html>
 <form>
 <center><table><tr><td>
 $? UserRights,4
+$? GameStarted,2
 <p><button type="button" onclick="A('start_game')">Начать Игру</button></p>
+$-
+$? GameStarted,1
 <p><button type="button" onclick="if (confirm('Завершить игру?\nВы уверены?')) A('end_game')">Закончить Игру</button></p>
+$-
 <p><button type="button" onclick="location.href='add_game_user.html'">Добавить Игрока</button></p>
 $-
 $? UserRights,10
@@ -32,5 +36,21 @@ $-
 </form>
 <hr>
 $[MainStatus]
+
+<script>
+
+function async_handler(cmds)
+{
+    for(const cmd of cmds)
+    {
+        if (cmd.cmd == 'started') {location.href = '/web/admin.html'; break;}
+    }
+}
+set_async_handler(async_handler);
+
+
+</script>
+
+
 </html>
 

@@ -156,7 +156,7 @@ def load_vars_file(fname, outf):
 #################################################################################################################################################################
 def load_ajax_def(file_n):
     srcs = {}
-    with open(file_n, "r") as f:
+    with open(file_n, "r", encoding='UTF8') as f:
         for line in f:
             mtch = re.match(r'^[SGP]\(\s*(\w+)', line)
             if mtch:
@@ -179,7 +179,7 @@ def load_ajax_imp_file(file_n):
         srcs[id] = sig
         sig = None
 
-    with open(file_n, "r") as f:
+    with open(file_n, "r", encoding='UTF8') as f:
         for line in f:
             line = line.strip()
             mtch = re.match(r'^\s*//\s*([SGP]\((\w+).*)$', line)
@@ -220,7 +220,7 @@ def test_ajax(source_file, out_file):
 
     if srcs_only:
         print("Not implemented accessors (will be added):", srcs_only)
-        with open(out_file, "a") as f:
+        with open(out_file, "a", encoding='UTF8') as f:
             for id in srcs_only:
                 print(file=f)
                 tpl = srcs[id]
@@ -247,7 +247,7 @@ args = parser.parse_args()
 if args.action == 'dirscan':
     generate_dir(args.output, args.source)
 elif args.action == 'webswitch':
-    with open(args.output+".cpp", "w") as f:
+    with open(args.output+".cpp", "w", encoding='UTF8') as f:
         print(f'#include "common.h"\n#include "{args.source}"\n', file=f)
         load_vars_file(args.source, f)
 elif args.action == 'test_ajax':

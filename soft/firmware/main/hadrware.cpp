@@ -864,6 +864,8 @@ void hw_init()
 
     ESP_ERROR_CHECK(i2c_driver_install(i2c_master_port, conf.mode, 0, 0, 0));
 
+    ESP_ERROR_CHECK(ledc_fade_func_install(ESP_INTR_FLAG_LEVEL1));
+
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_HIGH_SPEED_MODE,
         .duty_resolution  = LEDC_TIMER_13_BIT,
@@ -1074,7 +1076,7 @@ static void sol_task(void*)
         {
             --index;
             static const uint8_t enc[] = {5, 4, 6, 7, 3, 8, 1, 2};
-            write_sol(bit(enc[index-1]));
+            write_sol(bit(enc[index]-1));
             delay(1000);
             write_sol(0);
             reengage_sol();
@@ -1239,17 +1241,26 @@ void EEPROM::write(uint16_t address, const void* data, uint8_t size)
     assert(size <= 32);
     poll4ready();
     uint8_t addr[2] = {uint8_t(address >> 8), uint8_t(address)}; 
-    ESP_ERROR_CHECK(i2c_master_write2_to_device(i2c_master_port, 0xA0>>1, 
-        addr, 2, 
-        (const uint8_t*)data, size,
-        I2C_MASTER_TIMEOUT));
+    esp_err_t err;
+    for(int i=0; i<10; ++i)
+    {
+        err = i2c_master_write2_to_device(i2c_master_port, 0xA0>>1, addr, 2,  (const uint8_t*)data, size, I2C_MASTER_TIMEOUT);
+        if (ESP_OK == err) return;
+    }
+    ESP_ERROR_CHECK(err);
 }
 
 void EEPROM::read(uint16_t address, void* data, uint8_t size)
 {
     poll4ready();
-    uint8_t addr[2] = {uint8_t(address >> 8), uint8_t(address)}; 
-    ESP_ERROR_CHECK(i2c_master_write_read_device(i2c_master_port, 0xA0>>1, addr, 2, (uint8_t*)data, size, I2C_MASTER_TIMEOUT));
+    uint8_t addr[2] = {uint8_t(address >> 8), uint8_t(address)};
+    esp_err_t err;
+    for(int i=0; i<10; ++i)
+    {
+        err = i2c_master_write_read_device(i2c_master_port, 0xA0>>1, addr, 2, (uint8_t*)data, size, I2C_MASTER_TIMEOUT);
+        if (ESP_OK == err) return;
+    }
+    ESP_ERROR_CHECK(err);
 }
 
 void EEPROM::poll4ready()
@@ -1264,7 +1275,7 @@ void fade_out()
 
 void fade_in()
 {
-    ESP_ERROR_CHECK(ledc_set_fade_time_and_start(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, 100, 1000, LEDC_FADE_WAIT_DONE));
+    ESP_ERROR_CHECK(ledc_set_fade_time_and_start(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0, (1<<LEDC_TIMER_13_BIT)-1, 1000, LEDC_FADE_WAIT_DONE));
 }
 
 bool test_wakeup() {return !gpio_get_level(PIN_NUM_FP_WAKEUP);}

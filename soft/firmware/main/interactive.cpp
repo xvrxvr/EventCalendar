@@ -92,7 +92,11 @@ inline void lcd_turnon() {fade_in();}
 inline void restart_web_page(const char* url) {web_send_cmd("{'cmd':'goto','href':'%s'}", url);}
 
 // Setup WEB root as Mesage with 'message' and 'title'
-inline void set_web_message(const char* title, const char* message) {web_options.set_title_and_message(title, message);}
+inline void set_web_message(const char* title, const char* message) 
+{
+    web_options.set_title_and_message(title, message);
+    set_web_root("/web/message.html");
+}
 
 // Delete FG. index is <User-index>*4 + <FG-index-in-lib>
 inline void do_fg_del(int index, uint8_t count=1)
@@ -101,7 +105,7 @@ inline void do_fg_del(int index, uint8_t count=1)
     // else - send error as AJAX result
 }
 
-static void game();
+static bool game();
 static void no_game();
 static void challenge() {}
 
@@ -115,19 +119,32 @@ void entry()
     bg_images.peek_next_bg_image();
     bg_images.draw(Activity::LCDAccess(NULL).access());
 
+    set_web_root("/web/message.html");        
+
     switch(working_state.state)
     {
-        case WS_Pending: lcd_message("Приходите в\n", ts_to_string(working_state.last_round_time)); no_game(); return;
-        case WS_Active: game(); return;
+        case WS_Pending:
+            if (working_state.last_round_time <= utc2ts(time(NULL)))
+            {
+                start_game();
+                if (game()) challenge();
+                return;
+            }
+            lcd_message("Приходите в %s", ts_to_string(working_state.last_round_time)); 
+            no_game(); 
+            return;
+        case WS_Active: if (game()) challenge(); return;
         //case WS_NotActive: 
         default: break;
     }
     if (override_switch_active() || !get_eeprom_users())
     {
         login_superuser();
-        set_web_root("web/admin.html");
-        lcd_message("Ждите настройки");
-        do {web_event_process(MsgActivity(AT_WEBEvent).get_action());} while(working_state.state == WS_NotActive && (override_switch_active() || !get_eeprom_users()));
+        set_web_root("/web/admin.html");        
+        do {
+            lcd_message("Ждите настройки");
+            web_event_process(MsgActivity(AT_WEBEvent).get_action());
+        } while(working_state.state == WS_NotActive && (override_switch_active() || !get_eeprom_users()));
         return;
     }
     set_web_message("Waiting for login", "Пожалуста, войдите в систему с помощью отпечатка пальца");
@@ -158,9 +175,10 @@ static void web_event_process(const Action& act)
     }
 }
 
-static void no_game()
+static Action no_game_internal()
 {
-    MsgActivity act(AT_WatchDog|AT_Fingerprint0|(working_state.state == WS_Pending ? AT_Alarm : 0));
+    bool enable_web_events = false;
+    MsgActivity act(AT_WatchDog|AT_Fingerprint0|(working_state.state == WS_Pending ? AT_Alarm : 0)|AT_WEBEvent);
     if (working_state.state == WS_Pending) act.setup_alarm_action(ts2utc(working_state.last_round_time));
     act.setup_watchdog(SC_TurnoffDelay);
 
@@ -169,32 +187,46 @@ static void no_game()
         Action a = act.get_action();
         switch(a.type)
         {
-            case AT_WatchDog: passivate(); return;
+            case AT_WatchDog: passivate(); return {};
             case AT_Fingerprint:
             {
                 if (a.fp_index == -1) continue;
                 login_user(a.fp_index>>2);
-                if (!current_user.options) continue;
+                if (!current_user.options) {enable_web_events = false; continue;}
                 lcd_message("Настройка системы Админом");
+                set_web_root("/web/admin.html");        
                 restart_web_page("/");
-                auto act = wait(AT_WEBEvent);
-                switch(act.web.event)
-                {
-                    case WE_Logout: return;
-                    case WE_GameStart: game(); return;
-                    case WE_FGDel: web_event_process(act); break;
-                    case WE_FGEdit: case WE_FGView: web_event_process(act); return;
-                    default: break;
-                }
+                enable_web_events = true;
                 break;
             }
-            case AT_Alarm: game(); return;
+            case AT_Alarm: start_game(); return {};
+            case AT_WEBEvent:
+                if (enable_web_events)
+                {
+                    switch(a.web.event)
+                    {
+                        case WE_Logout: case WE_GameStart: return {};
+                        case WE_FGDel: case WE_FGEdit: case WE_FGView: return a;
+                        default: break;
+                    }
+                }
+                break;
             default: break;
         }        
     }
 }
 
-static void game()
+static void no_game()
+{
+    for(;;)
+    {
+        auto act = no_game_internal();
+        if (act.type == AT_WEBEvent) web_event_process(act);
+        else return;
+    }
+}
+
+static bool game()
 {
     MsgActivity act(AT_WatchDog|AT_Fingerprint|AT_WEBEvent);
     act.setup_watchdog(SC_TurnoffDelay);
@@ -204,7 +236,7 @@ static void game()
     {
         const auto round = global_setup.round_time*60;
         uint32_t now = utc2ts(time(NULL));
-        if (working_state.last_round_time + round >= now)
+        if (working_state.last_round_time + round <= now)
         {
             working_state.enabled_users = -1;
             working_state.last_round_time += ((now - working_state.last_round_time + round - 1) / round) * round;
@@ -218,7 +250,7 @@ static void game()
             else set_web_message("Access denied", "У вас недостаточно прав для входа сюда");
             if ((current_user.status & (US_Enabled|US_Paricipated)) != (US_Enabled|US_Paricipated))
             {
-                lcd_message("Вы не принимаете участия в\nраздаче подарков");
+                lcd_message("Вы не принимаете участия в раздаче подарков");
                 continue;
             }
             if (current_user.status & US_Done)
@@ -237,42 +269,37 @@ static void game()
                 continue;
             }
             lcd_message("Вы готовы получить подарок?\nНо сначала загадка...");
-            for(;;)
+            MsgActivity act(AT_WatchDog|AT_Fingerprint2|AT_WEBEvent|AT_TouchDown|AF_Override);
+            act.setup_watchdog(SC_TurnoffDelay);
+            Action a = act.get_action();
+            switch(a.type)
             {
-                MsgActivity act(AT_WatchDog|AT_Fingerprint2|AT_WEBEvent|AT_TouchDown|AF_Override);
-                act.setup_watchdog(SC_TurnoffDelay);
-                Action a = act.get_action();
-                switch(a.type)
-                {
-                    case AT_WatchDog: passivate(); return;
-                    case AT_Fingerprint: 
-                        if (a.fp_index == -1 || logged_in_user == (a.fp_index>>2)) break;
-                        login_user(a.fp_index>>2);
-                        test_user = true;
-                        break;
-                    case AT_WEBEvent:
-                        if (a.web.event == WE_GameEnd) return;
-                        web_event_process(a);
-                        break;
-                    default: break;
-                }
-                if (test_user) continue;
-                challenge();
-                return;
+                case AT_WatchDog: passivate(); return false;
+                case AT_Fingerprint: 
+                    if (a.fp_index == -1 || logged_in_user == (a.fp_index>>2)) break;
+                    login_user(a.fp_index>>2);
+                    test_user = true;
+                    continue;
+                case AT_WEBEvent:
+                    if (a.web.event == WE_GameEnd) return false;
+                    // web_event_process(a); - No any WEB editors in Game
+                    break;
+                default: break;
             }
+            return true;
         }
         Action a = act.get_action();
         switch(a.type)
         {
-            case AT_WatchDog: passivate(); return;
+            case AT_WatchDog: passivate(); return false;
             case AT_Fingerprint: 
                 if (a.fp_index == -1) break;
                 login_user(a.fp_index>>2);
                 test_user = true;
                 break;
             case AT_WEBEvent:
-                if (a.web.event == WE_GameEnd) return;
-                web_event_process(a);
+                if (a.web.event == WE_GameEnd) return false;
+                // web_event_process(a); - No any WEB editors in Game
                 break;
             default: break;
         }
@@ -360,15 +387,18 @@ static void fg_edit(int user_index)
                 {'cmd':'fgedit-circle-state', 'dst':%d,'state':'%s'}
             ])", tpl_to_fill >> 3, (tpl_to_fill >> 3)*SC_MAX_CH+(tpl_to_fill&7), circle_state_override);
 
-            panel.body_reset();
-            for(int i=0; i<4; ++i)
+            if ((tpl_to_fill&7) == 0) // New line of Icons
             {
-                if (filled_tpls & bit(i)) panel.add_text_utf8("Палец №%d - заполнен", i+1); else
-                if ((tpl_to_fill >> 3) == i) panel.add_icons(fg_icon, SC_MAX_CH, rgb(FGEDIT_ICON_COLOR_NOT_FILLED)); 
-                else panel.add_text_utf8("Палец №%d - пусто", i+1);
+                panel.body_reset();
+                for(int i=0; i<4; ++i)
+                {
+                    if (filled_tpls & bit(i)) panel.add_text_utf8("Палец №%d - заполнен", i+1); else
+                    if ((tpl_to_fill >> 3) == i) panel.add_icons(fg_icon, SC_MAX_CH, rgb(FGEDIT_ICON_COLOR_NOT_FILLED)); 
+                    else panel.add_text_utf8("Палец №%d - пусто", i+1);
+                }
+                panel.body_draw();
             }
-            panel.animate_icon(tpl_to_fill&7, FGEDIT_ICON_COLOR_FILLING_SETUP);
-            panel.body_draw(Activity::LCDAccess(&act).access());
+            panel.animate_icon(tpl_to_fill&7, FGEDIT_ICON_COLOR_FILLING_SETUP).tick(false);
         }
         circle_state_override = "filling";
         Activity::FPAccess(&act).access().active_page = (tpl_to_fill&7) + 1;
@@ -377,7 +407,7 @@ static void fg_edit(int user_index)
         {
             a = act.get_action();
             if (a.type != AT_WatchDog) break;
-            panel.tick(Activity::LCDAccess(&act).access());
+            panel.tick();
         }
         if (a.type == AT_Fingerprint)
         {
@@ -394,6 +424,7 @@ static void fg_edit(int user_index)
                 // unhighlight();
                 auto cbox = tpl_to_fill >> 3;
                 web_send_cmd("{'cmd':'fgedit-circle-state', 'dst':%d,'state':'filled'}", cbox*SC_MAX_CH+(tpl_to_fill&7));
+                panel.animate_icon(tpl_to_fill & 7, FGEDIT_ICON_COLOR_FILLED_SETUP).tick(false);
                 if ((tpl_to_fill & 7) != SC_MAX_CH-1) {++tpl_to_fill; continue;}// 1st part was filled - fill seconds
 
                 ESP_LOGI(TAG, "FG Editor: Create FG library entry");

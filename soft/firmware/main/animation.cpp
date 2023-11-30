@@ -4,6 +4,7 @@
 #include "text_draw.h"
 #include "box_draw.h"
 #include "ILI9327_Shield.h"
+#include "activity.h"
 
 static void operator<< (std::unique_ptr<char[]>& dst, Prn& src)
 {
@@ -62,7 +63,6 @@ void AnimatedPannel::add_text_utf8(const char* msg, ...)
         return;
     }
     lines[total_lines].text << b;
-    start_line_to_redraw = total_lines;
     ++total_lines;
 }
 
@@ -81,7 +81,6 @@ void AnimatedPannel::add_icons(uint32_t* icon_, int count, uint16_t color)
 
     lines[total_lines].text.reset();
     icons_line = total_lines;
-    start_line_to_redraw = total_lines;
     ++total_lines;
 }
 
@@ -153,18 +152,19 @@ void AnimatedPannel::draw_icons(LCD& lcd)
     lcd.WRect(x, icon_y, text_w - 32*icon_count, 32, bdef.bg_color);
 }
 
-void AnimatedPannel::animate_icon(int icon_index, const AnimationSetup& setup, bool override)
+AnimatedPannel& AnimatedPannel::animate_icon(int icon_index, const AnimationSetup& setup, bool override)
 {
     (override?oob_anim:main_anim).assign(setup, icon_index);
+    return *this;
 }
 
-void AnimatedPannel::tick(LCD& lcd)
+void AnimatedPannel::tick(LCD& lcd, bool step)
 {
-    if (oob_anim.is_active()) animate(lcd, oob_anim);
-    if (main_anim.is_active() && !(oob_anim.is_active() && main_anim.icon_index == oob_anim.icon_index)) animate(lcd, main_anim);
+    if (oob_anim.is_active()) animate(lcd, oob_anim, step);
+    if (main_anim.is_active() && !(oob_anim.is_active() && main_anim.icon_index == oob_anim.icon_index)) animate(lcd, main_anim, step);
 }
 
-void AnimatedPannel::animate(LCD& lcd, Animation& a)
+void AnimatedPannel::animate(LCD& lcd, Animation& a, bool do_tick)
 {
     uint16_t color=0;
     switch(a.anim.type)
@@ -201,6 +201,7 @@ void AnimatedPannel::animate(LCD& lcd, Animation& a)
             break;
     }
     lcd.icon32x32(text_x + a.icon_index*32, icon_y, icon, color);
+    if (do_tick) a.tick++;
 }
 
 uint16_t AnimatedPannel::Animation::color(bool raising_slope)
@@ -218,4 +219,14 @@ uint16_t AnimatedPannel::Animation::color(bool raising_slope)
 #undef E
 #undef SEL
     return (r<<11) | (g<<5) | b;
+}
+
+void AnimatedPannel::body_draw()
+{
+    body_draw(Activity::LCDAccess(NULL).access());
+}
+
+void AnimatedPannel::tick(bool step)
+{
+    tick(Activity::LCDAccess(NULL).access(), step);
 }

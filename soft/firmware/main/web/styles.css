@@ -1,3 +1,9 @@
+.error {
+  font-size: 20px;
+  color: red;
+  font-weight: bold;  
+}
+
 button {
   padding: 15px 25px;
   font-size: 24px;
