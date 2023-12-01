@@ -106,10 +106,8 @@ void AnimatedPannel::body_draw(LCD& lcd)
         text_x = box_x + sh.first;
         text_y = box_y + sh.second;
         text_w = box_width - bdef.reserved_space().first;
-        
-        BoxCreator box(box_width, box_height, bdef.corner_r, bdef.border_width, bdef.shadow_width);
-        const uint16_t pallete[] = {0, bdef.bg_color, bdef.border_color, bdef.shadow_color};
-        box.draw(lcd, box_x, box_y, pallete, true);
+
+        bdef.draw_box(lcd, box_x, box_y, box_width, box_height, true);
 
         int title_len = strlen(title.get());
         int dx = (text_w - title_len * sym_w()) >> 1;

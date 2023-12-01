@@ -104,6 +104,9 @@ struct TextGlobalDefinition {
 
     // Minimal distance from box top/left to internal text
     Size min_dist_to_text() const;
+
+    void draw_box(LCD& lcd, int x, int y, int w, int h, bool with_clip) const;
+
 };
 extern const TextGlobalDefinition default_text_global_definition;
 

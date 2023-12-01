@@ -21,6 +21,7 @@ set(srcs
     interactive.cpp
     challenge_mgr.cpp
     animation.cpp
+    grid_mgr.cpp
     main.cpp
     challenges/equest.cpp
     icons/fg_ico.cpp

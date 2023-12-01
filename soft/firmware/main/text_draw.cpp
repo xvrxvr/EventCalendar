@@ -63,6 +63,13 @@ bool TextGlobalDefinition::setup(const char* value)
     return true;
 }
 
+void TextGlobalDefinition::draw_box(LCD& lcd, int x, int y, int w, int h, bool with_clip) const
+{
+    BoxCreator box(w, h, corner_r, border_width, shadow_width);
+    const uint16_t pallete[] = {0, bg_color, border_color, shadow_color};
+    box.draw(lcd, x, y, pallete, with_clip);
+}
+
 inline void trim_front(String& text)
 {
     while(!text.empty() && isspace(text.front())) text.remove_prefix(1);

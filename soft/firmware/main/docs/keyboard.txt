@@ -1,0 +1,91 @@
+﻿. . . . . . . . . . . . . .
+1 2 3 4 5 6 7 8 9 0 
+Q W E R T Y U I O P ( ) BS+
+A S D F G H J K L : @ ENT++
+Z X C V B N M , . ? / SP+ Lang
+
+. . . . . . . . . . . . . .
+1 2 3 4 5 6 7 8 9 0 
+Й Ц У К Е Н Г Ш Щ З Х Ъ BS+
+Ф Ы В А П Р О Л Д Ж Э ENT++
+Я Ч С М И Т Ь Б Ю Ё . SP+ Lang
+
+. . . . . . . . . . . .
+1 2 3 4 5 6 7 8 9 0 
+Q W E R T Y U I O P BS+
+A S D F G H J K L ENT++
+Z X C V B N M . SPC++++
+
+. . . . . . . . . . . . . .
+1 2 3 4 5 6 7 8 9 0 
+Й Ц У К Е Н Г Ш Щ З Х Ъ BS+
+Ф Ы В А П Р О Л Д Ж Э ENT++
+Я Ч С М И Т Ь Б Ю Ё . SP+++ 
+
+
+. . . . . . .
+0 1 2 3 4 BS+
+5 6 7 8 9 ENT
+---------------------------------------------------
+
+15 Game:
+
+' ' ' '
+X   X X
+XXXXXXX
+XXXXXXX
+XXXXXXX
+---------------------------------------------------
+
+Geometry:
+Lines of:
+ cell <colspan> / empty <colspan>  + ID   [+ ability to drop first line]
+
+ title: func(ID)
+
++ cell size
++ 2 x Box definition (for external box + boxes for cells)
++ reserved space at left/top
+
+(+ getter of reserved space coordinates)
+(+ getter for cell geometry - start and sizes of text box inside)
+
+Draw - centered in specified box
+
+Label swap (by setup new Geomety):
+ New ID for subset of cells
+ Sizes and colspans not changed!
+
+Touch:
+ ID + row/col
+
+Cell move:
+ Slice (row/col) moved horizontaly/vertically by touch track (in specified range)
+
+Cell move done:
+ Reassign ID|empty for each cell (by parameter) + redraw affected region
+
+Access to cell ID by row/col
+---------------------------------------------------
+
+class Row {
+    std::vector<CellDef> cells;
+public:
+    Row(const char* = NULL);
+
+    Row& operator () (const char*);
+    Row& operator () (int, int colspan=1);
+};
+
+class Rows {
+public:
+    Rows& operator << (const Row&&);
+};
+
+class Geometry {
+public:
+    Geometry(const Rows&);
+};
+
+
+Geometry eng (Rows() << Row("1234567890") << Row("QWERTYUIOP()")(BS,2) << Row("ASDFGHJKL:@")(ENT,3) << Row("ZXCVBNM,.?/")(SP,2)(Lang));
