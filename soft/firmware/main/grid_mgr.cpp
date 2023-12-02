@@ -46,6 +46,7 @@ void Grid::initial_geom_eval()
             (MiniCell&)C = geom->cell(r+strip_lines, cc);
             if (C.col_span < 1) C.col_span = 1;
             C.updated = -1;
+            C.box_index = 1;
             if (!bdef.cell_width)
             {
                 const char* text = get_text_dos(C);
@@ -57,7 +58,7 @@ void Grid::initial_geom_eval()
 
     bdef.cell_width = std::max<int16_t>(bdef.cell_width, cell_w);
 
-    auto res_space = bdef.cell_box_def.reserved_space();
+    auto res_space = box_defs[1].reserved_space();
 
     int cell_outer_w = bdef.cell_width + res_space.first;
     int cell_outer_h = bdef.cell_height + res_space.second;
@@ -73,13 +74,13 @@ void Grid::initial_geom_eval()
             C.box.height = cell_outer_h;
             C.box.x = x;
             C.box.y = y;
-            x += (cell_outer_w + bdef.cell_box_def.marging_h) * C.col_span;
+            x += (cell_outer_w + box_defs[1].marging_h) * C.col_span;
             c += C.col_span;
         }
-        y += cell_outer_h + bdef.cell_box_def.marging_v;
+        y += cell_outer_h + box_defs[1].marging_v;
     }
-    grid_bounds.width = (cell_outer_w + bdef.cell_box_def.marging_h) * col_count - bdef.cell_box_def.marging_h;
-    grid_bounds.height = (cell_outer_h + bdef.cell_box_def.marging_v) * row_count - bdef.cell_box_def.marging_v;
+    grid_bounds.width = (cell_outer_w + box_defs[1].marging_h) * col_count - box_defs[1].marging_h;
+    grid_bounds.height = (cell_outer_h + box_defs[1].marging_v) * row_count - box_defs[1].marging_v;
 }
 
 // Prepare and draw Grid inside supplied coordinates
@@ -88,7 +89,7 @@ void Grid::set_coord(LCD& lcd, const Rect& rect)
     int my_internal_w = grid_bounds.width + bdef.reserve_left;
     int my_internal_h = grid_bounds.height + bdef.reserve_top;
 
-    auto reserved = bdef.outer_box_def.reserved_space();
+    auto reserved = box_defs[0].reserved_space();
 
     int ext_w = my_internal_w + reserved.first;
     int ext_h = my_internal_h + reserved.second;
@@ -102,11 +103,11 @@ void Grid::set_coord(LCD& lcd, const Rect& rect)
     bounds.x = (rect.width - ext_w) / 2 + rect.x;
     bounds.y = (rect.height - ext_h) / 2 + rect.y;
 
-    auto box_shift = bdef.outer_box_def.min_dist_to_text();
+    auto box_shift = box_defs[0].min_dist_to_text();
     grid_bounds.x = bounds.x + box_shift.first;
     grid_bounds.y = bounds.y + box_shift.second;
 
-    bdef.outer_box_def.draw_box(lcd, bounds.x, bounds.y, bounds.width, bounds.height, true);
+    box_defs[0].draw_box(lcd, bounds.x, bounds.y, bounds.width, bounds.height, true);
     update(lcd);
 }
 
@@ -143,7 +144,7 @@ Grid::TouchCell Grid::get_touch(int x, int y) const
     return result;
 }
 
-void Grid::swap_geometry(Geometry* new_geom)
+void Grid::swap_geometry(const Geometry* new_geom)
 {
     if (geom == new_geom) return;
     assert(new_geom->row_size() == col_count);
@@ -198,13 +199,13 @@ void Grid::draw_cell(LCD& lcd, const Cell& cell, int update, int dx, int dy)
 
     if (update & UI_Box)
     {
-        if (cell.id != -1) bdef.cell_box_def.draw_box(lcd, bx, by, cell.box.width, cell.box.height, false); 
+        if (cell.id != -1 && cell.box_index) box_defs[cell.box_index].draw_box(lcd, bx, by, cell.box.width, cell.box.height, false); 
         else draw_spacer(lcd, Rect{.x=bx, .y=by, .width=cell.box.width, .height= cell.box.height});
     }
     if (text)
     {
-        auto box_reserved = bdef.cell_box_def.reserved_space();
-        auto box_shift = bdef.cell_box_def.min_dist_to_text();
+        auto box_reserved = box_defs[cell.box_index].reserved_space();
+        auto box_shift = box_defs[cell.box_index].min_dist_to_text();
         bx += (cell.box.width - box_reserved.first - strlen(text)*8) / 2 + box_shift.first;
         by += (cell.box.height - box_reserved.second - 16) / 2 + box_shift.second;
         lcd.text(text, bx, by);
@@ -231,7 +232,7 @@ void Grid::draw_spacer(LCD& lcd, const Rect& b1, const Rect& b2, int dx, int dy)
 
 void Grid::draw_spacer(LCD& lcd, const Rect& to_fill)
 {
-    lcd.WRect(to_fill.x, to_fill.y, to_fill.width, to_fill.height, bdef.outer_box_def.bg_color);
+    lcd.WRect(to_fill.x, to_fill.y, to_fill.width, to_fill.height, box_defs[0].bg_color);
 }
 
 
@@ -262,9 +263,6 @@ void Grid::draw_float_spacer(LCD& lcd, int row, int col, int row_count, int col_
 // History cleared by 'update' call
 void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, int dx, int dy)
 {
-    lcd.set_fg(bdef.cell_box_def.fg_color);
-    lcd.set_bg(bdef.cell_box_def.bg_color);
-
     dx += grid_bounds.x; dy += grid_bounds.y;
     draw_float_spacer(lcd, row, col, row_count, col_count, dx, dy);
     prev_dx = dx; prev_dy = dy;
@@ -273,6 +271,8 @@ void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, 
         for(int c=0; c<col_count;)
         {
             auto& C = cell(r+row, c+col);
+            lcd.set_fg(box_defs[C.box_index].fg_color);
+            lcd.set_bg(box_defs[C.box_index].bg_color);
             draw_cell(lcd, C, -1, dx, dy);
             if (c+1 < col_count) draw_spacer(lcd, C.box, cell(c+1+col, r+row).box, dx, dy);
             if (r+1 < row_count) draw_spacer(lcd, C.box, cell(c+col, r+1+row).box, dx, dy);
@@ -283,9 +283,6 @@ void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, 
 // Draw grid on screen
 void Grid::update(LCD& lcd, bool with_spacers)
 {
-    lcd.set_fg(bdef.cell_box_def.fg_color);
-    lcd.set_bg(bdef.cell_box_def.bg_color);
-
     prev_dx = grid_bounds.x;
     prev_dy = grid_bounds.y;
 
@@ -293,6 +290,8 @@ void Grid::update(LCD& lcd, bool with_spacers)
         for(int c=0; c<col_count;)
         {
             auto& C = cell(r, c);
+            lcd.set_fg(box_defs[C.box_index].fg_color);
+            lcd.set_bg(box_defs[C.box_index].bg_color);
             if (C.updated)
             {
                 draw_cell(lcd, C, C.updated, grid_bounds.x, grid_bounds.y);

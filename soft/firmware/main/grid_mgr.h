@@ -34,7 +34,7 @@ public:
 class Rows {
     std::vector<Row> rows;
 public:
-    Rows& operator << (const Row&& r) {rows.push_back(r); return *this;}
+    Rows& operator << (const Row& r) {rows.push_back(r); return *this;}
 
     size_t row_size() const 
     {
@@ -50,7 +50,7 @@ public:
 class Geometry {
     Rows rows;
 public:
-    Geometry(const Rows&& r) : rows(r) {}
+    Geometry(const Rows& r) : rows(r) {}
 
     size_t row_size() const  {return rows.row_size();}
     size_t total_rows() const {return rows.total_rows();}
@@ -64,26 +64,22 @@ struct Rect {
     int height=0;
 };
 
+constexpr int TotalBoxDefs = 3;
 struct BoxDef {
-    TextBoxDraw::TextGlobalDefinition outer_box_def, cell_box_def;
+    const char* box_defs[TotalBoxDefs] = {};
     int16_t reserve_top = 0; // -1 for reserve all availabe space
     int16_t reserve_left = 0; // -1 for reserve all availabe space
     int16_t cell_width = 0; // Set to >0 value to define internal cell width. By default defined by cell contents
     int16_t cell_height = 16; // Define internal cell height.
-
-    constexpr BoxDef res_top(int16_t val) const {BoxDef res(*this); res.reserve_top = val; return res;}
-    constexpr BoxDef res_left(int16_t val) const {BoxDef res(*this); res.reserve_left = val; return res;}
-    constexpr BoxDef c_width(int16_t val) const {BoxDef res(*this); res.cell_width = val; return res;}
-    constexpr BoxDef c_height(int16_t val) const {BoxDef res(*this); res.cell_height = val; return res;}
-    BoxDef outer_b(const char* v) const {BoxDef res(*this); res.outer_box_def.setup(v); return res;}
-    BoxDef cell_b(const char* v) const {BoxDef res(*this); res.cell_box_def.setup(v); return res;}
 };
 
 class Grid {
     struct Cell : public MiniCell {
         Rect box;      // x,y from top/left of internal Grid area (grid_bounds). box itself represents Box for this cell (not internal contents)
         int updated=0; // bitset of UpdateItem
+        int box_index = 1;
     };
+    TextBoxDraw::TextGlobalDefinition box_defs[TotalBoxDefs];
     BoxDef bdef;
     const Geometry* geom;
     int strip_lines = 0;
@@ -121,7 +117,13 @@ class Grid {
     void draw_float_spacer(LCD& lcd, int row, int col, int row_count, int col_count, int dx, int dy);
 
 public:
-    Grid(const BoxDef& b, const Geometry& g, int strip_lines=0) : bdef(b), geom(&g), strip_lines(strip_lines) {}
+    Grid(const BoxDef& b, const Geometry& g, int strip_lines=0) : bdef(b), geom(&g), strip_lines(strip_lines) 
+    {
+        for(int i=0; i<TotalBoxDefs; ++i)
+        {
+            if (auto str = b.box_defs[i]) box_defs[i].setup(str);
+        }
+    }
 
     // Callback for cell text. Returns NULL if no text required
     virtual const char* get_text_dos(const MiniCell&) = 0;
@@ -135,13 +137,17 @@ public:
     Rect get_cell_coord_ext(int row, int col) const {return cell(row, col).box;}
 
     // Return rectangle of cell internals
-    Rect get_cell_coord_int(int row, int col) const {return shrink(cell(row, col).box, bdef.cell_box_def);}
+    Rect get_cell_coord_int(int row, int col) const 
+    {
+        const auto& c = cell(row, col) ;
+        return shrink(c.box, box_defs[c.box_index]);
+    }
 
     // Return reserved space Rect
     Rect get_reserved(bool top_part=true)
     {
         initial_geom_eval();
-        Rect inner = shrink(bounds, bdef.outer_box_def);
+        Rect inner = shrink(bounds, box_defs[0]);
         if (top_part) inner.height = bdef.reserve_top;
         else inner.width = bdef.reserve_left;
         return inner;
@@ -157,9 +163,21 @@ public:
     TouchCell get_touch(int x, int y) const;
 
     ///////////// Runtime geomentry/contents manipulation ////////////////////////////////
-    void swap_geometry(Geometry*);
-    void set_cell_id(int row, int col, int id) {initial_geom_eval(); auto& c = cell(row, col); if (c.id != id) {c.id = id; c.updated = true;}}
+    void swap_geometry(const Geometry*);
+    void set_cell_id(int row, int col, int id) 
+    {
+        initial_geom_eval(); 
+        auto& c = cell(row, col); 
+        if (c.id != id) {c.id = id; c.updated |= UI_Text;}
+    }
     int get_cell_id(int row, int col) {initial_geom_eval(); return cell(row, col).id;}
+    void set_cell_box(int row, int col, int box_idx) 
+    {
+        initial_geom_eval(); 
+        auto& c = cell(row, col); 
+        ++box_idx; 
+        if (c.box_index != box_idx) {c.box_index = box_idx; c.updated |= UI_Box;}
+    }
 
     ////////////// Updates management /////////////////////////////////////////////////////
     // Mark cells to redraw.
