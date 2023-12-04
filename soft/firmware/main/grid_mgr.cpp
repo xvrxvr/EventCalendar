@@ -197,7 +197,7 @@ void Grid::swap_geometry(const Geometry* new_geom)
 void Grid::draw_cell(LCD& lcd, const Cell& cell, int update, int dx, int dy)
 {
     const char* text = NULL;
-    if (update & UI_Text) text = get_text_dos(cell);
+    if (update & (UI_Text|UI_Box)) text = get_text_dos(cell);
 
     int bx = cell.box.x+dx;
     int by = cell.box.y+dy;

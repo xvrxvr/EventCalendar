@@ -188,14 +188,25 @@ public:
         if (c.box_index != box_idx) {c.box_index = box_idx; c.updated |= UI_Box;}
     }
 
+    // Change setup for box 'box_index'. Valid values 0 and 1
+    // All affected grid cell marked for update
+    void change_box(int box_index, const char* setup)
+    {
+        ++box_index;
+        box_defs[box_index].setup(setup);
+        for(auto& c: cells)
+            if (c.box_index == box_index)
+                c.updated |= UI_Box;
+    }
+
     ////////////// Updates management /////////////////////////////////////////////////////
     // Mark cells to redraw.
-    void invalidate(int row, int col, int row_count=1, int col_count=1)
+    void invalidate(int row, int col, int how=UI_Text, int row_count=1, int col_count=1)
     {
         initial_geom_eval();
         for(int r=0; r<row_count; ++r)
             for(int c=0; c<col_count; ++c)
-                cell(r, c).updated = true;
+                cell(r, c).updated |= how;
     }
 
     bool need_update() const
