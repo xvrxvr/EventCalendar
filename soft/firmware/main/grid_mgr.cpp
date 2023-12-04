@@ -70,7 +70,7 @@ void Grid::initial_geom_eval()
         for(int c=0; c<col_count;)
         {
             auto& C = cell(r, c);
-            C.box.width = cell_outer_w;
+            C.box.width = cell_outer_w * C.col_span + box_defs[1].marging_h * (C.col_span-1);
             C.box.height = cell_outer_h;
             C.box.x = x;
             C.box.y = y;
@@ -86,6 +86,7 @@ void Grid::initial_geom_eval()
 // Prepare and draw Grid inside supplied coordinates
 void Grid::set_coord(LCD& lcd, const Rect& rect)
 {
+    initial_geom_eval();
     int my_internal_w = grid_bounds.width + bdef.reserve_left;
     int my_internal_h = grid_bounds.height + bdef.reserve_top;
 
@@ -104,8 +105,8 @@ void Grid::set_coord(LCD& lcd, const Rect& rect)
     bounds.y = (rect.height - ext_h) / 2 + rect.y;
 
     auto box_shift = box_defs[0].min_dist_to_text();
-    grid_bounds.x = bounds.x + box_shift.first;
-    grid_bounds.y = bounds.y + box_shift.second;
+    grid_bounds.x = bounds.x + box_shift.first + bdef.reserve_left;
+    grid_bounds.y = bounds.y + box_shift.second + bdef.reserve_top;
 
     box_defs[0].draw_box(lcd, bounds.x, bounds.y, bounds.width, bounds.height, true);
     update(lcd);
@@ -146,6 +147,7 @@ Grid::TouchCell Grid::get_touch(int x, int y) const
 
 void Grid::swap_geometry(const Geometry* new_geom)
 {
+    initial_geom_eval();
     if (geom == new_geom) return;
     assert(new_geom->row_size() == col_count);
     assert(new_geom->total_rows() - strip_lines == row_count);
@@ -155,7 +157,7 @@ void Grid::swap_geometry(const Geometry* new_geom)
         for(int c=0, cc=0; c<col_count; ++cc)
         {
             auto& C = cell(r, c);
-            auto const &CC = geom->cell(r+strip_lines, cc);
+            auto const &CC = new_geom->cell(r+strip_lines, cc);
             assert(C.col_span == CC.col_span);
             if (C.id != CC.id)
             {
@@ -166,18 +168,21 @@ void Grid::swap_geometry(const Geometry* new_geom)
                 else // Text may be changed
                 {
                     auto t1 = get_text_dos(C);
+                    uint32_t v1 = 0;
+                    if (t1) strncpy((char*)&v1, t1, 3);
+
                     auto t2 = get_text_dos(CC);
-                    if (t1 != t2)
+                    uint32_t v2 = 0;
+                    if (t2) strncpy((char*)&v2, t2, 3);
+
+                    if ( (t1 == NULL) != (t2 == NULL) ) // Turn on/off text
                     {
-                        if ( (t1 == NULL) != (t2 == NULL) ) // Turn on/off text
-                        {
-                            C.updated |= t2 ? UI_Text : UI_Box|UI_Text; // If turn on (t2) - just text update will be enough, otherwise - Box need to be redrawn
-                        }
-                        else if (strcmp(t1, t2)) // Text changed - update
-                        {
-                            assert(strlen(t1) == strlen(t2)); // We do not support text length change (for now)
-                            C.updated |= UI_Text;
-                        }
+                        C.updated |= t2 ? UI_Text : UI_Box|UI_Text; // If turn on (t2) - just text update will be enough, otherwise - Box need to be redrawn
+                    }
+                    else if (v1 != v2) // Text changed - update
+                    {
+                        // assert(strlen(t1) == strlen(t2)); // We do not support text length change (for now)
+                        C.updated |= UI_Text;
                     }
                 }
                 C.id = CC.id;
@@ -263,6 +268,7 @@ void Grid::draw_float_spacer(LCD& lcd, int row, int col, int row_count, int col_
 // History cleared by 'update' call
 void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, int dx, int dy)
 {
+    initial_geom_eval();
     dx += grid_bounds.x; dy += grid_bounds.y;
     draw_float_spacer(lcd, row, col, row_count, col_count, dx, dy);
     prev_dx = dx; prev_dy = dy;
@@ -283,6 +289,7 @@ void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, 
 // Draw grid on screen
 void Grid::update(LCD& lcd, bool with_spacers)
 {
+    initial_geom_eval();
     prev_dx = grid_bounds.x;
     prev_dy = grid_bounds.y;
 

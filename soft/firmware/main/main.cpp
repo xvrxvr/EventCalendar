@@ -6,6 +6,7 @@
 #include "activity.h"
 #include "box_draw.h"
 #include "text_draw.h"
+#include "keyboard.h"
 
 void start_http_servers();
 
@@ -251,4 +252,40 @@ extern "C" void app_main(void)
 */
 
     for(;;) Interactive::entry();
+
+    GridManager::KeybBoxDef bdef{
+        .box_def{
+            .box_defs = {
+                "5555155U0A630E03 D6D9,0000,9CD3,FFFF", // Box
+                "2211003U0A630E03 1BE3,0000,9CD3,FFFF" // Keyboard
+            },
+            .reserve_top = 20, // -1 for reserve all availabe space
+            .reserve_left = 0, // -1 for reserve all availabe space
+            .cell_width = 0, // Set to >0 value to define internal cell width. By default defined by cell contents
+            .cell_height = 16 // Define internal cell height.
+        }
+    };
+    Activity act(AT_TouchDown|AT_WatchDog);
+    act.setup_watchdog_ticks(50);
+
+#define lcd Activity::LCDAccess(&act).access()
+
+    GridManager::Keyboard kb(bdef, GridManager::keyb_combo_eng, GridManager::keyb_combo_rus, 1);
+    kb.set_coord(lcd, GridManager::Rect{0, 0, 400, 240});
+    kb.kb_activate(lcd);
+    for(;;)
+    {
+        auto a = act.get_action();
+        if (a.type == AT_TouchDown)
+        {
+            int id = kb.get_touch(a.touch.x, a.touch.y).id;
+            if (id == -1) continue;
+            if (kb.kb_process(lcd, id))
+            {
+                printf("Collected '%s'\n", kb.kb_get_string());
+            }
+        } else
+        if (a.type == AT_WatchDog) kb.kb_animate(lcd);
+    }
+
 }

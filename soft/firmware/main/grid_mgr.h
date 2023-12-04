@@ -79,7 +79,6 @@ class Grid {
         int updated=0; // bitset of UpdateItem
         int box_index = 1;
     };
-    TextBoxDraw::TextGlobalDefinition box_defs[TotalBoxDefs];
     BoxDef bdef;
     const Geometry* geom;
     int strip_lines = 0;
@@ -115,6 +114,8 @@ class Grid {
 
     // Draw diff spacer for floating rect
     void draw_float_spacer(LCD& lcd, int row, int col, int row_count, int col_count, int dx, int dy);
+protected:
+    TextBoxDraw::TextGlobalDefinition box_defs[TotalBoxDefs];
 
 public:
     Grid(const BoxDef& b, const Geometry& g, int strip_lines=0) : bdef(b), geom(&g), strip_lines(strip_lines) 
@@ -148,8 +149,16 @@ public:
     {
         initial_geom_eval();
         Rect inner = shrink(bounds, box_defs[0]);
-        if (top_part) inner.height = bdef.reserve_top;
-        else inner.width = bdef.reserve_left;
+        if (top_part) inner.height = bdef.reserve_top; else
+        {
+            inner.width = bdef.reserve_left;
+            if (bdef.reserve_top) // Top also reserved - shrink pane by shifting start down
+            {
+                int cut = bdef.reserve_top + 2 * box_defs[0].marging_v;
+                inner.y += cut;
+                inner.height -= cut;
+            }
+        } 
         return inner;
     }
 

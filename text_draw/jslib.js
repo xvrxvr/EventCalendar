@@ -1,4 +1,4 @@
-"use strict";
+$"use strict";
 
 function I(name) {return document.getElementById(name);}
 
@@ -59,7 +59,8 @@ function loaded_gifts_to_disabled(second_names)
     return result;
 }
 
-let _time_to_doors_enable = 0; //$[TimeToDoorsEnable];
+var _time_to_doors_enable = $[TimeToDoorsEnable];
+var _timer_id = null;
 
 function _msg_time_to_doors()
 {
@@ -70,7 +71,7 @@ function activate_doors(second_names, disabled_scale, usr_callback, reset_timeou
 {
     if (reset_timeout) _time_to_doors_enable = 10;
     let doors = I("doors");
-    if (_time_to_doors_enable)
+    if (_time_to_doors_enable > 0)
     {
         doors.innerHTML = door_table(second_names, 255, "");
         _msg_time_to_doors();
@@ -78,10 +79,11 @@ function activate_doors(second_names, disabled_scale, usr_callback, reset_timeou
         {
             --_time_to_doors_enable;
             _msg_time_to_doors();
-            if (_time_to_doors_enable) setTimeout(cb, 1000); 
+            if (_time_to_doors_enable > 0) {clearTimeout(_timer_id); _timer_id = setTimeout(cb, 1000);}
             else activate_doors(second_names, disabled_scale, usr_callback);
         };
-        setTimeout(cb, 1000);
+        clearTimeout(_timer_id); 
+        _timer_id = setTimeout(cb, 1000);
     }
     else
     {
@@ -105,7 +107,7 @@ function set_html_with_timeout(cmd, element_name, msg = undefined)
     if (m) call_later(cmd, () => {element.innerHTML="";});
 }
 
-let websock = null;
+var websock = null;
 
 // Setup callback handler for WebSocket. Callback got Array of Objects with comands
 // Generic commands processed right here, but it still be included in callback argument
@@ -142,7 +144,7 @@ window.onload = () => {if (!websock) set_async_handler();};
 window.onunload = () => {if (websock) {websock.close(); websock = null;}};
 
 
-let _popup_data = null;
+var _popup_data = null;
 
 function show_popup(parent, msg, popup_data)
 {
@@ -192,10 +194,27 @@ function popup_clicked()
 function send_ajax_request(url, callback = null, as_json = false)
 {
     let req = new XMLHttpRequest();
-    if (callback) req.onload = () => {callback(as_json ? JSON.parse(this.responseText) : this.responseText);};
+    if (callback) req.onload = () => {callback(as_json ? JSON.parse(req.responseText) : req.responseText);};
     req.open("GET", "../action/" + url);
     req.send();
 //    console.log('AJAX: ' + url);
+}
+
+function send_ajax_update_challenge(data, callback)
+{
+    let req = new XMLHttpRequest();
+    req.onload = () => {callback(req.responseText);};
+    req.open("POST", "../action/update_challenge.html");
+    req.send(data);
+}
+
+
+function send_ajax_bg_add(data, callback)
+{
+    let req = new XMLHttpRequest();
+    req.onload = () => {callback(req.responseText);};
+    req.open("POST", "../action/bg_add.html");
+    req.send(data);
 }
 
 // callback argument - new user name to put on door
@@ -226,21 +245,15 @@ function send_set_interround_time(time)
     send_ajax_request(`set_interround_time.html?value=${time}`);
 }
 
-// Callback called with new challenge index
-function send_add_challenge(text, callback)
-{
-    send_ajax_request(`add_challenge.html?value=${encodeURIComponent(text)}`, callback);
-}
-
 function send_del_challenge(index)
 {
     send_ajax_request(`del_challenge.html?index=${index}`);
 }
 
-// Callback called with JSON object with challenge data
+// Callback called with text of challenge definition
 function send_get_challenge(index, callback)
 {
-    send_ajax_request(`get_challenge.html?index=${index}`, callback, true);
+    send_ajax_request(`get_challenge.html?index=${index}`, callback);
 }
 
 // Callback called with JSON data with User options
@@ -252,7 +265,7 @@ function send_get_user_opts(index, callback)
 // Callback called with new user name (to show in list nox)
 function send_set_user_option(index, opt_name, opt_value, callback)
 {
-    send_ajax_request(`set_user_opt.html?index=${index}&name=${opt_name}&value=${encodeURIComponent(opt_value)}`);
+    send_ajax_request(`set_user_opt.html?index=${index}&name=${opt_name}&value=${encodeURIComponent(opt_value)}`, callback);
 }
 
 function send_del_user(index)
