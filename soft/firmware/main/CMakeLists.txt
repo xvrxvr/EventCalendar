@@ -23,9 +23,12 @@ set(srcs
     animation.cpp
     grid_mgr.cpp
     keyboard.cpp
+    open_doors.cpp
+    stat_hook.cpp
     main.cpp
     challenges/equest.cpp
     icons/fg_ico.cpp
+    icons/close_ico.cpp
 )
 
 file(GLOB web_srcs "web/*")

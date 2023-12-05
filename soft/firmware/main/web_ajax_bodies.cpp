@@ -47,7 +47,7 @@ void AJAXDecoder_gift_load::run()
 void AJAXDecoder_unload_gift::run()
 {
 //    sol_hit(arg_door);
-    working_state.load_state[arg_door] = 0xFF;
+    working_state.unload_gift(arg_door);
     working_state.sync();
     web_options.LoadedGiftDoors(*this);
 }

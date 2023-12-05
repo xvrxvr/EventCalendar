@@ -137,6 +137,7 @@ struct WorkingState {
     void sync() const; // Save me to RTC
     int get_loaded_gift(int user_index); // Returns Door index with gift fot User, or -1 if no gift loaded
     int total_loaded_gift(int user_index);
+    void unload_gift(int door_index); // Remove gift from requested door. Update Gifts indexes for user whose gift was removed
 
     // Emit user name with gift order (if any). Return true
     // If requested slot is empty - emit nothing and return false

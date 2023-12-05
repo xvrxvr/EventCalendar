@@ -233,7 +233,7 @@ static void web_ping_task(void*)
     for(;;)
     {
         Activity::send_web_ping();
-        vTaskDelay(s2ticks(SC_WEBPing_Time));
+        vTaskDelay(ms2ticks(SC_WEBPing_Time));
     }
 }
 

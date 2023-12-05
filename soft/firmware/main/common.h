@@ -169,6 +169,6 @@ enum OpenDoorResult {
 };
 
 // Run interactive GUI for Door open.
-// 'door_index' is a dor index to open
+// 'door_index' is a door index to open
 // Returns bitset of OpenDoorResult (and optionally new user ID in low 5 bits)
 uint32_t open_door(int door_index);

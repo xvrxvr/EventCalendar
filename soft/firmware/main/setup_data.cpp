@@ -134,6 +134,20 @@ int WorkingState::total_loaded_gift(int user_index)
     return result;
 }
 
+// Remove gift from requested door. Update Gifts indexes for user whose gift was removed
+void WorkingState::unload_gift(int door_index)
+{
+    uint8_t data = load_state[door_index];
+    if (data == 0xFF) return;
+    load_state[door_index] = 0xFF;
+    uint8_t slot = data & 0xE0;
+    data &= 0x1F;
+    for(auto& u: load_state)
+    {
+        if (u != 0xFF && (u & 0x1F) == data && (u & 0xE0) > slot) u -= 0x20;
+    }
+}
+
 // Emit user name with gift order (if any). No quotes (just <User (N)>), Return true
 // If requested slot is empty emit nothing and return false
 bool WorkingState::write_user_name(Ans& ans, int index, bool add_quotes)

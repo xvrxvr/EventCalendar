@@ -200,10 +200,14 @@ public:
     }
 
     ////////////// Updates management /////////////////////////////////////////////////////
-    // Mark cells to redraw.
+    // Mark cells to redraw. Set row_count and/or col_count to 0 to update to the end of row/column
     void invalidate(int row, int col, int how=UI_Text, int row_count=1, int col_count=1)
     {
         initial_geom_eval();
+
+        if (!row_count) row_count = this->row_count - row;
+        if (!col) col_count = this->col_count - col;
+
         for(int r=0; r<row_count; ++r)
             for(int c=0; c<col_count; ++c)
                 cell(r, c).updated |= how;
@@ -227,6 +231,9 @@ public:
 
     // Draw grid on screen
     void update(LCD&, bool with_spacers=false);
+
+    // Draw everything
+    void update_all(LCD&);
 };
 
 

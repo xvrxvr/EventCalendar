@@ -108,9 +108,16 @@ void Grid::set_coord(LCD& lcd, const Rect& rect)
     grid_bounds.x = bounds.x + box_shift.first + bdef.reserve_left;
     grid_bounds.y = bounds.y + box_shift.second + bdef.reserve_top;
 
+    update_all(lcd);
+}
+
+void Grid::update_all(LCD& lcd)
+{
+    invalidate(0, 0, UI_Text|UI_Box, 0, 0);
     box_defs[0].draw_box(lcd, bounds.x, bounds.y, bounds.width, bounds.height, true);
     update(lcd);
 }
+
 
 Grid::TouchCell Grid::get_touch(int x, int y) const
 {

@@ -206,6 +206,8 @@ static esp_err_t ws_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+esp_err_t send_stat(httpd_req_t *req);
+
 static esp_err_t start_http_data_server()
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -230,6 +232,15 @@ static esp_err_t start_http_data_server()
             .uri       = "/",
             .method    = HTTP_GET,
             .handler   = send_root
+        };
+        httpd_register_uri_handler(server, &index);
+    }
+
+    {
+        httpd_uri_t index = {
+            .uri       = "/stat.html",
+            .method    = HTTP_GET,
+            .handler   = send_stat
         };
         httpd_register_uri_handler(server, &index);
     }

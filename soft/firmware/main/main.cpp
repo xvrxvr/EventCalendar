@@ -251,7 +251,11 @@ extern "C" void app_main(void)
     pars.draw_one_box_centered(lcd);
 */
 
-    for(;;) Interactive::entry();
+    uint32_t door = open_door(0);
+    printf("OpenDoor returns %lX\n", door);
+
+
+    for(;;) {Interactive::entry(); vTaskDelay(100);}
 
     GridManager::KeybBoxDef bdef{
         .box_def{

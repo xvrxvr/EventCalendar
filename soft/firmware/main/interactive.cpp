@@ -226,6 +226,27 @@ static void no_game()
     }
 }
 
+const char* test_user_login(const UserSetup& current_user, int logged_in_user)
+{
+    if ((current_user.status & (US_Enabled|US_Paricipated)) != (US_Enabled|US_Paricipated))
+    {
+        return "Вы не принимаете участия в раздаче подарков";
+    }
+    if (current_user.status & US_Done)
+    {
+        return "Вам уже вручили все подарки";
+    }
+    if (!(working_state.enabled_users & bit(logged_in_user)))
+    {
+        return "Вы уже получили свой подарок\nПриходите %s за следующим";
+    }
+    if (working_state.get_loaded_gift(logged_in_user) == -1)
+    {
+        return "Для вас не загрузили подарка\nСрочно поэовите Админа";
+    }
+    return NULL;
+}
+
 static bool game()
 {
     MsgActivity act(AT_WatchDog|AT_Fingerprint|AT_WEBEvent);
@@ -248,24 +269,10 @@ static bool game()
             bg_images.draw(Activity::LCDAccess(NULL).access());
             if (current_user.options) set_web_root("web/admin.html"); 
             else set_web_message("Access denied", "У вас недостаточно прав для входа сюда");
-            if ((current_user.status & (US_Enabled|US_Paricipated)) != (US_Enabled|US_Paricipated))
+            const char* msg = test_user_login(current_user,logged_in_user);
+            if (msg)
             {
-                lcd_message("Вы не принимаете участия в раздаче подарков");
-                continue;
-            }
-            if (current_user.status & US_Done)
-            {
-                lcd_message("Вам уже вручили все подарки");
-                continue;
-            }
-            if (!(working_state.enabled_users & bit(logged_in_user)))
-            {
-                lcd_message("Вы уже получили свой подарок\nПриходите %s за следующим", ts_to_string(working_state.last_round_time + round));
-                continue;
-            }
-            if (working_state.get_loaded_gift(logged_in_user) == -1)
-            {
-                lcd_message("Для вас не загрузили подарка\nСрочно поэовите Админа");
+                lcd_message(msg, ts_to_string(working_state.last_round_time + round));
                 continue;
             }
             lcd_message("Вы готовы получить подарок?\nНо сначала загадка...");
