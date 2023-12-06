@@ -1092,6 +1092,7 @@ static void sol_task(void*)
             --index;
             static const uint8_t enc[] = {5, 4, 6, 7, 3, 8, 1, 2};
             write_sol(bit(enc[index]-1));
+            time_to_reengage_sol = 10;
             delay(1000);
             write_sol(0);
             reengage_sol();

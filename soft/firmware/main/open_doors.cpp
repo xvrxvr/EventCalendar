@@ -32,7 +32,7 @@ static BoxDef doors_box{
 static const char door_wait_for_open[] = "2211102U0A630E03 D6FD,0000,7BAF,0020"; 
 
 // Door available to open
-static const char door_available[] = "2211102U0A630E03 8B69,0000,7BAF,0020";
+static const char door_available[] = "2211102U0A630E03 5B1F,0000,7BAF,0020";
 
 // Door available to reopen
 static const char door_available_reopen[] = "2211102U0A630E03 C552,0000,7BAF,0020";
@@ -80,7 +80,9 @@ class DoorGrid : public Grid {
         return res;
     }
 
-    void open_door();
+    void open_door(LCD&);
+
+    void draw_icon(LCD& lcd) {lcd.icon32x32(RES_X-32, 0, close_icon, 0xFFFF);}
 
     // ID: -1 - spacer
     //      0 - not active cell
@@ -121,7 +123,7 @@ public:
         if (first_entry) set_coord(lcd, GridManager::Rect{0, 0, RES_X, RES_Y});
         else update_all(lcd);
         lcd.set_bg(0);
-        lcd.icon32x32(RES_X-32, 0, close_icon, 0xFFFF);
+        if (!door_not_opened_yet) draw_icon(lcd);
     }
 };
 
@@ -172,7 +174,7 @@ uint32_t DoorGrid::run_dc_activity()
                 update(Lcd());
                 break;
             case AT_TouchDown:
-                if (is_close_icon(act)) result(ODR_Finished);
+                if (is_close_icon(act)) return result(ODR_Finished);
                 break;
             default: break;
         }
@@ -194,9 +196,7 @@ uint32_t DoorGrid::run_stable_activity()
             {
                 if (get_touch(act.touch.x, act.touch.y).id == 1)
                 {
-                    sol_hit(door_index);
-                    while(!time_to_reengage_sol) vTaskDelay(100); // Get a time to Solenoid task raise and update douncounter
-                    if (door_not_opened_yet) open_door();
+                    open_door(Lcd());
                     return 0; // Restart Activity
                 }
                 if (is_close_icon(act)) return result(ODR_Finished);
@@ -209,7 +209,7 @@ uint32_t DoorGrid::run_stable_activity()
                 fg_user &= 31;
                 if (fg_user == logged_in_user) // Current user touch FG - just open door
                 {
-                    open_door();
+                    open_door(Lcd());
                     return 0;
                 }
                 // Someone else touch FG - test if he can login now
@@ -228,11 +228,17 @@ uint32_t DoorGrid::run_stable_activity()
     }
 }
 
-void DoorGrid::open_door()
+void DoorGrid::open_door(LCD& lcd)
 {
-    door_not_opened_yet = false;
-    working_state.unload_gift(door_index);
-    working_state.sync();
+    sol_hit(door_index);
+    while(!time_to_reengage_sol) vTaskDelay(100); // Get a time to Solenoid task raise and update douncounter
+    if (door_not_opened_yet)
+    {
+        draw_icon(lcd);
+        door_not_opened_yet = false;
+        working_state.unload_gift(door_index);
+        working_state.sync();
+    }
 }
 
 uint32_t open_door(int door_index)
