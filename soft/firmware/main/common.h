@@ -64,6 +64,9 @@
 #include <hal/spi_ll.h>
 #pragma GCC diagnostic pop
 
+#define RES_Y 240	//Screen X axis resolution
+#define RES_X 400	//Screen Y axis resolution
+
 // Priorities of various tasks
 enum TasksPriority {
     TP_Hardware = 5,    // Handling of HW input
@@ -93,7 +96,8 @@ enum SetupConsts {
     SC_MinMsgTime = 5000,   // Minimum time to display message (in ms)
     SC_ActivityQueueLength = 16,// Size of Activity Queue. It will holds all pending Actions when no active Activity exists.
     SC_FGEditAnimSpeed = 10, // Animation speed in ticks
-    SC_AminPanelTitleGap = 8 // Gap between title line (in Animated panel) and body
+    SC_AminPanelTitleGap = 8,// Gap between title line (in Animated panel) and body
+    SC_KbMsgShow        = 3, // Time to show message in Keyboard manager (in seconds)
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1

@@ -87,10 +87,13 @@ void Grid::initial_geom_eval()
 void Grid::set_coord(LCD& lcd, const Rect& rect)
 {
     initial_geom_eval();
+    auto reserved = box_defs[0].reserved_space();
+
+    if (bdef.reserve_left == -1) bdef.reserve_left = rect.width - grid_bounds.width - reserved.first;
+    if (bdef.reserve_top == -1) bdef.reserve_top = rect.height - grid_bounds.height - reserved.second;
+    
     int my_internal_w = grid_bounds.width + bdef.reserve_left;
     int my_internal_h = grid_bounds.height + bdef.reserve_top;
-
-    auto reserved = box_defs[0].reserved_space();
 
     int ext_w = my_internal_w + reserved.first;
     int ext_h = my_internal_h + reserved.second;

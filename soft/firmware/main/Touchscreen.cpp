@@ -2,7 +2,6 @@
 
 #include "hadrware.h"
 #include "setup_data.h"
-#include "ILI9327_Shield.h"
 
 struct Vec5 {
     int32_t data[5];

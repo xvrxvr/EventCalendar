@@ -234,6 +234,14 @@ public:
 
     // Draw everything
     void update_all(LCD&);
+
+    // Setup LCD text color by box index
+    void set_lcd_color(LCD& lcd, int idx)
+    {
+        const auto& B = box_defs[idx];
+        lcd.set_bg(B.bg_color);
+        lcd.set_fg(B.fg_color);
+    }
 };
 
 

@@ -3,7 +3,6 @@
 #include "hadrware.h"
 #include "text_draw.h"
 #include "box_draw.h"
-#include "ILI9327_Shield.h"
 #include "activity.h"
 
 static void operator<< (std::unique_ptr<char[]>& dst, Prn& src)

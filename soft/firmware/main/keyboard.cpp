@@ -62,8 +62,13 @@ void Keyboard::kb_activate(LCD& lcd) // Draw keyboard input line and cursor
     area.height = 8;    
     kb_x = area.x; kb_y = area.y; kb_symbols = area.width/8;
     kb_x += (area.width - kb_symbols*8) >> 1;
-    lcd.WRect(kb_x, kb_y, kb_symbols*8, 16, kb_def.kb_bg_text_color);
+    wipe_kb_box(lcd);
     kb_set_cursor(lcd, true);
+}
+
+void Keyboard::wipe_kb_box(LCD& lcd)
+{
+    lcd.WRect(kb_x, kb_y, kb_symbols*8, 16, kb_def.kb_bg_text_color);
 }
 
 bool Keyboard::kb_process(LCD& lcd, int id)
@@ -108,5 +113,42 @@ void Keyboard::kb_set_cursor(LCD& lcd, bool turn_on) // Turn on/off cursor
     char sym = kb_flag ? '_' : ' ';
     lcd.text(&sym, kb_x + kb_pos*8, kb_y, 1);
 }
+
+// Writes message into input string. Wait 5 seconds and wipe out (input buffer and cursor also cleared). Method blocked inside for 5 seconds.
+// Message can includes control codes (\1 to \9) to switch color. \1 denotes original color of input line, \2 and so on defined in 'colors' array
+void Keyboard::message_utf8(LCD& lcd, const char* msg, uint16_t* colors)
+{
+    Prn b(msg);
+
+    utf8_to_dos(b.c_str());
+    kb_set_cursor(lcd, false);
+    wipe_kb_box(lcd);
+
+    lcd.set_bg(kb_def.kb_bg_text_color);
+    lcd.set_fg(box_defs[0].fg_color);
+
+    int x = kb_x;
+    int total = 0;
+
+    for(const char* s = b.c_str(); *s && total < kb_symbols; ++s)
+    {
+        if (uint8_t(*s) <= 9)
+        {
+            if (*s == 1) lcd.set_fg(box_defs[0].fg_color);
+            else lcd.set_fg(colors[*s-2]);
+        }
+        else
+        {
+            lcd.text(s, x, kb_y, 1);
+            ++total;
+            x+=8;
+        }
+    }
+
+    vTaskDelay(s2ticks(SC_KbMsgShow));
+    wipe_kb_box(lcd);
+    kb_pos = 0;
+}
+
 
 }

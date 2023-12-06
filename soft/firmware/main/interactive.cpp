@@ -7,8 +7,8 @@
 #include "web_vars.h"
 #include "web_gadgets.h"
 #include "animation.h"
+#include "icons.h"
 
-extern uint32_t fg_icon[];
 
 static const char TAG[] = "interactive";
 namespace Interactive {

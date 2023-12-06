@@ -1,4 +1,4 @@
-﻿with open('close.ico.txt', 'r') as f:
+﻿with open('hlp.txt', 'r') as f:
     for l in f:
         acc = 0
         for s in l.strip():

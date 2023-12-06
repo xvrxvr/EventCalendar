@@ -7,6 +7,8 @@
 #include "box_draw.h"
 #include "text_draw.h"
 #include "keyboard.h"
+#include "interactive.h"
+#include "challenge_list.h"
 
 void start_http_servers();
 
@@ -211,10 +213,6 @@ void test_jpeg(const void* img, size_t size)
 }
 #endif
 
-namespace Interactive {
-void entry();
-}
-
 extern "C" void app_main(void)
 {
     hw_init();
@@ -251,9 +249,10 @@ extern "C" void app_main(void)
     pars.draw_one_box_centered(lcd);
 */
 
-    uint32_t door = open_door(0);
-    printf("OpenDoor returns %lX\n", door);
+//    uint32_t door = open_door(0);
+//    printf("OpenDoor returns %lX\n", door);
 
+    printf("EQuest = %d\n", EQuest::run_challenge());
 
     for(;;) {Interactive::entry(); vTaskDelay(100);}
 

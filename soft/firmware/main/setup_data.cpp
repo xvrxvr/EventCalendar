@@ -2,7 +2,6 @@
 
 #include "setup_data.h"
 #include "hadrware.h"
-#include "ILI9327_Shield.h"
 #include "activity.h"
 #include "web_gadgets.h"
 

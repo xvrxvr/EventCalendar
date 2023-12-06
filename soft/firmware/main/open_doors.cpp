@@ -4,14 +4,12 @@
 #include "setup_data.h"
 #include "bg_image.h"
 #include "grid_mgr.h"
-#include "ILI9327_Shield.h"
+#include "icons.h"
 #include "interactive.h"
 
 using namespace GridManager;
 
 static const char TAG[]= "door";
-
-extern uint32_t close_icon[];
 
 static Geometry doors_geom( Rows()
     << Row()(0, 4)(-1,4)(0,4)
@@ -237,6 +235,7 @@ void DoorGrid::open_door(LCD& lcd)
         draw_icon(lcd);
         door_not_opened_yet = false;
         working_state.unload_gift(door_index);
+        working_state.enabled_users &= ~bit(logged_in_user);
         working_state.sync();
     }
 }

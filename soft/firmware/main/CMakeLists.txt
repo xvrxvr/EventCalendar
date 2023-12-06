@@ -27,8 +27,10 @@ set(srcs
     stat_hook.cpp
     main.cpp
     challenges/equest.cpp
+    challenges/ch_equest.cpp
     icons/fg_ico.cpp
     icons/close_ico.cpp
+    icons/help_ico.cpp
 )
 
 file(GLOB web_srcs "web/*")

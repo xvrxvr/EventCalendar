@@ -37,6 +37,8 @@ class Keyboard : public Grid {
     int16_t kb_x, kb_y; // x & y of Keyboard input line start
     int16_t kb_symbols; // Total symbols in Keyboard line
 
+    void wipe_kb_box(LCD&);
+
 public:
     Keyboard(const KeybBoxDef& b, const Geometry& g1, const Geometry& g2, int strip_lines=0) : Grid(b.box_def, g1, strip_lines), kb_def(b)
     {
@@ -52,6 +54,10 @@ public:
     }
 
     virtual const char* get_text_dos(const MiniCell&) override;
+
+    // Writes message into input string. Wait 5 seconds and wipe out (input buffer and cursor also cleared). Method blocked inside for 5 seconds.
+    // Message can includes control codes (\1 to \9) to switch color. \1 denotes original color of input line, \2 and so on defined in 'colors' array
+    void message_utf8(LCD& lcd, const char* msg, uint16_t* colors=NULL);
 
     // Keyboard interface
     void kb_activate(LCD& lcd); // Draw keyboard input line and cursor
