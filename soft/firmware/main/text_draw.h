@@ -249,6 +249,13 @@ public:
 
 struct TextsParserSelected;
 
+struct CellDef {
+    int index;
+    int x, y;
+    int width, height;
+
+    void set(int x, int y, int w, int h) {this->x=x; this->y=y; width=w; height=h;}
+};
 class TextsParser {
     friend struct TextsParserSelected;
 
@@ -272,6 +279,8 @@ public:
     void operator=(TextsParser && from) {text_lines = from.text_lines;}
 
     void parse_text(const String& lines);
+
+    size_t total_lines() const {return text_lines.size();}
 
     bool have_letter_size() const 
     {
@@ -333,15 +342,7 @@ public:
         else draw_one_box_imp(lcd, x, y, width, height);
     }
 
-    void draw_selection_of_boxes(LCD& lcd, const std::vector<int>& sel_array, int x=0, int y=0, int width=400, int height=240);
-};
-
-struct TextsParserSelected {
-    TextsParser obj;
-    Size sz;
-
-    TextsParserSelected(const TextGlobalDefinition& gd, const TextLine& tl, int width, int height);
-    TextsParserSelected() = default;
+    void draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int x=0, int y=0, int width=400, int height=240);
 };
 
 } // namespace TextBoxDraw

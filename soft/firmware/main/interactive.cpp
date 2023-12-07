@@ -41,7 +41,7 @@ static void fge_activate_user(int user_index, const char* name, int age)
 
 // Draw message (in UTF8) to LCD in centered Box
 // If 'msg' is NULL draws last box + mesage on already locked LCD instance
-static void lcd_message(const char* msg, ...)
+void lcd_message(const char* msg, ...)
 {
     static Prn buf;
     static TickType_t last_draw_time;

@@ -5,6 +5,14 @@ namespace TextBoxDraw {
 
 const TextBoxDraw::TextGlobalDefinition default_text_global_definition;
 
+struct TextsParserSelected {
+    TextsParser obj;
+    Size sz;
+
+    TextsParserSelected(const TextGlobalDefinition& gd, const TextLine& tl, int width, int height);
+    TextsParserSelected() = default;
+};
+
 uint8_t unbase64_digit(const char val)
 {
     if (val >= '0' && val <= '9') return val - '0';
@@ -555,12 +563,12 @@ Size TextsParser::eval_box(int x, int y, int width, int height)
     return {width, height};
 }
 
-void TextsParser::draw_selection_of_boxes(LCD& lcd, const std::vector<int>& sel_array, int x, int y, int width, int height)
+void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int x, int y, int width, int height)
 {
     std::vector<TextsParserSelected> selected;
 
-    assert(sel_array.size() <= text_lines.size());
-    for(const auto idx: sel_array) selected.emplace_back(global_definitions, text_lines[idx], width, height);
+    assert(sel_array_size <= text_lines.size());
+    for(int i=0; i<sel_array_size; ++i) selected.emplace_back(global_definitions, text_lines[sel_array[i].index], width, height);
     if (selected.size() == 0) return;
     if (selected.size() == 1) {draw_one_box_centered(lcd, x, y, width, height); return;}
     if (global_definitions.equal_size_horizontal() || global_definitions.equal_size_vertical())
@@ -597,14 +605,19 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, const std::vector<int>& sel_
             int total_gap = height - 2*global_definitions.marging_v - total_height;
             int rest_boxes = selected.size() - 1;
             int yy = y + global_definitions.marging_v;
+            int idx=0;
             for(auto& box: selected)
             {
                 const int xx = x + ((width - box.sz.first) >> 1);
                 box.obj.draw_one_box(lcd, xx, yy, box.sz.first, box.sz.second);
-                const int ins = total_gap / rest_boxes;
-                yy += box.sz.second + ins;
-                --rest_boxes;
-                total_gap -= ins;
+                sel_array[idx++].set(xx, yy, box.sz.first, box.sz.second);
+                if (rest_boxes)
+                {
+                    const int ins = total_gap / rest_boxes;
+                    yy += box.sz.second + ins;
+                    --rest_boxes;
+                    total_gap -= ins;
+                }
             }
             return;
         }
@@ -616,14 +629,19 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, const std::vector<int>& sel_
             int total_gap = width - 2*global_definitions.marging_h - total_width;
             int rest_boxes = selected.size() - 1;
             int xx = x + global_definitions.marging_h;
+            int idx=0;
             for(auto& box: selected)
             {
                 const int yy = y + ((height - box.sz.second) >> 1);
                 box.obj.draw_one_box(lcd, xx, yy, box.sz.first, box.sz.second);
-                const int ins = total_gap / rest_boxes;
-                xx += box.sz.first + ins;
-                --rest_boxes;
-                total_gap -= ins;
+                sel_array[idx++].set(xx, yy, box.sz.first, box.sz.second);
+                if (rest_boxes)
+                {
+                    const int ins = total_gap / rest_boxes;
+                    xx += box.sz.first + ins;
+                    --rest_boxes;
+                    total_gap -= ins;
+                }
             }
             return;
         }

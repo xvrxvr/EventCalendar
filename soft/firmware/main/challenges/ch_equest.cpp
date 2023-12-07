@@ -6,6 +6,7 @@
 #include "bg_image.h"
 #include "challenge_list.h"
 #include "icons.h"
+#include "multi_select.h"
 
 namespace EQuest {
 
@@ -67,7 +68,7 @@ static int get_random_equest(Prn& result, int allowed_width)
 static uint16_t colors[] = {0xF904, 0x27E8};
 
 // Result - ChResults or value to pass to MultiSelect dialog
-int run_challenge()
+static int run_challenge_p1()
 {
     GridManager::KeybBoxDef bdef{
         .box_def{
@@ -95,7 +96,7 @@ int run_challenge()
     bool help_active = false;
     int error_count = 0;    
     Prn prn("Сколько будет?");
-    
+
     utf8_to_dos(prn.c_str());
     kb.set_lcd_color(lcd, 2);
     lcd.text(prn.c_str(), rect.x + (rect.width - strlen(prn.c_str())*8)/2, rect.y);
@@ -137,6 +138,33 @@ int run_challenge()
         } else
         if (a.type == AT_WatchDog) kb.kb_animate(lcd);
     }
+}
+
+static ChResults run_multi_selection(int value)
+{
+    Prn buf;
+    int delta = std::max(5, value/10);
+    auto rnd = [=]() {return (esp_random() % delta) + 1;};
+
+    return multi_select_vary([&]() -> std::string_view {
+        buf.printf("%d\n", value);
+        int r1 = rnd();
+        buf.cat_printf("%d\n", value + r1);
+        if (r1 < value) buf.cat_printf("%d\n", value - r1);
+        else {r1 += rnd(); buf.cat_printf("%d\n", value + r1);}
+        r1 += rnd();
+        if (r1 < value && (esp_random() & 1)) r1 = -r1;
+        buf.cat_printf("%d\n", value + r1);
+        return std::string_view(buf.c_str(), buf.length());
+    }, TextBoxDraw::default_text_global_definition) ? CR_Ok : CR_Timeout;
+}
+
+// Result - ChResults
+int run_challenge()
+{
+    int result = run_challenge_p1();
+    if (result < 0) return result;
+    return run_multi_selection(result);
 }
 
 } // namespace EQuest

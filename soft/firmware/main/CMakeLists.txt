@@ -25,6 +25,7 @@ set(srcs
     keyboard.cpp
     open_doors.cpp
     stat_hook.cpp
+    multi_select.cpp
     main.cpp
     challenges/equest.cpp
     challenges/ch_equest.cpp

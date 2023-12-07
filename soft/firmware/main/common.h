@@ -98,6 +98,7 @@ enum SetupConsts {
     SC_FGEditAnimSpeed = 10, // Animation speed in ticks
     SC_AminPanelTitleGap = 8,// Gap between title line (in Animated panel) and body
     SC_KbMsgShow        = 3, // Time to show message in Keyboard manager (in seconds)
+    SC_MultiSelectErr   = 1, // Time to show mesage 'Invalid - try egain" (in seconds)
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
