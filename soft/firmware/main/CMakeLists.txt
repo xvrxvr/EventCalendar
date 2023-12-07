@@ -1,37 +1,12 @@
+file(GLOB main_srcs "*.cpp")
+file(GLOB ch_srcs  "challenges/*.cpp")
+file(GLOB ico_srcs "icons/*.cpp")
+
 set(srcs
-    common.cpp
+    ${main_srcs}
     protocol_examples_utils.c
-    hadrware.cpp
-    R503.cpp
-    Touchscreen.cpp
-    wifi_module.cpp
-    setup_data.cpp
-    web_server.cpp
-    web_files_access.cpp
-    web_vars_inc.cpp
-    web_gadgets.cpp
-    web_vars.cpp
-    web_ajax_bodies.cpp
-    activity.cpp
-    input_hw_touch.cpp
-    input_hw_fg.cpp
-    bg_image.cpp
-    box_draw.cpp
-    text_draw.cpp
-    interactive.cpp
-    challenge_mgr.cpp
-    animation.cpp
-    grid_mgr.cpp
-    keyboard.cpp
-    open_doors.cpp
-    stat_hook.cpp
-    multi_select.cpp
-    main.cpp
-    challenges/equest.cpp
-    challenges/ch_equest.cpp
-    icons/fg_ico.cpp
-    icons/close_ico.cpp
-    icons/help_ico.cpp
+    ${ch_srcs}
+    ${ico_srcs}
 )
 
 file(GLOB web_srcs "web/*")
