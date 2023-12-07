@@ -5,6 +5,10 @@
 #include "setup_data.h"
 #include "web_gadgets.h"
 
+#include <random>
+#include <fcntl.h>
+#include <sys/stat.h>
+
 static const char* TAG = "challenge";
 
 ChallengeMgr& challenge_mgr()
@@ -150,4 +154,62 @@ ChallengeMgr::ChUpd ChallengeMgr::update_challenge(uint8_t* first_pack, size_t f
     fprintf(f, "u%d\n", logged_in_user);
     files[ch_index].second = logged_in_user;
     return {f, ch_index, fwrite(first_pack,1,first_pack_size, f) + delta};
+}
+
+void ChallengeMgr::shuffle_challenges()
+{
+    std::minstd_rand rnd(esp_random());
+    std::shuffle(files.begin(), files.end(), rnd);
+}
+
+bool ChallengeMgr::read_ch_file(ChFile& dst, int ch_index)
+{
+    struct stat fs;
+    int fd = open(ch_name(ch_index), O_RDONLY);
+    if (fd==-1) return false;
+    if (fstat(fd, &fs)) {close(fd); return false;}
+    char* buffer = new char[fs.st_size+1];
+    char* org = buffer;
+    read(fd, buffer, fs.st_size);
+    buffer[fs.st_size] = 0;
+    close(fd);
+
+    dst.data.reset(buffer);
+    dst.data_size = fs.st_size;
+    
+    buffer = strstr(buffer, "\nV");
+    if (!buffer)
+    {
+        ESP_LOGE(TAG, "V? mark not found in file");
+        return false;
+    } 
+    ++buffer;
+    if (memcmp(buffer, "V1 ", 3))
+    {
+        ESP_LOGE(TAG, "V1 expected in file");
+        return false;
+    }
+    buffer+=3;
+    auto body_lines = strtoul(buffer, &buffer, 10);
+
+    char* prev_buf;
+    auto nxt_line = [&]() { prev_buf = buffer; char* n = strchr(buffer, '\n'); if (n) buffer = n+1; else buffer += strlen(buffer);};
+
+    // Header
+    while(isspace(*buffer)) ++buffer;    
+    dst.header_ptr.first = buffer - org;
+    nxt_line();
+    dst.header_ptr.second = buffer - prev_buf - 1; // Adjust for \n at end
+
+    // Body
+    dst.body_ptr.first = buffer - org;
+    char* pb = prev_buf;
+    while(body_lines--) nxt_line();
+    dst.header_ptr.second = buffer - pb;
+
+    // Answers
+    dst.ans_ptr.first = buffer - org;
+    dst.ans_ptr.second = fs.st_size - dst.ans_ptr.first;
+
+    return true;
 }
