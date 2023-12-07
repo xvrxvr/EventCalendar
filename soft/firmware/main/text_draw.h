@@ -71,10 +71,10 @@ struct TextGlobalDefinition {
     uint16_t bg_color = 0xAFD5;  // BG color (rgb565 hex string)
     GlobOptions glob_options = GlobOptions(GO_FuzzyPercent|GO_CentrVert|GO_CentrHor|GO_EqSizeHor|GO_EqSizeVert|GO_WordWrap);
 
-    uint8_t marging_v = 5;
-    uint8_t marging_h = 5;
-    uint8_t padding_v = 5;
-    uint8_t padding_h = 5;
+    uint8_t marging_v = 4;
+    uint8_t marging_h = 4;
+    uint8_t padding_v = 3;
+    uint8_t padding_h = 3;
     uint8_t border_width = 1;
     uint8_t shadow_width = 5;
     uint8_t corner_r = 5;
@@ -342,7 +342,7 @@ public:
         else draw_one_box_imp(lcd, x, y, width, height);
     }
 
-    void draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int x=0, int y=0, int width=400, int height=240);
+    void draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int header_line=0, int x=0, int y=0, int width=400, int height=240);
 };
 
 } // namespace TextBoxDraw

@@ -68,7 +68,7 @@ static int get_random_equest(Prn& result, int allowed_width)
 static uint16_t colors[] = {0xF904, 0x27E8};
 
 // Result - ChResults or value to pass to MultiSelect dialog
-static int run_challenge_p1()
+static int run_challenge_p1(Prn& prn)
 {
     GridManager::KeybBoxDef bdef{
         .box_def{
@@ -95,7 +95,7 @@ static int run_challenge_p1()
     int total_syms = rect.width/8;
     bool help_active = false;
     int error_count = 0;    
-    Prn prn("Сколько будет?");
+    prn.strcpy("Сколько будет?");
 
     utf8_to_dos(prn.c_str());
     kb.set_lcd_color(lcd, 2);
@@ -140,14 +140,15 @@ static int run_challenge_p1()
     }
 }
 
-static ChResults run_multi_selection(int value)
+static ChResults run_multi_selection(int value, const char* eq_text)
 {
     Prn buf;
     int delta = std::max(5, value/10);
     auto rnd = [=]() {return (esp_random() % delta) + 1;};
+    const char* extra = strlen(eq_text) < 40 ? " = ?" : "";
 
     return multi_select_vary([&]() -> std::string_view {
-        buf.printf("%d\n", value);
+        buf.printf("\\cD11F\\%s%s\n%d\n", eq_text, extra, value);
         int r1 = rnd();
         buf.cat_printf("%d\n", value + r1);
         if (r1 < value) buf.cat_printf("%d\n", value - r1);
@@ -156,15 +157,16 @@ static ChResults run_multi_selection(int value)
         if (r1 < value && (esp_random() & 1)) r1 = -r1;
         buf.cat_printf("%d\n", value + r1);
         return std::string_view(buf.c_str(), buf.length());
-    }, TextBoxDraw::default_text_global_definition) ? CR_Ok : CR_Timeout;
+    }, TextBoxDraw::default_text_global_definition, 1) ? CR_Ok : CR_Timeout;
 }
 
 // Result - ChResults
 int run_challenge()
 {
-    int result = run_challenge_p1();
+    Prn eq_text;
+    int result = run_challenge_p1(eq_text);
     if (result < 0) return result;
-    return run_multi_selection(result);
+    return run_multi_selection(result, eq_text.c_str());
 }
 
 } // namespace EQuest

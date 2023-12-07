@@ -12,12 +12,12 @@ enum ResultType {
     RT_Timeout
 };
 
-static ResultType select_one(TextBoxDraw::TextsParser& parser, std::vector<TextBoxDraw::CellDef>& cdef, int x, int y, int width, int height)
+static ResultType select_one(int reserved_lines, TextBoxDraw::TextsParser& parser, std::vector<TextBoxDraw::CellDef>& cdef, int x, int y, int width, int height)
 {
     {
         Activity::LCDAccess acc(NULL);
         bg_images.draw(acc.access());
-        parser.draw_selection_of_boxes(acc.access(), cdef.data(), std::min<size_t>(4, cdef.size()), x, y, width, height);
+        parser.draw_selection_of_boxes(acc.access(), cdef.data(), std::min<size_t>(4+reserved_lines, cdef.size()), reserved_lines, x, y, width, height);
     }
     Activity act(AT_TouchDown|AT_WatchDog);
     act.setup_watchdog(SC_TurnoffDelay);
@@ -28,12 +28,16 @@ static ResultType select_one(TextBoxDraw::TextsParser& parser, std::vector<TextB
         if (a.type == AT_WatchDog) return RT_Timeout;
         for(const auto& c: cdef)
         {
-            if (a.touch.x >=c.x && a.touch.x < c.x+c.width && a.touch.y >= c.y && a.touch.y < c.y+c.height) return c.index == 0 ? RT_Valid : RT_Invalid;
+            if (a.touch.x >=c.x && a.touch.x < c.x+c.width && a.touch.y >= c.y && a.touch.y < c.y+c.height)
+            {
+                if (c.index < reserved_lines) break;
+                return c.index == reserved_lines ? RT_Valid : RT_Invalid;
+            }
         }
     }
 }
 
-static ResultType run_round(TextBoxDraw::TextsParser& parser, bool multi_run, int x, int y, int width, int height)
+static ResultType run_round(int reserved_lines, TextBoxDraw::TextsParser& parser, bool multi_run, int x, int y, int width, int height)
 {
     int sz = parser.total_lines();
     std::vector<TextBoxDraw::CellDef> cdef;
@@ -44,46 +48,41 @@ static ResultType run_round(TextBoxDraw::TextsParser& parser, bool multi_run, in
 
     for(;;)
     {
-        std::shuffle(cdef.begin(), cdef.end(), rnd);
-        if (sz > 4)
+        std::shuffle(cdef.begin()+reserved_lines, cdef.end(), rnd);
+        if (sz > 4+reserved_lines)
         {
             int index;
-            for(index=0; index<sz; ++index) if (cdef[index].index==0) break;
-            if (index >= 4) std::swap(cdef[esp_random() & 3], cdef[index]);
+            for(index=reserved_lines; index<sz; ++index) if (cdef[index].index==0) break;
+            if (index >= 4+reserved_lines) std::swap(cdef[reserved_lines + (esp_random() & 3)], cdef[index]);
         }
-        auto result = select_one(parser, cdef, x, y, width, height);
+        auto result = select_one(reserved_lines, parser, cdef, x, y, width, height);
         switch(result)
         {
-            case RT_Invalid:
-                Interactive::lcd_message("\\#\\cF904\\Неверно!\n\\#Ещё раз ...");
-                vTaskDelay(s2ticks(SC_MultiSelectErr));
+            case RT_Invalid: Interactive::msg_valid(false);
                 if (!multi_run) return RT_Invalid;
                 break;
-            case RT_Valid:
-                Interactive::lcd_message("Правильно");
-                vTaskDelay(s2ticks(SC_MultiSelectErr));
-                return RT_Valid;
+            case RT_Valid: Interactive::msg_valid(true); return RT_Valid;
             default: return result;
         }
     }
 }
 
 // Returns 'false' on timeout
-bool multi_select_const(const std::string_view& data, const TextBoxDraw::TextGlobalDefinition &td, int x, int y, int width, int height)
+bool multi_select_const(const std::string_view& data, const TextBoxDraw::TextGlobalDefinition &td, int reserved_lines, int x, int y, int width, int height)
 {
     TextBoxDraw::TextsParser parser(td);
     parser.parse_text(data);
-    return run_round(parser, true, x, y, width, height) == RT_Valid;
+    return run_round(reserved_lines, parser, true, x, y, width, height) == RT_Valid;
 }
 
 // Returns 'false' on timeout
-bool multi_select_vary(std::function<std::string_view()> new_data, const TextBoxDraw::TextGlobalDefinition &td, int x, int y, int width, int height)
+bool multi_select_vary(std::function<std::string_view()> new_data, const TextBoxDraw::TextGlobalDefinition &td, int reserved_lines, int x, int y, int width, int height)
 {
     for(;;)
     {
         TextBoxDraw::TextsParser parser(td);
         parser.parse_text(new_data());
-        auto result = run_round(parser, false, x, y, width, height);
+        auto result = run_round(reserved_lines, parser, false, x, y, width, height);
         if (result != RT_Invalid) return result == RT_Valid;
     }
 }

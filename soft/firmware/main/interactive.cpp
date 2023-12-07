@@ -72,6 +72,12 @@ void lcd_message(const char* msg, ...)
     bg_images.set_durty();
 }
 
+void msg_valid(bool is_valid)
+{
+    lcd_message(is_valid ? "\\2Правильно" : "\\#\\2\\cF904\\Неверно!\n\\#\\2Ещё раз ...");
+    vTaskDelay(s2ticks(SC_MultiSelectErr));
+}
+
 class MsgActivity : public Activity {
 public:
     using Activity::Activity;

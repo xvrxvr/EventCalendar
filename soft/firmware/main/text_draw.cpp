@@ -1,6 +1,8 @@
 ﻿#include "common.h"
 #include "text_draw.h"
 
+static const char TAG[]  = "TextDraw";
+
 namespace TextBoxDraw {
 
 const TextBoxDraw::TextGlobalDefinition default_text_global_definition;
@@ -563,7 +565,7 @@ Size TextsParser::eval_box(int x, int y, int width, int height)
     return {width, height};
 }
 
-void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int x, int y, int width, int height)
+void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int header_line, int x, int y, int width, int height)
 {
     std::vector<TextsParserSelected> selected;
 
@@ -573,16 +575,26 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t s
     if (selected.size() == 1) {draw_one_box_centered(lcd, x, y, width, height); return;}
     if (global_definitions.equal_size_horizontal() || global_definitions.equal_size_vertical())
     {
-        auto sz = selected[0].sz;
+        auto sz = selected[header_line].sz;
+        int idx=0;
         for(const auto &it: selected)
         {
-            sz.first = std::max(sz.first, it.sz.first);
-            sz.second = std::max(sz.second, it.sz.second);
+            if (idx >= header_line)
+            {
+                sz.first = std::max(sz.first, it.sz.first);
+                sz.second = std::max(sz.second, it.sz.second);
+            }
+            ++idx;
         }
+        idx = 0;
         for(auto& it: selected) 
         {
-            if (global_definitions.equal_size_horizontal()) it.sz.first = sz.first;
-            if (global_definitions.equal_size_vertical())   it.sz.second = sz.second;
+            if (idx >= header_line)
+            {
+                if (global_definitions.equal_size_horizontal()) it.sz.first = sz.first;
+                if (global_definitions.equal_size_vertical())   it.sz.second = sz.second;
+            }
+            ++idx;
         }
     }
 
@@ -646,6 +658,7 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t s
             return;
         }
     }
+    ESP_LOGE(TAG, "Out of bounds: width=%d, reqested=%d; height=%d, requested=%d", width, xx, height, yy);
     throw OutOfBounds("Box doesn't fit");
 }
 
