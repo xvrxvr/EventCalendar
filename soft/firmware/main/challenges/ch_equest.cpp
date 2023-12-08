@@ -64,37 +64,25 @@ static int get_random_equest(Prn& result, int allowed_width)
     return -1;
 }
 
-// <red>, <green>
-static uint16_t colors[] = {0xF904, 0x27E8};
-
 // Result - ChResults or value to pass to MultiSelect dialog
 static int run_challenge_p1(Prn& prn)
 {
-    GridManager::KeybBoxDef bdef{
+    static const GridManager::KeybBoxDef bdef{
         .box_def{
-            .box_defs = {
-                "5555155U0A630E03 D6D9,0000,9CD3,FFFF", // Box
-                "2211003U0A630E03 1BE3,0000,9CD3,FFFF",// Keyboard
-                "5555155U0A630E03 D6D9,0000,9CD3,0000", // Use it for text draw
-            },
+            .box_defs = {KB_PALLETE, "5555155U0A630E03 D6D9,0000,9CD3,0000"}, // Use it for text draw            
             .reserve_top = 40, // -1 for reserve all availabe space
             .reserve_left = -1, // -1 for reserve all availabe space
         },
         .kb_options = GridManager::KBO_Left
     };
-    Activity act(AT_TouchDown|AT_WatchDog); // Add timeout! (Make separate microtick support)
-    act.setup_watchdog_ticks(50);
-#define lcd Activity::LCDAccess(&act).access()
-
-    bg_images.draw(lcd);
+#define lcd Activity::LCDAccess(NULL).access()
 
     GridManager::Keyboard kb(bdef, GridManager::keyb_digits, GridManager::keyb_digits);
+    bg_images.draw(lcd);
     kb.set_coord(lcd, GridManager::Rect{0, 0, 400, 240});
 
     auto rect = kb.get_reserved();
     int total_syms = rect.width/8;
-    bool help_active = false;
-    int error_count = 0;    
     prn.strcpy("Сколько будет?");
 
     utf8_to_dos(prn.c_str());
@@ -105,39 +93,7 @@ static int run_challenge_p1(Prn& prn)
     if (value == -1) return CR_Error;
     lcd.text(prn.c_str(), rect.x + (rect.width - prn.length()*8)/2, rect.y+16);
 
-    kb.kb_activate(lcd);
-    for(;;)
-    {
-        auto a = act.get_action();
-        if (a.type == AT_TouchDown)
-        {
-            int id = kb.get_touch(a.touch.x, a.touch.y).id;
-            if (id == -1)
-            {
-                if (help_active && a.touch.y < 32 && a.touch.x > RES_X-32) return value;
-                continue;
-            } 
-            if (kb.kb_process(lcd, id))
-            {
-                if (atoi(kb.kb_get_string()) == value)
-                {
-                    kb.message_utf8(lcd, "\3Правильно", colors);
-                    return CR_Ok;
-                }
-                else
-                {
-                    kb.message_utf8(lcd, "\2Не правильно\3 Ещё раз ...", colors);
-                    ++error_count;
-                    if (error_count == 3)
-                    {
-                        help_active = true;
-                        lcd.icon32x32(RES_X-32, 0, help_icon, 0x27E8);
-                    }
-                }
-            }
-        } else
-        if (a.type == AT_WatchDog) kb.kb_animate(lcd);
-    }
+    return kb.default_kb_process([&]() {return atoi(kb.kb_get_string()) == value;});
 }
 
 static ChResults run_multi_selection(int value, const char* eq_text)

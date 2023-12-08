@@ -113,3 +113,12 @@ U dos_to_utf8(char sym)
 //          D0 81 D1 91 D0 84 D1 94 D0 87 D1 97 D0 8E D1 9E C2 B0 E2 88 99 C2 B7 E2 88 9A E2 84 96 C2 A4 E2 96 A0 20
 //          F0    F1    F2    F3    F4    F5    F6    F7    F8    F9       FA    FB       FC       FD    FE       FF
 }
+
+// Do upper case (latin & DOS)
+uint8_t upcase(uint8_t sym)
+{
+    if (!(sym&0x80)) return toupper(sym);
+    if (sym >= 0xA0 && sym <= 0xAF) return sym - (0xA0-0x80);
+    if (sym >= 0xE0 && sym <= 0xEF) return sym - (0xE0-0x90);
+    return sym == 0xF1 ? 0xF0 : sym;
+}

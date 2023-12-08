@@ -7,14 +7,13 @@ class DV {
     const char* a;
     const char* b;
 
-    unsigned d(int i, int j)
+    unsigned d(int i, int j) const
     {
         unsigned min_val = -1u;
         
-        if (i < 0 || j < 0) return -1u;
         if (i == 0 && j == 0) return 0;
 
-        const auto m = [&](int score) {min_val = std::min(min_val, score);};
+        const auto m = [&](unsigned score) {min_val = std::min(min_val, score);};
 
         if (i > 0) m(d(i-1, j) + 1);
         if (j > 0) m(d(i, j-1) + 1);
@@ -31,51 +30,26 @@ public:
 
 
 class DVPlus {
-    PrnBuf buf;
-    char* ptrs[2];
-    char* iters[2][2];
-
-    int iter(int idx)
+    static void separate(const std::string_view &src, Prn& body, Prn& digits)
     {
-        char* & src = iters[idx][0];
-        char* & dst = iters[idx][1];
-        while(*src)
+        for(auto s: src)
         {
-            if (*src == ',') {++src; return '.';}
-            if (isdigit(*src) || *src == '.') return *src++;
-            *dst ++= *src++;
+            if (s == '.' || s==',') digits.cat_fill('.', 1); else
+            if (isdigit(s)) digits.cat_fill(s, 1);
+            else body.cat_fill(upcase(s), 1);
         }
-        *dst = 0;
-        return 0;
     }
 
 public:
-    DVPlus(const char* a, const char* b)
+    static unsigned compare(const std::string_view &a, const std::string_view &b, int& a_length)
     {
-        buf.strcpy(a);
-        buf.cat_fill(0, 1);
-        int len = buf.length();
-        buf.strcat(b);
-        iters[0][0] = iters[0][1] = ptrs[0] = buf.c_str();
-        iters[1][1] = iters[1][1] = ptrs[1] = ptrs[0]+len;
-    }
-
-    size_t size(int idx) const {return strlen(ptrs[idx]);}
-
-    unsigned score()
-    {
-        bool digits = false;
-        for(;;)
-        {
-            int s1 = iter(0);
-            int s2 = iter(1);
-            if (s1 == 0 && s2 == 0) break;
-            digits = true;
-            if (s1 != s2) return -1u;
-        }
-        int l1 = strlen(ptrs[0]);
-        int l2 = strlen(ptrs[1]);
-        if (l1 == 0 || l2 == 0) return digits ? (l1+l2) : -1u;
-        return DV(ptrs[0], ptrs[1]).score();
+        Prn a_body, a_digits, b_body, b_digits;
+        separate(a, a_body, a_digits);
+        separate(b, b_body, b_digits);
+        a_length = a_body.length();
+        if (strcmp(a_digits.c_str(), b_digits.c_str())) return -1u;
+        if (a_body.length() == 0) return b_body.length();
+        if (b_body.length() == 0) return a_body.length();
+        return DV(a_body.c_str(), b_body.c_str()).score();
     }
 };

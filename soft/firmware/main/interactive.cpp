@@ -266,7 +266,7 @@ static bool game()
         if (working_state.last_round_time + round <= now)
         {
             working_state.enabled_users = -1;
-            working_state.last_round_time += ((now - working_state.last_round_time + round - 1) / round) * round;
+            working_state.last_round_time =  now - (now - working_state.last_round_time) % round;
             working_state.sync();
         }
         if (test_user)

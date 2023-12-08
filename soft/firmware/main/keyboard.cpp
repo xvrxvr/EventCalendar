@@ -1,6 +1,9 @@
 #include "common.h"
 #include "grid_mgr.h"
 #include "keyboard.h"
+#include "activity.h"
+#include "challenge_list.h"
+#include "icons.h"
 
 namespace GridManager {
 
@@ -36,6 +39,30 @@ Geometry keyb_digits(Rows()
     << Row("01234")(SS_BS, 2)
     << Row("56789")(SS_Ent, 2)
 );
+
+struct KbDefByType {
+    Geometry* kb1;
+    Geometry* kb2=NULL;
+    int strip_lines=0;
+};
+
+static KbDefByType kb_defs_by_type[8] = {
+    {&keyb_combo_rus, &keyb_combo_eng}, // Empty KB ???
+    {&keyb_eng, NULL, 1},               // GO_KbEnglish
+    {&keyb_rus, NULL, 1},               // GO_KbRussian
+    {&keyb_combo_eng, &keyb_combo_rus, 1}, // GO_KbEnglish+GO_KbRussian
+    {&keyb_digits, NULL},               // GO_KbNumbers
+    {&keyb_eng, NULL},                  // GO_KbNumbers+GO_KbEnglish
+    {&keyb_rus, NULL},                  // GO_KbNumbers+GO_KbRussian
+    {&keyb_combo_eng, &keyb_combo_rus} // GO_KbNumbers+GO_KbEnglish+GO_KbRussian
+};
+
+Keyboard::Keyboard(const KeybBoxDef& b, int kb_type) : Grid(b.box_def, *kb_defs_by_type[kb_type&7].kb1, kb_defs_by_type[kb_type&7].strip_lines), kb_def(b)
+{
+    geoms[0] = kb_defs_by_type[kb_type&7].kb1;
+    geoms[1] = kb_defs_by_type[kb_type&7].kb2;
+    if (!geoms[1]) geoms[1] = geoms[0];
+}
 
 const char* Keyboard::get_text_dos(const MiniCell& cell)
 {
@@ -148,6 +175,55 @@ void Keyboard::message_utf8(LCD& lcd, const char* msg, uint16_t* colors)
     vTaskDelay(s2ticks(SC_KbMsgShow));
     wipe_kb_box(lcd);
     kb_pos = 0;
+}
+
+#define Lcd() Activity::LCDAccess(NULL).access()
+
+// <red>, <green>
+static uint16_t colors[] = {0xF904, 0x27E8};
+
+int Keyboard::default_kb_process(std::function<bool()> test_func)
+{
+    Activity act(AT_TouchDown|AT_WatchDog); // Add timeout! (Make separate microtick support)
+    act.setup_watchdog_ticks(50);
+
+    bool help_active = false;
+    int error_count = 0;    
+
+    kb_activate(Lcd());
+    for(;;)
+    {
+        auto a = act.get_action();
+        if (a.type == AT_TouchDown)
+        {
+            int id = get_touch(a.touch.x, a.touch.y).id;
+            if (id == -1)
+            {
+                if (help_active && a.touch.y < 32 && a.touch.x > RES_X-32) return 0;
+                continue;
+            } 
+            if (kb_process(Lcd(), id))
+            {
+                if (test_func())
+                {
+                    message_utf8(Lcd(), "\3Правильно", colors);
+                    return CR_Ok;
+                }
+                else
+                {
+                    message_utf8(Lcd(), "\2Не правильно\3 Ещё раз ...", colors);
+                    ++error_count;
+                    if (error_count == 3)
+                    {
+                        help_active = true;
+                        Lcd().icon32x32(RES_X-32, 0, help_icon, 0x27E8);
+                    }
+                }
+            }
+        } else
+        if (a.type == AT_WatchDog) kb_animate(Lcd());
+    }
+
 }
 
 

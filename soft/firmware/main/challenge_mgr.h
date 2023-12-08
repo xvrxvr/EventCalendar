@@ -62,6 +62,7 @@ class ChFile {
     P2 header_ptr;
     P2 body_ptr;
     P2 ans_ptr;
+    P2 valid_ans_ptr;
 
     std::string_view get(P2 who) const {return {data.get()+who.first, who.second};}
 public:
@@ -69,6 +70,7 @@ public:
     std::string_view get_header() const {return get(header_ptr);}
     std::string_view get_body() const {return get(body_ptr);}
     std::string_view get_ans() const {return get(ans_ptr);}
+    std::string_view get_valid_ans() const {return get(valid_ans_ptr);}
 };
 
 

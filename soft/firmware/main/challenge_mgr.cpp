@@ -200,16 +200,21 @@ bool ChallengeMgr::read_ch_file(ChFile& dst, int ch_index)
     dst.header_ptr.first = buffer - org;
     nxt_line();
     dst.header_ptr.second = buffer - prev_buf - 1; // Adjust for \n at end
+    buffer[-1] = 0; // Terminate by zero
 
     // Body
     dst.body_ptr.first = buffer - org;
-    char* pb = prev_buf;
+    char* pb = buffer;
     while(body_lines--) nxt_line();
-    dst.header_ptr.second = buffer - pb;
+    dst.body_ptr.second = buffer - pb - 1;
 
     // Answers
     dst.ans_ptr.first = buffer - org;
     dst.ans_ptr.second = fs.st_size - dst.ans_ptr.first;
+
+    // Valid answer - first line of Ans
+    dst.valid_ans_ptr.first = buffer - org;
+    dst.valid_ans_ptr.second = strchr(buffer, '\n') - buffer;
 
     return true;
 }

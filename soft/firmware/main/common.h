@@ -177,3 +177,6 @@ enum OpenDoorResult {
 // 'door_index' is a door index to open
 // Returns bitset of OpenDoorResult (and optionally new user ID in low 5 bits)
 uint32_t open_door(int door_index);
+
+// Do upper case (latin & DOS)
+uint8_t upcase(uint8_t);

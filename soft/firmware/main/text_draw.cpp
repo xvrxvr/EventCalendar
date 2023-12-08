@@ -53,7 +53,10 @@ bool TextGlobalDefinition::setup(const char* value)
     min_age      = unhex(value+8, 2);
     max_age      = unhex(value+10, 2);
 
-    glob_options = GlobOptions(unhex(value+12, 4));
+    auto low = unhex(value+12, 1);
+    auto mid = unhex(value+13, 2) << 4;
+    auto high = unhex(value+15, 1) << 12;
+    glob_options = GlobOptions(low | mid | high);
 
     const char* p = strchr(value, ' ');
     if (!p) return false;

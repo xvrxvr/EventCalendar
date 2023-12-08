@@ -501,7 +501,13 @@ size_t AJAXDecoder_update_challenge::consume_stream(uint8_t* data, size_t size, 
         if (eof && opaque_1) {fclose(opaque_1); *this << opaque_2;}
         return size;
     }
-    if (!eof) size = valid_utf8_size((const char*)data, size);
+    int delta=0;
+    if (!eof)
+    {
+        auto new_size = valid_utf8_size((const char*)data, size);
+        delta = size - new_size;
+        size = new_size;
+    } 
 
     auto out_size = utf8_to_dos((char*)data, size);
     if (!opaque_1) // First entry - open file and write first pack to it directly by Challenge Manager
@@ -509,8 +515,8 @@ size_t AJAXDecoder_update_challenge::consume_stream(uint8_t* data, size_t size, 
         auto def = challenge_mgr().update_challenge(data, out_size);
         opaque_1 = def.file;
         opaque_2 = def.ch_index;
-        return def.processed_size;
+        return size - delta;
     }
     fwrite(data, 1, out_size, opaque_1);
-    return size;
+    return size - delta;
 }

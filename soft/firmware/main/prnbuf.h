@@ -65,7 +65,7 @@ public:
     ~Prn() {zap();}
 
     // Return raw buffer (as char*)
-    char* c_str() {return buffer;}
+    char* c_str() {return buffer ? buffer : (char*)"";}
 
     char& operator[](int idx) {assert(idx < length()); return buffer[idx];}
 

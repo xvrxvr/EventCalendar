@@ -1,7 +1,5 @@
 #pragma once
 
-// Expression quest challenge
-namespace EQuest {
 enum ChResults {
     CR_Ok       = -1, // User entered answer right
     CR_Timeout  = -2, // Timeout hit (do logout)
@@ -9,6 +7,14 @@ enum ChResults {
     // >=0 - Value to match. User press 'help' icon (used internally - can't be returned by run_challenge)
 };
 
-// Result - ChResults
-int run_challenge();
+// Expression quest challenge
+namespace EQuest {
+    // Result - ChResults
+    int run_challenge();
+}
+
+// Riddle challenge
+namespace Riddle {
+    // Result - ChResults
+    int run_challenge();
 }

@@ -46,6 +46,8 @@ public:
         geoms[1] = &g2;
     }
 
+    Keyboard(const KeybBoxDef& b, int kb_type);
+
     void switch_lang(LCD& lcd)
     {
         swap_geometry(geoms[cur_geom^=1]);
@@ -80,7 +82,11 @@ public:
     const char* kb_get_string() {kb_buffer[kb_pos]=0; return kb_buffer;} // Returns image of string entered so far
     void kb_animate(LCD& lcd) {kb_set_cursor(lcd, !kb_flag);} // Call to animate keyboard cursor
     void kb_set_cursor(LCD& lcd, bool turn_on); // Turn on/off cursor
+
+    int default_kb_process(std::function<bool()> test_func);
 };
+
+#define KB_PALLETE "5555155U0A630E03 D6D9,0000,9CD3,FFFF", /* Box */ "2211003U0A630E03 1BE3,0000,9CD3,FFFF" /* Keyboard */
 
 
 } // namespace GridManager
