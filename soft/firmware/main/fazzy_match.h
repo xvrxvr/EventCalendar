@@ -35,8 +35,8 @@ class DVPlus {
         for(auto s: src)
         {
             if (s == '.' || s==',') digits.cat_fill('.', 1); else
-            if (isdigit(s)) digits.cat_fill(s, 1);
-            else body.cat_fill(upcase(s), 1);
+            if (isdigit(s)) digits.cat_fill(s, 1); else
+            if (isalpha(s) || (s&0x80)) body.cat_fill(upcase(s), 1);
         }
     }
 

@@ -31,19 +31,15 @@ class Riddle {
 
     void setup_kb_type();
 
-    bool test_answer(const char*);
+    bool test_answer(GridManager::Keyboard&);
 
     // Init all Quest subsystem. Select Quest number to ask.
     // Returns quest number or CR_Error if can't select
     int init();
 
-    // Load Challenge, Draw question, wait for touch
-    // Return CR_* on error, 0 if Ok
-    int ask_challenge(int index);
-
-    // Run keyboard input method
+    // Ask riddle and enter answer
     // Return CR_* or 0 if user click Help icon
-    int get_ans_keyboard();
+    int ask_and_query(int index);
 
     // Run selection. Return CR_*
     int get_selection();
@@ -66,6 +62,7 @@ int Riddle::init()
     {
         ESP_LOGE(TAG, "No logged-in user");
         return -1;
+//        logged_in_user = 0;
     }
     EEPROM::read_pg(ES_UsedQ + logged_in_user, used_quests, sizeof(used_quests));
     challenge_mgr().shuffle_challenges();
@@ -80,7 +77,7 @@ int Riddle::init()
 
 #define Lcd() Activity::LCDAccess(NULL).access()
 
-int Riddle::ask_challenge(int index)
+int Riddle::ask_and_query(int index)
 {
     if (!challenge_mgr().read_ch_file(chf, index))
     {
@@ -92,21 +89,45 @@ int Riddle::ask_challenge(int index)
     setup_kb_type();
 
     TextBoxDraw::TextsParser parser(td);
+    GridManager::Keyboard kb(kb_type);
     parser.parse_text(chf.get_body());
 
+    bool sequential = true;
+
+    auto box_rect = parser.min_box_size();
+    auto kb_size = kb.get_coord();
+
+    int kb_y = 0, kb_height = RES_Y, box_height = RES_Y;
+
+    if (!(kb_type & TextBoxDraw::GO_KbSelector) && box_rect.second + kb_size.height + td.marging_v*3 <= RES_Y)
+    {
+        // Run in one screen
+        sequential = false;
+        auto extra = (RES_Y - td.marging_v - box_rect.second - kb_size.height) / 2;
+        kb_height = kb_size.height + extra;
+        box_height = box_rect.second + extra;
+        kb_y = box_height + td.marging_v;
+    }
+
     bg_images.draw(Lcd());
-    parser.draw_one_box_centered(Lcd());
+    parser.draw_one_box_centered(Lcd(), 0, 0, RES_X, box_height);
+    if (sequential)
+    {
+        Activity act(AT_TouchDown|AT_WatchDog);
+        act.setup_watchdog(s2ticks(SC_TurnoffDelay));
+        if (act.get_action().type == AT_WatchDog) return CR_Timeout;
 
-    Activity act(AT_TouchDown|AT_WatchDog);
-    act.setup_watchdog(s2ticks(SC_TurnoffDelay));
-
-    return act.get_action().type == AT_WatchDog ? CR_Timeout : 0;
+        if (kb_type & TextBoxDraw::GO_KbSelector) return 0;
+        bg_images.draw(Lcd());
+    }
+    kb.set_coord(Lcd(), GridManager::Rect{0, kb_y, RES_X, kb_height});
+    return kb.default_kb_process([&, this]() {return test_answer(kb);});
 }
 
 void Riddle::setup_kb_type()
 {
     kb_type = td.keyb_type();
-    if (kb_type & TextBoxDraw::GO_KbSelector) return;
+    if (kb_type) return;
     for(uint8_t s: chf.get_ans())
     {
         if (isdigit(s) || s == '.' || s == ',') kb_type |= TextBoxDraw::GO_KbNumbers; else
@@ -117,29 +138,17 @@ void Riddle::setup_kb_type()
     }
 }
 
-int Riddle::get_ans_keyboard()
-{
-    static const GridManager::KeybBoxDef bdef{
-        .box_def{
-            .box_defs = {KB_PALLETE},
-            .reserve_top = 20
-        }
-    };
-
-    GridManager::Keyboard kb(bdef, kb_type);
-    bg_images.draw(Lcd());
-    kb.set_coord(Lcd(), GridManager::Rect{0, 0, RES_X, RES_Y});
-
-    return kb.default_kb_process([&, this]() {return test_answer(kb.kb_get_string());});
-}
-
-bool Riddle::test_answer(const char* answer)
+bool Riddle::test_answer(GridManager::Keyboard& kb)
 {
     int length;
-    auto score = DVPlus::compare(chf.get_valid_ans(), std::string_view(answer), length);
+    const char* answer = kb.kb_get_string();
+    auto org = chf.get_valid_ans();
+    auto score = DVPlus::compare(org, std::string_view(answer), length);
     int limit = td.fuzzy_dist;
     if (td.fuzzy_is_percent()) limit = length * limit / 100;
-    return score <= limit;
+    if (score > limit) return false;
+    if (answer != org) kb.message_dos(Lcd(), org);
+    return true;
 }
 
 // Run selection. Return CR_*
@@ -161,27 +170,11 @@ int Riddle::run()
 {
     int err;
 
-    // Init all Quest subsystem. Select Quest number to ask.
-    // Returns quest number or CR_Error if can't select
     int ch_index = init();
     if (ch_index < 0) return ch_index; // This is error
 
-    do {
-        // Load Challenge, Draw question, wait for touch
-        // Return CR_* on error, 0 if Ok
-        err = ask_challenge(ch_index);
-        if (err) break;
-
-        if (!(kb_type & TextBoxDraw::GO_KbSelector))
-        {
-            // Run keyboard input method
-            // Return CR_* or 0 if user click Help icon
-            err = get_ans_keyboard();
-            if (err) break;
-        }
-        // Run selection. Return CR_*
-        err = get_selection();
-    } while(false);
+    err = ask_and_query(ch_index);
+    if (!err) err = get_selection();
 
     if (err == CR_Ok) finalize(ch_index);
 

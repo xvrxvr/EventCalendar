@@ -7,57 +7,77 @@
 
 namespace GridManager {
 
-Geometry keyb_combo_eng( Rows() 
+const Geometry keyb_combo_eng( Rows() 
     << Row("1234567890")
     << Row("QWERTYUIOP()")(SS_BS,2)
     << Row("ASDFGHJKL:@")(SS_Ent, 3)
     << Row("ZXCVBNM,.?/")(SS_Space, 2)(SS_Lang, 1)
 );
 
-Geometry keyb_combo_rus(Rows() 
+const Geometry keyb_combo_rus(Rows() 
     << Row("1234567890")
     << Row("ЙЦУКЕНГШЩЗХЪ")(SS_BS,2)
     << Row("ФЫВАПРОЛДЖЭ")(SS_Ent, 3)
     << Row("ЯЧСМИТЬБЮЁ.")(SS_Space, 2)(SS_Lang, 1)
 );
 
-Geometry keyb_eng( Rows() 
+const Geometry keyb_eng( Rows() 
     << Row("1234567890")
     << Row("QWERTYUIOP")(SS_BS,2)
     << Row("ASDFGHJKL")(SS_Ent, 3)
     << Row("ZXCVBNM.")(SS_Space, 4)
 );
 
-Geometry keyb_rus(Rows() 
+const Geometry keyb_rus(Rows() 
     << Row("1234567890")
     << Row("ЙЦУКЕНГШЩЗХЪ")(SS_BS,2)
     << Row("ФЫВАПРОЛДЖЭ")(SS_Ent, 3)
     << Row("ЯЧСМИТЬБЮЁ.")(SS_Space, 3)
 );
 
-Geometry keyb_digits(Rows() 
+const Geometry keyb_digits(Rows() 
     << Row("01234")(SS_BS, 2)
     << Row("56789")(SS_Ent, 2)
 );
 
+const Geometry keyb_digits_plus(Rows() 
+    << Row("01234.")(SS_BS, 1)
+    << Row("56789")(SS_Ent, 2)
+);
+
 struct KbDefByType {
-    Geometry* kb1;
-    Geometry* kb2=NULL;
+    const Geometry* kb1;
+    const KeybBoxDef* kbdef;
+    const Geometry* kb2=NULL;
     int strip_lines=0;
 };
 
-static KbDefByType kb_defs_by_type[8] = {
-    {&keyb_combo_rus, &keyb_combo_eng}, // Empty KB ???
-    {&keyb_eng, NULL, 1},               // GO_KbEnglish
-    {&keyb_rus, NULL, 1},               // GO_KbRussian
-    {&keyb_combo_eng, &keyb_combo_rus, 1}, // GO_KbEnglish+GO_KbRussian
-    {&keyb_digits, NULL},               // GO_KbNumbers
-    {&keyb_eng, NULL},                  // GO_KbNumbers+GO_KbEnglish
-    {&keyb_rus, NULL},                  // GO_KbNumbers+GO_KbRussian
-    {&keyb_combo_eng, &keyb_combo_rus} // GO_KbNumbers+GO_KbEnglish+GO_KbRussian
+static const GridManager::KeybBoxDef bdef_top{
+    .box_def{
+        .box_defs = {KB_PALLETE},
+        .reserve_top = 20
+    }
 };
 
-Keyboard::Keyboard(const KeybBoxDef& b, int kb_type) : Grid(b.box_def, *kb_defs_by_type[kb_type&7].kb1, kb_defs_by_type[kb_type&7].strip_lines), kb_def(b)
+static const GridManager::KeybBoxDef bdef_left{
+    .box_def{
+        .box_defs = {KB_PALLETE},
+        .reserve_left = 200
+    }
+};
+
+static KbDefByType kb_defs_by_type[8] = {
+    {&keyb_combo_rus, &bdef_top, &keyb_combo_eng}, // Empty KB ???
+    {&keyb_eng, &bdef_top, NULL, 1},               // GO_KbEnglish
+    {&keyb_rus, &bdef_top, NULL, 1},               // GO_KbRussian
+    {&keyb_combo_eng, &bdef_top, &keyb_combo_rus, 1}, // GO_KbEnglish+GO_KbRussian
+    {&keyb_digits_plus, &bdef_left},          // GO_KbNumbers
+    {&keyb_eng, &bdef_top},                  // GO_KbNumbers+GO_KbEnglish
+    {&keyb_rus, &bdef_top},                  // GO_KbNumbers+GO_KbRussian
+    {&keyb_combo_eng, &bdef_top, &keyb_combo_rus} // GO_KbNumbers+GO_KbEnglish+GO_KbRussian
+};
+
+Keyboard::Keyboard(int kb_type) : Grid(kb_defs_by_type[kb_type&7].kbdef->box_def, *kb_defs_by_type[kb_type&7].kb1, kb_defs_by_type[kb_type&7].strip_lines), kb_def(*kb_defs_by_type[kb_type&7].kbdef)
 {
     geoms[0] = kb_defs_by_type[kb_type&7].kb1;
     geoms[1] = kb_defs_by_type[kb_type&7].kb2;
@@ -143,11 +163,22 @@ void Keyboard::kb_set_cursor(LCD& lcd, bool turn_on) // Turn on/off cursor
 
 // Writes message into input string. Wait 5 seconds and wipe out (input buffer and cursor also cleared). Method blocked inside for 5 seconds.
 // Message can includes control codes (\1 to \9) to switch color. \1 denotes original color of input line, \2 and so on defined in 'colors' array
-void Keyboard::message_utf8(LCD& lcd, const char* msg, uint16_t* colors)
+void Keyboard::message_utf8(LCD& lcd, const std::string_view& msg, uint16_t* colors)
 {
     Prn b(msg);
 
     utf8_to_dos(b.c_str());
+    message_dos_imp(lcd, b.c_str(), colors);
+}
+
+void Keyboard::message_dos(LCD& lcd, const std::string_view& msg, uint16_t* colors)
+{
+    Prn b(msg);
+    message_dos_imp(lcd, b.c_str(), colors);
+}
+
+void Keyboard::message_dos_imp(LCD& lcd, const char* b, uint16_t* colors)
+{
     kb_set_cursor(lcd, false);
     wipe_kb_box(lcd);
 
@@ -157,7 +188,7 @@ void Keyboard::message_utf8(LCD& lcd, const char* msg, uint16_t* colors)
     int x = kb_x;
     int total = 0;
 
-    for(const char* s = b.c_str(); *s && total < kb_symbols; ++s)
+    for(const char* s = b; *s && total < kb_symbols; ++s)
     {
         if (uint8_t(*s) <= 9)
         {

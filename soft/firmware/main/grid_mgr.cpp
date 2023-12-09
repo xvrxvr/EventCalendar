@@ -81,6 +81,11 @@ void Grid::initial_geom_eval()
     }
     grid_bounds.width = (cell_outer_w + box_defs[1].marging_h) * col_count - box_defs[1].marging_h;
     grid_bounds.height = (cell_outer_h + box_defs[1].marging_v) * row_count - box_defs[1].marging_v;
+
+    // Evaluate minimum boundintg box for KB and writes it to 'bounds'
+    auto reserved = box_defs[0].reserved_space();
+    bounds.width = grid_bounds.width + std::max<int>(0, bdef.reserve_left) + reserved.first;
+    bounds.height = grid_bounds.height + std::max<int>(0, bdef.reserve_top) + reserved.second;
 }
 
 // Prepare and draw Grid inside supplied coordinates
@@ -91,7 +96,7 @@ void Grid::set_coord(LCD& lcd, const Rect& rect)
 
     if (bdef.reserve_left == -1) bdef.reserve_left = rect.width - grid_bounds.width - reserved.first;
     if (bdef.reserve_top == -1) bdef.reserve_top = rect.height - grid_bounds.height - reserved.second;
-    
+
     int my_internal_w = grid_bounds.width + bdef.reserve_left;
     int my_internal_h = grid_bounds.height + bdef.reserve_top;
 

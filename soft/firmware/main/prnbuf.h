@@ -59,6 +59,15 @@ public:
         strcpy(str);
     }
 
+    Prn(const std::string_view& str)
+    {
+        if (str.size() && str.size() != -1) // Compare to -1 - just to passify compiler :(
+        {
+            fill(0, str.size());
+            memcpy(buffer, str.data(), str.size());
+        }
+    }
+
     Prn(const Prn&) = delete;
 //    operator =(const Prn&) = delete;
 

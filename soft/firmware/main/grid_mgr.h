@@ -132,7 +132,7 @@ public:
     ///////////// Run time coordinates info //////////////////////////
 
     // Returns coordinates of outer box
-    Rect get_coord() const {return bounds;}
+    Rect get_coord() {initial_geom_eval(); return bounds;}
 
     // Return rectangle of cell outer part
     Rect get_cell_coord_ext(int row, int col) const {return cell(row, col).box;}

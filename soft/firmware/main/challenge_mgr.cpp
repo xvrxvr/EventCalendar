@@ -158,8 +158,10 @@ ChallengeMgr::ChUpd ChallengeMgr::update_challenge(uint8_t* first_pack, size_t f
 
 void ChallengeMgr::shuffle_challenges()
 {
-    std::minstd_rand rnd(esp_random());
-    std::shuffle(files.begin(), files.end(), rnd);
+//    std::minstd_rand rnd(esp_random());
+//    std::shuffle(files.begin(), files.end(), rnd);
+    // std::minstd_rand do not works properly :(
+    for(int i=0; i<files.size(); ++i) std::swap(files[i], files[i + uint32_t(esp_random()) % (files.size()-i)]);
 }
 
 bool ChallengeMgr::read_ch_file(ChFile& dst, int ch_index)

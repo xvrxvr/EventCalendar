@@ -24,6 +24,7 @@
         "semaphore": "cpp",
         "stop_token": "cpp",
         "system_error": "cpp",
-        "memory_resource": "cpp"
+        "memory_resource": "cpp",
+        "algorithm": "cpp"
     }
 }

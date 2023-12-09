@@ -11,7 +11,7 @@ enum SpecialSyms {
     SS_Lang = 0x109
 };
 
-extern Geometry keyb_combo_eng, keyb_combo_rus, keyb_eng, keyb_rus, keyb_digits;
+extern const Geometry keyb_combo_eng, keyb_combo_rus, keyb_eng, keyb_rus, keyb_digits, keyb_digits_plus;
 
 enum KeybOption {
     KBO_Left    = 0x0001,   // Place input line in left part of reserved area (if both parts defined)
@@ -39,6 +39,8 @@ class Keyboard : public Grid {
 
     void wipe_kb_box(LCD&);
 
+    void message_dos_imp(LCD& lcd, const char*, uint16_t* colors);
+
 public:
     Keyboard(const KeybBoxDef& b, const Geometry& g1, const Geometry& g2, int strip_lines=0) : Grid(b.box_def, g1, strip_lines), kb_def(b)
     {
@@ -46,7 +48,7 @@ public:
         geoms[1] = &g2;
     }
 
-    Keyboard(const KeybBoxDef& b, int kb_type);
+    Keyboard(int kb_type);
 
     void switch_lang(LCD& lcd)
     {
@@ -59,7 +61,8 @@ public:
 
     // Writes message into input string. Wait 5 seconds and wipe out (input buffer and cursor also cleared). Method blocked inside for 5 seconds.
     // Message can includes control codes (\1 to \9) to switch color. \1 denotes original color of input line, \2 and so on defined in 'colors' array
-    void message_utf8(LCD& lcd, const char* msg, uint16_t* colors=NULL);
+    void message_utf8(LCD& lcd, const std::string_view& msg, uint16_t* colors=NULL);
+    void message_dos(LCD& lcd, const std::string_view& msg, uint16_t* colors=NULL);
 
     // Keyboard interface
     void kb_activate(LCD& lcd); // Draw keyboard input line and cursor
