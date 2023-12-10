@@ -1,6 +1,5 @@
 #include "common.h"
 #include "setup_data.h"
-#include "activity.h"
 #include "prnbuf.h"
 #include "text_draw.h"
 #include "bg_image.h"
@@ -8,7 +7,7 @@
 #include "web_gadgets.h"
 #include "animation.h"
 #include "icons.h"
-
+#include "interactive.h"
 
 static const char TAG[] = "interactive";
 namespace Interactive {
@@ -619,5 +618,22 @@ static void fg_view()
     }
 }
 
+// Draw 'Help' icon in top right corner
+void draw_help_icon()
+{
+    Activity::LCDAccess(NULL).access().icon32x32(RES_X-32, 0, help_icon, 0x27E8);
+}
+
+// Check if FP index belong to user that can help in opening door
+bool check_open_door_fingerprint(const Action &a)
+{
+    assert(a.type & AT_Fingerprint);
+    auto idx = a.fp_index;
+    if (idx == -1) return false;
+    if (idx == logged_in_user) return false;
+    UserSetup usr;
+    usr.load(idx, NULL);
+    return (usr.options & UO_CanHelpUser) != 0;
+}
 
 } // namespace Interactive

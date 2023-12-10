@@ -21,7 +21,8 @@ extern "C" void app_main(void)
 //    printf("OpenDoor returns %lX\n", door);
 
 //    printf("EQuest = %d\n", EQuest::run_challenge());
-    printf("Riddle = %d\n", Riddle::run_challenge());
+//    printf("Riddle = %d\n", Riddle::run_challenge());
+    printf("15 Game = %d\n", Game15::run_challenge());
 
     for(;;) {Interactive::entry(); vTaskDelay(100);}
 }

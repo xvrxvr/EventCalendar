@@ -3,7 +3,7 @@
 #include "keyboard.h"
 #include "activity.h"
 #include "challenge_list.h"
-#include "icons.h"
+#include "interactive.h"
 
 namespace GridManager {
 
@@ -230,7 +230,7 @@ int Keyboard::default_kb_process(std::function<bool()> test_func)
             int id = get_touch(a.touch.x, a.touch.y).id;
             if (id == -1)
             {
-                if (help_active && a.touch.y < 32 && a.touch.x > RES_X-32) return 0;
+                if (help_active && Interactive::test_help_icon(a)) return 0;
                 continue;
             } 
             if (kb_process(Lcd(), id))
@@ -247,7 +247,7 @@ int Keyboard::default_kb_process(std::function<bool()> test_func)
                     if (error_count == 3)
                     {
                         help_active = true;
-                        Lcd().icon32x32(RES_X-32, 0, help_icon, 0x27E8);
+                        Interactive::draw_help_icon();
                     }
                 }
             }

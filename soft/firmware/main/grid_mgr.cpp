@@ -295,10 +295,18 @@ void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, 
             lcd.set_fg(box_defs[C.box_index].fg_color);
             lcd.set_bg(box_defs[C.box_index].bg_color);
             draw_cell(lcd, C, -1, dx, dy);
+            C.updated |= UI_Box|UI_Text;
             if (c+1 < col_count) draw_spacer(lcd, C.box, cell(c+1+col, r+row).box, dx, dy);
             if (r+1 < row_count) draw_spacer(lcd, C.box, cell(c+col, r+1+row).box, dx, dy);
             c += C.col_span;
         }
+
+    if (dx > 0 && col_count+1 < this->col_count) ++col_count; else
+    if (dx < 0 && col) {--col; ++col_count;} else
+    if (dy > 0 && row_count+1 < this->row_count) ++row_count; else
+    if (dy < 0 && row) {--row; ++row_count;}
+    else return;
+    invalidate(row, col, UI_Box|UI_Text, row_count, col_count);
 }
 
 // Draw grid on screen

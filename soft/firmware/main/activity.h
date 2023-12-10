@@ -126,6 +126,8 @@ public:
     Activity(uint32_t /* bitset of ActionType and ActionFlags*/ actions, uint32_t /* bitset of ActionType*/ can_be_borrowed_actions=0);
     ~Activity();
 
+    void add_actions(uint32_t extra);
+
     // Required Activity setup. Appropriate members must be called BEFORE call to get_action()
     // Multiple calls to these methods possible - later call will override setup from former.
     Activity& setup_alarm_action(time_t time_to_hit); // time_to_hit is UTC timestamp

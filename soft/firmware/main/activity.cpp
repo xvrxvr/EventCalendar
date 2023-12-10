@@ -69,6 +69,12 @@ Activity::Activity(uint32_t /* bitset of ActionType and ActionFlags*/ actions, u
     }
 }
 
+void Activity::add_actions(uint32_t extra) 
+{
+    L lock;
+    actions |= extra;
+}
+
 void Activity::lock_out()
 {
     if (suspended) return;

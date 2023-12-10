@@ -18,3 +18,8 @@ namespace Riddle {
     // Result - ChResults
     int run_challenge();
 }
+
+namespace Game15 {
+    // Result - ChResults
+    int run_challenge();
+}
