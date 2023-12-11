@@ -23,3 +23,8 @@ namespace Game15 {
     // Result - ChResults
     int run_challenge();
 }
+
+namespace TileGame {
+    // Result - ChResults
+    int run_challenge();
+}

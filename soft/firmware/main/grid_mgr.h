@@ -187,6 +187,7 @@ public:
         ++box_idx; 
         if (c.box_index != box_idx) {c.box_index = box_idx; c.updated |= UI_Box;}
     }
+    int get_cell_box(int row, int col) const {assert(!cells.empty()); return cell(row, col).box_index-1;}
 
     // Change setup for box 'box_index'. Valid values 0 and 1
     // All affected grid cell marked for update

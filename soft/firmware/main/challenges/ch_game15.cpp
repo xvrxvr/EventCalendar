@@ -3,13 +3,13 @@
 #include "activity.h"
 #include "interactive.h"
 #include "challenge_list.h"
+#include "bg_image.h"
 
 #define Lcd() Activity::LCDAccess(NULL).access()
 
 namespace Game15 {
 
 using namespace GridManager;
-
 
 Geometry game_geom( Rows() 
     << Row()(1)(2)(3)(4)
@@ -286,6 +286,7 @@ int Game15::run()
 
 int run_challenge()
 {
+    bg_images.draw(Lcd());
     return Game15().run();
 }
 
