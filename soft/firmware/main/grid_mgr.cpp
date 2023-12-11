@@ -284,6 +284,7 @@ void Grid::draw_float_spacer(LCD& lcd, int row, int col, int row_count, int col_
 void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, int dx, int dy)
 {
     initial_geom_eval();
+    int ddx = dx, ddy = dy;
     dx += grid_bounds.x; dy += grid_bounds.y;
     draw_float_spacer(lcd, row, col, row_count, col_count, dx, dy);
     prev_dx = dx; prev_dy = dy;
@@ -296,15 +297,15 @@ void Grid::draw_float(LCD& lcd, int row, int col, int row_count, int col_count, 
             lcd.set_bg(box_defs[C.box_index].bg_color);
             draw_cell(lcd, C, -1, dx, dy);
             C.updated |= UI_Box|UI_Text;
-            if (c+1 < col_count) draw_spacer(lcd, C.box, cell(c+1+col, r+row).box, dx, dy);
-            if (r+1 < row_count) draw_spacer(lcd, C.box, cell(c+col, r+1+row).box, dx, dy);
+            if (c+1 < col_count) draw_spacer(lcd, C.box, cell(r+row, c+1+col).box, dx, dy);
+            if (r+1 < row_count) draw_spacer(lcd, C.box, cell(r+1+row, c+col).box, dx, dy);
             c += C.col_span;
         }
 
-    if (dx > 0 && col_count+1 < this->col_count) ++col_count; else
-    if (dx < 0 && col) {--col; ++col_count;} else
-    if (dy > 0 && row_count+1 < this->row_count) ++row_count; else
-    if (dy < 0 && row) {--row; ++row_count;}
+    if (ddx > 0 && col + col_count+1 <= this->col_count) ++col_count; else
+    if (ddx < 0 && col) {--col; ++col_count;} else
+    if (ddy > 0 && row + row_count+1 <= this->row_count) ++row_count; else
+    if (ddy < 0 && row) {--row; ++row_count;}
     else return;
     invalidate(row, col, UI_Box|UI_Text, row_count, col_count);
 }
@@ -328,8 +329,8 @@ void Grid::update(LCD& lcd, bool with_spacers)
                 C.updated = 0;
                 if (with_spacers)
                 {
-                    if (c+1 < col_count && cell(c+1, r).updated) draw_spacer(lcd, C.box, cell(c+1, r).box, grid_bounds.x, grid_bounds.y);
-                    if (r+1 < row_count && cell(c, r+1).updated) draw_spacer(lcd, C.box, cell(c, r+1).box, grid_bounds.x, grid_bounds.y);
+                    if (c+1 < col_count && cell(r, c+1).updated) draw_spacer(lcd, C.box, cell(r, c+1).box, grid_bounds.x, grid_bounds.y);
+                    if (r+1 < row_count && cell(r+1, c).updated) draw_spacer(lcd, C.box, cell(r+1, c).box, grid_bounds.x, grid_bounds.y);
                 }
             }
             c += C.col_span;

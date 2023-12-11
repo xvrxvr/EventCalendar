@@ -179,7 +179,7 @@ public:
         auto& c = cell(row, col); 
         if (c.id != id) {c.id = id; c.updated |= UI_Text;}
     }
-    int get_cell_id(int row, int col) {initial_geom_eval(); return cell(row, col).id;}
+    int get_cell_id(int row, int col) const {assert(!cells.empty()); return cell(row, col).id;}
     void set_cell_box(int row, int col, int box_idx) 
     {
         initial_geom_eval(); 
@@ -206,11 +206,11 @@ public:
         initial_geom_eval();
 
         if (!row_count) row_count = this->row_count - row;
-        if (!col) col_count = this->col_count - col;
+        if (!col_count) col_count = this->col_count - col;
 
         for(int r=0; r<row_count; ++r)
             for(int c=0; c<col_count; ++c)
-                cell(r, c).updated |= how;
+                cell(r+row, c+col).updated |= how;
     }
 
     bool need_update() const

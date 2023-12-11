@@ -27,6 +27,10 @@ BoxDef game_bdef = {
     .cell_height = 30
 };
 
+struct Point {
+    int row=-1, col=-1;
+};
+
 // Trim value by to bounds
 struct CTrim {
     int min_value=0;
@@ -45,7 +49,7 @@ struct CTrim {
 struct DBDeltas {
     int d_row; // Direction from Gap to Row (-1/0/1)
     int d_col; // Direction from Gap to Col (-1/0/1)
-    int total; // Disatnce from Gap to Cell (including Gap)
+    int total; // Disatnce from Gap to Cell (excluding Gap)
 };
 
 // Represenation of dragged block of cells
@@ -60,11 +64,20 @@ struct DragBlock {
 };
 
 class Game15 : public Grid {
-    int gap_row=3, gap_col=3;
     char txt_buf[5];
     DragBlock cur_drag;
     int move_count = 0;
     bool help_active = false;
+    int last_x=0, last_y=0; // Where last touch/drag occure
+    
+    Point find(int idx) const
+    {
+        for(int r=0; r<4; ++r)
+            for(int c=0; c<4; ++c)
+                if (get_cell_id(r, c) == idx) 
+                    return Point{r, c};
+        return {};
+    }
 
     virtual const char* get_text_dos(const MiniCell& cell) override
     {
@@ -73,7 +86,7 @@ class Game15 : public Grid {
         return txt_buf;
     }
 
-    bool is_can_move(int row, int col) const {return ((row==gap_row) + (col==gap_col)) == 1;}
+    bool is_can_move(int row, int col) const {const auto gap = find(-1); return ((row==gap.row) + (col==gap.col)) == 1;}
 
     DragBlock block_rc(int row, int col) const
     {
@@ -100,14 +113,14 @@ class Game15 : public Grid {
     {
         int dx = abs(cur_drag.lim_x(x)-cur_drag.x);
         int dy = abs(cur_drag.lim_y(y)-cur_drag.y);
-        return dx >= cur_drag.lim_x.dist()/2 || dy >= cur_drag.lim_y.dist()/2;
+        return dx > cur_drag.lim_x.dist()/2 || dy > cur_drag.lim_y.dist()/2;
     }
 
     bool is_game_finished()
     {
         int idx=1;
-        for(int c=0; c<4; ++c)
-            for(int r=0; r<4; ++r, ++idx)
+        for(int r=0; r<4; ++r)
+            for(int c=0; c<4; ++c, ++idx)
                 if (idx < 16 && get_cell_id(r, c) != idx) 
                     return false;
         return true;
@@ -129,14 +142,18 @@ bool Game15::on_touch(const Action& act)
     {
         case AT_TouchDown:         
             cur_drag = block_xy(act.touch.x, act.touch.y);
+            last_x = act.touch.x;
+            last_y = act.touch.y;
             return cur_drag.active();
         case AT_TouchTrack:
             if (!cur_drag.active()) return false;
             do_block_drag(act.touch.x, act.touch.y);
+            last_x = act.touch.x;
+            last_y = act.touch.y;
             return true;
         case AT_TouchUp:
             if (!cur_drag.active()) return false;
-            if (is_new_place(act.touch.x, act.touch.y)) 
+            if (is_new_place(last_x, last_y)) 
             {
                 apply(cur_drag); 
                 ++move_count;
@@ -159,19 +176,21 @@ void Game15::apply(const DragBlock& blk)
 {
     if (blk.row == -1) return;
     DBDeltas d = get_deltas(blk);
+    Point gap = find(-1); 
     while(d.total--)
     {
-        set_cell_id(gap_row, gap_col, get_cell_id(gap_row+d.d_row, gap_col+d.d_col));
-        gap_row+=d.d_row;
-        gap_col+=d.d_col;
+        set_cell_id(gap.row, gap.col, get_cell_id(gap.row+d.d_row, gap.col+d.d_col));
+        gap.row += d.d_row;
+        gap.col += d.d_col;
     }
-    set_cell_id(gap_row, gap_col, -1);
+    set_cell_id(gap.row, gap.col, -1);
 }
 
 DBDeltas Game15::get_deltas(const DragBlock& blk) const
 {
-    auto d_row = blk.row - gap_row;
-    auto d_col = blk.col - gap_col;
+    const Point gap = find(-1); 
+    auto d_row = blk.row - gap.row;
+    auto d_col = blk.col - gap.col;
     return DBDeltas{
         .d_row = sign(d_row),
         .d_col = sign(d_col),
@@ -182,23 +201,24 @@ DBDeltas Game15::get_deltas(const DragBlock& blk) const
 DragBlock Game15::block_xy(int x, int y) const
 {
     auto touch = get_touch(x,y);
-    if (touch.id == -1) return {};
+    if (touch.id == -1 || !is_can_move(touch.row, touch.col)) return {};
     auto result = block_rc(touch.row, touch.col);
     result.x = x;
     result.y = y;
     result.lim_x = x;
     result.lim_y = y;
 
-    auto cell_rect = get_cell_coord_int(gap_row, gap_col);
-    if (result.row == gap_row) // Horisontal
+    const Point gap = find(-1); 
+    auto cell_rect = get_cell_coord_ext(gap.row, gap.col);
+    if (result.row == gap.row) // Horisontal
     {
-        if (result.col < gap_col) result.lim_x += cell_rect.width; // Can move right
-        else result.lim_x -= cell_rect.width; // Can move left
+        if (result.col < gap.col) result.lim_x += cell_rect.width + box_defs[1].marging_h; // Can move right
+        else result.lim_x -= cell_rect.width + box_defs[1].marging_h; // Can move left
     }
     else // Vertical
     {
-        if (result.row < gap_row) result.lim_y += cell_rect.height; // Can move down
-        else result.lim_y -= cell_rect.height; // Can move up
+        if (result.row < gap.row) result.lim_y += cell_rect.height + box_defs[1].marging_v; // Can move down
+        else result.lim_y -= cell_rect.height + box_defs[1].marging_v; // Can move up
     }
     return result;
 }
@@ -210,10 +230,12 @@ void Game15::do_block_drag(int x, int y)
     int dy = cur_drag.lim_y(y) - cur_drag.y;
 
     DBDeltas d = get_deltas(cur_drag);
-    int total_cols = (d.total-1) * abs(d.d_col);
-    int total_rows = (d.total-1) * abs(d.d_row);
-    int row = std::min(gap_row - d.d_row, cur_drag.row);
-    int col = std::min(gap_col - d.d_col, cur_drag.col);
+    const auto gap = find(-1);
+
+    int total_cols = std::max(1, d.total * abs(d.d_col));
+    int total_rows = std::max(1, d.total * abs(d.d_row));
+    int row = std::min(gap.row+d.d_row, cur_drag.row);
+    int col = std::min(gap.col+d.d_col, cur_drag.col);
 
     draw_float(Lcd(), row, col, total_rows, total_cols, dx, dy);
 }
@@ -227,11 +249,12 @@ inline void rnd_move(int& val)
 
 void Game15::random_init()
 {
+    get_coord();
     for(int i=0; i<100; ++i)
     {
-        int r=gap_row, c=gap_col;
-        if (esp_random() & 1) rnd_move(r); else rnd_move(c);
-        apply(block_rc(r, c));
+        Point gap = find(-1);
+        if (esp_random() & 1) rnd_move(gap.row); else rnd_move(gap.col);
+        apply(block_rc(gap.row, gap.col));
     }
 }
 
@@ -255,7 +278,7 @@ int Game15::run()
         {
             case AT_TouchUp: if (is_game_finished()) return CR_Ok; else break;
             case AT_WatchDog: return CR_Timeout;
-            case AT_Fingerprint: if (Interactive::check_open_door_fingerprint(a)) return 0; //!! Make auto solver
+            case AT_Fingerprint: if (Interactive::check_open_door_fingerprint(a)) return CR_Ok; //!! Make auto solver
             default: break;
         }
     }
