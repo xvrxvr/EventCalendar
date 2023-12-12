@@ -621,7 +621,10 @@ static void fg_view()
 // Draw 'Help' icon in top right corner
 void draw_help_icon()
 {
-    Activity::LCDAccess(NULL).access().icon32x32(RES_X-32, 0, help_icon, 0x27E8);
+    Activity::LCDAccess acc(NULL);
+    auto& lcd = acc.access();
+    lcd.set_bg(0);
+    lcd.icon32x32(RES_X-32, 0, help_icon, 0x27E8);
 }
 
 // Check if FP index belong to user that can help in opening door
