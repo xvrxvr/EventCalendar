@@ -2,6 +2,7 @@
 #include "box_draw.h"
 #include "hadrware.h"
 
+static const char TAG[] = "box-draw";
 
 void RectList::sub(const Rect& clip)
 {
@@ -45,7 +46,7 @@ void RectList::sub(const Rect& clip)
             case 6: /*cut right bottom - split*/    put(Rect(x1,  y1, x1 -  xx1, yy2 - y1, r.color));  y1 = yy2; break;
             case 9: /*cur top left - split*/        put(Rect(xx2, yy1, x2 - xx2, y2 -  yy1, r.color)); y2 = yy1; break;
             case 10: /*cur top right - split*/      put(Rect(x1,  yy1, x1 - xx1, y2 -  yy1, r.color)); y2 = yy1; break;
-            default: assert(false && "Unsupported fit value"); break;
+            default: ESP_LOGE(TAG, "Fit = %d", fit); assert(false && "Unsupported fit value"); break;
         }
         r.x=x1; r.y = y1;
         r.w=x2-x1; r.h = y2-y1;

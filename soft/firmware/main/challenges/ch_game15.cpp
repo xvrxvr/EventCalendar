@@ -4,6 +4,7 @@
 #include "interactive.h"
 #include "challenge_list.h"
 #include "bg_image.h"
+#include "animation.h"
 
 #define Lcd() Activity::LCDAccess(NULL).access()
 
@@ -125,6 +126,7 @@ class Game15 : public Grid {
                     return false;
         return true;
     }
+    void flash_green();
 
     // Return true if processed
     bool on_touch(const Action& act);
@@ -134,6 +136,23 @@ public:
 
     int run();
 };
+
+void Game15::flash_green()
+{
+    Animation a1{.anim={
+        .type = AT_Pulse,
+        .color_from=box_defs[1].bg_color,
+        .color_to=0x27E8,
+        .length=5
+    }, .stage=0};
+    while(a1.is_active())
+    {
+        box_defs[1].bg_color = a1.animate(true);
+        vTaskDelay(SC_FGEditAnimSpeed);
+        invalidate(0, 0, UI_Box, 4, 4);
+        this->update(Lcd());
+    }
+}
 
 // Return true if processed
 bool Game15::on_touch(const Action& act)
@@ -276,7 +295,7 @@ int Game15::run()
         }
         switch(a.type)
         {
-            case AT_TouchUp: if (is_game_finished()) return CR_Ok; else break;
+            case AT_TouchUp: if (is_game_finished()) {flash_green(); return CR_Ok;} else break;
             case AT_WatchDog: return CR_Timeout;
             case AT_Fingerprint: if (Interactive::check_open_door_fingerprint(a)) return CR_Ok; //!! Make auto solver
             default: break;

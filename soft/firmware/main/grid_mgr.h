@@ -64,7 +64,7 @@ struct Rect {
     int height=0;
 };
 
-constexpr int TotalBoxDefs = 3;
+constexpr int TotalBoxDefs = 5;
 struct BoxDef {
     const char* box_defs[TotalBoxDefs] = {};
     int16_t reserve_top = 0; // -1 for reserve all availabe space

@@ -161,47 +161,52 @@ void AnimatedPannel::tick(LCD& lcd, bool step)
     if (main_anim.is_active() && !(oob_anim.is_active() && main_anim.icon_index == oob_anim.icon_index)) animate(lcd, main_anim, step);
 }
 
-void AnimatedPannel::animate(LCD& lcd, Animation& a, bool do_tick)
+uint16_t Animation::animate(bool do_tick)
 {
     uint16_t color=0;
-    switch(a.anim.type)
+    switch(anim.type)
     {
-        case AT_None: color = a.anim.color_from; a.abort(); break;
+        case AT_None: color = anim.color_from; abort(); break;
         case AT_One:        
-            if (a.tick >= a.anim.length) {color = a.anim.color_to; a.abort();}
-            else color=a.color(true);
+            if (tick >= anim.length) {color = anim.color_to; abort();}
+            else color=this->color(true);
             break;
         case AT_Pulse: // Animate <color_from> -> <color_to> -> <color_from> one time
-            if (a.tick >= a.anim.length) // Switch stage
+            if (tick >= anim.length) // Switch stage
             {
-                ++a.stage;
-                a.tick = 0;
+                ++stage;
+                tick = 0;
             }
-            switch(a.stage)
+            switch(stage)
             {
-                case 0: color = a.color(true); break;
-                case 1: color = a.color(false); break;
-                default: color = a.anim.color_from; a.abort(); break;
+                case 0: color = this->color(true); break;
+                case 1: color = this->color(false); break;
+                default: color = anim.color_from; abort(); break;
             }
             break;
         case AT_Periodic:
-            if (a.tick >= a.anim.length) a.tick = 0;
-            color = a.color(true); 
+            if (tick >= anim.length) tick = 0;
+            color = this->color(true); 
             break;
         case AT_Triange: // Animate <color_from> -> <color_to> -> <color_from> many times
-            if (a.tick >= a.anim.length) // Switch stage
+            if (tick >= anim.length) // Switch stage
             {
-                ++a.stage &= 1;
-                a.tick = 0;
+                ++stage &= 1;
+                tick = 0;
             }
-            color = a.color(a.stage == 0);
+            color = this->color(stage == 0);
             break;
     }
-    lcd.icon32x32(text_x + a.icon_index*32, icon_y, icon, color);
-    if (do_tick) a.tick++;
+    if (do_tick) tick++;
+    return color;
 }
 
-uint16_t AnimatedPannel::Animation::color(bool raising_slope)
+void AnimatedPannel::animate(LCD& lcd, Animation& a, bool do_tick)
+{
+    lcd.icon32x32(text_x + a.icon_index*32, icon_y, icon, a.animate(do_tick));
+}
+
+uint16_t Animation::color(bool raising_slope)
 {
     const int t = raising_slope ? tick : anim.length - tick - 1;
     const int l = anim.length-1;

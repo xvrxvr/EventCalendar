@@ -28,6 +28,20 @@ struct SizeDef {
     std::pair<int16_t, int16_t> get_size(bool double_size_letter, int title_length) const;
 };
 
+struct Animation {
+    AnimationSetup anim{};
+    int stage = -1;
+    int tick = 0;
+    int icon_index = 0;
+
+    void abort() {stage = -1; tick=0;}
+    bool is_active() const {return stage != -1;}
+    void assign(const AnimationSetup& a, int idx) {anim = a; tick=0; stage=0; icon_index=idx;}
+
+    uint16_t color(bool raising_slope);
+    uint16_t animate(bool do_tick);
+};
+
 class AnimatedPannel {
     static constexpr int MaxLines = 4;
 
@@ -35,18 +49,7 @@ class AnimatedPannel {
         std::unique_ptr<char[]> text; // NULL in 'text' - Icons line
     } lines[MaxLines];
 
-    struct Animation {
-        AnimationSetup anim{};
-        int stage = -1;
-        int tick = 0;
-        int icon_index = 0;
-
-        void abort() {stage = -1; tick=0;}
-        bool is_active() const {return stage != -1;}
-        void assign(const AnimationSetup& a, int idx) {anim = a; tick=0; stage=0; icon_index=idx;}
-
-        uint16_t color(bool raising_slope);
-    } main_anim, oob_anim;
+    Animation main_anim, oob_anim;
 
     const TextBoxDraw::TextGlobalDefinition& bdef;
     int16_t box_width, box_height; // Sizes of box
