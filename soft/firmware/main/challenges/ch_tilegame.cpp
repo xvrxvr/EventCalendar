@@ -43,6 +43,8 @@ class TileGame : public Grid {
     void init();
     void flash_green();
 
+    void run_solver();
+
 public:
     TileGame() : Grid(game_bdef, game_geom) {}
 
@@ -153,11 +155,37 @@ int TileGame::run()
                 break;
             }
             case AT_WatchDog: return CR_Timeout;
-            case AT_Fingerprint: if (Interactive::check_open_door_fingerprint(a)) return CR_Ok; //!! Make auto solver
+            case AT_Fingerprint: 
+                if (Interactive::check_open_door_fingerprint(a)) 
+                {
+                    run_solver();
+                    if (solved()) {flash_green(); return CR_Ok;}                    
+                }
+                break;
             default: break;
         }
     }
 }
+
+extern const int max_slv_length;
+extern const uint8_t solver_table[32768];
+
+void TileGame::run_solver()
+{
+    for(int max_lim=0; max_lim < max_slv_length; ++max_lim)
+    {
+        uint16_t val = 0;
+        for(int r=0, idx=0; r<4; ++r)
+            for(int c=0; c<4; ++c, ++idx)
+                if (get_cell_box(r, c) == 0)
+                    val |= bit(idx);
+        uint8_t sel = solver_table[val >> 1];
+        if (val & 1) sel >>= 4;
+        invert((sel >> 2) & 3, sel & 3);
+        if (solved()) break;
+    }
+}
+
 
 int run_challenge()
 {

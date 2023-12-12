@@ -101,6 +101,18 @@ class Solver:
                 self.add_item(new_state)
 
 
+class GenSolver:
+    def __init__(self):
+        self.states = 65536 * [None]
+        self.queue = []
+        self.push(0xFFFF, 0, 0)
+
+    def push(self, value:int, index:int, length:int):
+        if self.states[value] is not None:
+            return
+        self.states[value] = (index, length+1)
+
+
 for _ in range(100):
     tg = TileGameBoard()
     #print(tg)
