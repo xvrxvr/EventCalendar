@@ -8,6 +8,7 @@
 #include "animation.h"
 #include "icons.h"
 #include "interactive.h"
+#include "challenge_list.h"
 
 static const char TAG[] = "interactive";
 namespace Interactive {
@@ -112,7 +113,7 @@ inline void do_fg_del(int index, uint8_t count=1)
 
 static bool game();
 static void no_game();
-static void challenge() {}
+static void challenge();
 
 static void fg_edit(int user_index);
 static void fg_view();
@@ -189,7 +190,7 @@ static Action no_game_internal()
 
     for(;;)
     {
-        Action a = act.get_action();
+        Action a =  act.get_action();
         switch(a.type)
         {
             case AT_WatchDog: passivate(); return {};
@@ -638,5 +639,93 @@ bool check_open_door_fingerprint(const Action &a)
     usr.load(idx, NULL);
     return (usr.options & UO_CanHelpUser) != 0;
 }
+
+enum ChType {
+    CT_Riddle,
+    CT_Expr,
+    CT_Game15,
+    CT_TimeGame,
+
+    CTTotal
+};
+struct ChallengeSetup {
+    int min_age;
+    int max_age;
+    int ch_percents[CTTotal];
+};
+
+static ChallengeSetup ch_setup[] = {
+    {0, 10, {50, 1, 1, 1}},
+    {10, 20, {50, 5, 2, 1}},
+    {20, 30, {40, 5, 2, 2}},
+    {30, 99, {20, 8, 3, 3}}
+};
+
+static ChType select_inside_ch_group(const ChallengeSetup& g, int exclude)
+{
+    int pc[CTTotal]{};
+    int total=0;
+
+    for(int i=0; i<CTTotal; ++i)
+    {
+        if (!(exclude & bit(i)))
+        {
+            total += (pc[i] = g.ch_percents[i]);
+        }
+    }
+    if (!total) return CTTotal;
+    int val = esp_random() % total;
+    for(int i=0; i<CTTotal; ++i)
+    {
+        if (!pc[i]) continue;
+        val -= pc[i];
+        if (val <= 0) return ChType(i);
+    }
+    return CTTotal;
+}
+
+static ChType select_challenge_group(int exclude)
+{
+    for(const auto& g: ch_setup)
+    {
+        if (current_user.age >= g.min_age && current_user.age <= g.max_age)
+        {
+            return select_inside_ch_group(g, exclude);
+        }
+    }
+    return select_inside_ch_group(ch_setup[0], exclude);
+}
+
+static void challenge()
+{
+    int exclude = 0;
+    int res;
+    for(;;)
+    {
+        ChType sel = select_challenge_group(exclude);
+        switch(sel)
+        {
+            case CT_Riddle: res = Riddle::run_challenge(); break;
+            case CT_Expr:   res = EQuest::run_challenge(); break;
+            case CT_Game15: res = Game15::run_challenge(); break;
+            case CT_TimeGame: res = TileGame::run_challenge(); break;
+            default: res = CR_Ok; break;
+        }
+        if (res == CR_Error) exclude |= bit(sel); 
+        else break;
+    }
+    if (res == CR_Timeout) {passivate(); return;}
+
+    int door_idx = working_state.get_loaded_gift(logged_in_user);
+    assert(door_idx != -1);
+    auto open_door_res = open_door(door_idx);
+    if (open_door_res & ODR_Opened) working_state.unload_gift(door_idx);
+    if (open_door_res & ODR_Timeout) {passivate(); return;}
+    if (open_door_res & ODR_Login) 
+    {
+        Activity::queue_action(Action{.type = AT_Fingerprint, .fp_index = int16_t(open_door_res&31)});
+    }
+}
+
 
 } // namespace Interactive
