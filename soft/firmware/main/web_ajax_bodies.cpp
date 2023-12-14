@@ -329,7 +329,7 @@ void AJAXDecoder_end_game::run()
 void AJAXDecoder_start_game::run()
 {
     if (arg_users) setup_active_users(arg_users);
-    if (arg_start_time) // This is pending game
+    if (arg_start_time && *arg_start_time) // This is pending game
     {
         char* e;
         auto now = time(NULL);
@@ -482,9 +482,9 @@ void AJAXDecoder_fg_viewer_done::run()
 // G(fg_editor_done, P2(OSD, name, OI, age))
 void AJAXDecoder_fg_editor_done::run()
 {
-    // p1 - new user age (or -1), p2 - new user name (UTF8) or NULL
+    // p1 - new user age (or -1), p2 - new user name (DOS) or NULL
     int p1 = arg_age ? *arg_age : -1;
-    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGE_Done, .p1=p1, .p2=arg_name}});
+    Activity::push_action(Action{.type = AT_WEBEvent, .web={.event=WE_FGE_Done, .p1=p1, .p2=arg_name ? strdup(arg_name) : NULL}}); //!!! Possible Memory leak.
     redirect("/web/edit_user.html");
 }
 

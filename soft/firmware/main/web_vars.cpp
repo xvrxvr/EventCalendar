@@ -62,7 +62,9 @@ void WebOptions::MainStatus(Ans &ans)          // HTML block with current status
       {
         if (all_users & bit(i))
         {
-          ans << DOS << "<li> " << EEPROMUserName(i).dos() << " - ";
+          ans << DOS << "<li> " << EEPROMUserName(i).dos();
+          if (working_state.state != WS_Active) continue;
+          ans << UTF8 << " - ";
           if (done & bit(i)) ans << UTF8 << "завершён"; else
           {
             int t = working_state.total_loaded_gift(i);
@@ -239,7 +241,7 @@ void  WebOptions::HTMLChallengeOptions(Ans &ans) // HTML block with challenges l
 {
   for(const auto& idx: challenge_mgr().all_data())
   {
-    if (current_user.priority < 200 && logged_in_user == idx.second) continue;
+    if (current_user.priority < 200 && logged_in_user != idx.second) continue;
     ans << DOS << "<option value='" << idx.first << "'>" << challenge_mgr().get_dos_name(idx.first) << "</option>";
   }
 }

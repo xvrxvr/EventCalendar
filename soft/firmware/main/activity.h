@@ -180,6 +180,6 @@ public:
 // Method(s) for Activity sources
     static void push_action(const Action&); // Global entry - dispatched for particular Activity inside
     static void queue_action(const Action&); // Global entry - push Action in pending queue. It will be retrieved by first Activity that enabled for this type of Action
-    static void on_web_ping_echo(const char* tag); // Global entry - dispatched to all active WEB ping sources
+//    static void on_web_ping_echo(const char* tag); // Global entry - dispatched to all active WEB ping sources
     static void send_web_ping(); // Internal function - called by WEB ping thread in this module.
 };

@@ -206,16 +206,16 @@ void Activity::push_action(const Action& action)
     }
 }
 
-void Activity::on_web_ping_echo(const char* tag) // Global entry - dispatched to all active WEB ping sources
-{
-    L lock;
-    for(int i=0; i<MAX_ACTIVITIES; ++i)
-    {
-        auto a = all_activities[i];
-        if (!a || !a->web_ping_tag || a->locked_out || strcmp(tag, a->web_ping_tag)) continue;
-        a->web_ping_counter = 0;        
-    }
-}
+// void Activity::on_web_ping_echo(const char* tag) // Global entry - dispatched to all active WEB ping sources
+// {
+//     L lock;
+//     for(int i=0; i<MAX_ACTIVITIES; ++i)
+//     {
+//         auto a = all_activities[i];
+//         if (!a || !a->web_ping_tag || a->locked_out || strcmp(tag, a->web_ping_tag)) continue;
+//         a->web_ping_counter = 0;        
+//     }
+// }
 
 void Activity::send_web_ping() // Internal function - called by WEB ping thread in this module.
 {
@@ -225,12 +225,12 @@ void Activity::send_web_ping() // Internal function - called by WEB ping thread 
         auto a = all_activities[i];
         if (!a || !a->web_ping_tag || a->locked_out) continue;
         send_web_ping_to_ws(a->web_ping_tag);
-        ++a->web_ping_counter;
-        if (a->web_ping_counter > SC_WEBPing_Pings)
-        {
-            a->push_action_local({.type = AT_WEBEvent, .web = {.event = WE_Logout, .logout_tag = a->web_ping_tag}});
-            a->web_ping_counter = 0;
-        }
+        // ++a->web_ping_counter;
+        // if (a->web_ping_counter > SC_WEBPing_Pings)
+        // {
+        //     a->push_action_local({.type = AT_WEBEvent, .web = {.event = WE_Logout, .logout_tag = a->web_ping_tag}});
+        //     a->web_ping_counter = 0;
+        // }
     }
 }
 

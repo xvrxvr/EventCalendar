@@ -126,18 +126,15 @@ std::optional<TextSegment> TextSegment::trim_by_width(int16_t width, int default
     
     for(size_t index = 0; (index = text.find(' ', index)) != String::npos; ++index)
     {
-        if (let_width*index > width) // Split here
-        {
-            if (prev_good_index == String::npos) return {};
-            String result = text.substr(0, prev_good_index);
-            text.remove_prefix(prev_good_index);
-            trim_front(text);
-            trim_back(result);
-            return dup(result);
-        }
+        if (let_width*index > width) break; // Split here            
         prev_good_index = index;
     }
-    return {}; // Should not pass here
+    if (prev_good_index == String::npos) return {};
+    String result = text.substr(0, prev_good_index);
+    text.remove_prefix(prev_good_index);
+    trim_front(text);
+    trim_back(result);
+    return dup(result);
 }
 
 // Method to draw current object to LCD
@@ -299,7 +296,11 @@ void TextLine::word_wrap(std::vector<TextLine> &target, int width, int default_l
 
                 if (!new_item) // Split is unsuccessfull - flush line and try again
                 {
-                    if (new_line.empty()) throw WordWrapError("Can't word wrap line - word inside is too long");
+                    if (new_line.empty()) 
+                    {
+                        printf("%s (%d)\n", spl_item.text.data(), spl_item.text.size());
+                        throw WordWrapError("Can't word wrap line - word inside is too long");
+                    }
                     trim_back(new_line.back().text);
                     target.push_back(clone(new_line)); 
                     new_line.clear();

@@ -17,13 +17,5 @@ extern "C" void app_main(void)
     start_http_servers();
     Activity::start();
 
-//    uint32_t door = open_door(0);
-//    printf("OpenDoor returns %lX\n", door);
-
-//    printf("EQuest = %d\n", EQuest::run_challenge());
-//    printf("Riddle = %d\n", Riddle::run_challenge());
-//    printf("15 Game = %d\n", Game15::run_challenge());
-//    printf("Tile Game = %d\n", TileGame::run_challenge());
-
     for(;;) {Interactive::entry(); vTaskDelay(100);}
 }

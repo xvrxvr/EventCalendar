@@ -107,7 +107,7 @@ function send_picture()
     canvas.height = 240;
     canvas.width = 400;
 
-    ctx.drawImage(image, 0, 0);
+    ctx.drawImage(image, 0, 0, 400, 240);
     const image_url = canvas.toBlob((blob) => {
         send_ajax_bg_add(blob, (index) => {
             if (index == "-1") alert("Не могу добавить картинку"); else
@@ -117,7 +117,7 @@ function send_picture()
                 img.id = `i${index}`;
                 img.className = "img-box"
                 img.src = `../bg/${index}.jpg`;
-                img.onclick = () => {select(index+0);};
+                img.onclick = () => {select(index-0);};
                 I("bg_img_grid").append(img);
             }
         });

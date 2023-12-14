@@ -168,17 +168,19 @@ static void passivate()
     lcd_teardown(); 
     wait(AT_Fingerprint0|AT_TouchDown); 
     lcd_turnon();
+    logged_in_user = -1;
 }
 
 static void web_event_process(const Action& act)
 {
     switch(act.web.event)
     {
-        case WE_FGDel:  ESP_LOGI(TAG, "web_event_process: FG Del (%d)", act.web.p1); do_fg_del(act.web.p1); break;
+        case WE_FGDel:  ESP_LOGI(TAG, "web_event_process: FG Del (%d)", act.web.p1); do_fg_del(act.web.p1); return;
         case WE_FGEdit: ESP_LOGI(TAG, "web_event_process: FG Edit (%d)", act.web.p1); fg_edit(act.web.p1); break;
         case WE_FGView: ESP_LOGI(TAG, "web_event_process: FG View"); fg_view(); break;
-        default: break;
+        default: return;
     }
+    bg_images.draw(Activity::LCDAccess(NULL).access());
 }
 
 static Action no_game_internal()
@@ -514,7 +516,7 @@ static void fg_edit(int user_index)
                 }
                 case WE_Logout: ESP_LOGI(TAG, "FG Editor - returns (no usr update)"); return;
                 case WE_FGE_Done: 
-                    if (new_user && filled_tpls && a.web.p2) fge_activate_user(user_index, a.web.p2, a.web.p1);
+                    if (new_user && filled_tpls && a.web.p2) {fge_activate_user(user_index, a.web.p2, a.web.p1); free((char*)a.web.p2);}
                     ESP_LOGI(TAG, "FG Editor - FGE_Done");
                     return;
                 default: break;
@@ -634,6 +636,7 @@ bool check_open_door_fingerprint(const Action &a)
     assert(a.type & AT_Fingerprint);
     auto idx = a.fp_index;
     if (idx == -1) return false;
+    idx >>= 2;
     if (idx == logged_in_user) return false;
     UserSetup usr;
     usr.load(idx, NULL);
@@ -725,6 +728,7 @@ static void challenge()
     {
         Activity::queue_action(Action{.type = AT_Fingerprint, .fp_index = int16_t(open_door_res&31)});
     }
+    logged_in_user = -1;
 }
 
 

@@ -41,9 +41,9 @@ struct RowCol {
     int col;
 };
 static RowCol enc[] = {
-    {.row=0, .col=0}, {.row=0, .col=2},
-    {.row=1, .col=0}, {.row=1, .col=1}, {.row=1, .col=2},
-    {.row=2, .col=0}, {.row=2, .col=1}, {.row=2, .col=2}
+    {.row=0, .col=0}, {.row=0, .col=8},
+    {.row=1, .col=0}, {.row=1, .col=3}, {.row=1, .col=6},
+    {.row=2, .col=0}, {.row=2, .col=4}, {.row=2, .col=8}
 };
 
 #define Lcd() Activity::LCDAccess(NULL).access()
@@ -204,6 +204,7 @@ uint32_t DoorGrid::run_stable_activity()
             {
                 int fg_user = act.fp_index;
                 if (fg_user == -1) {ESP_LOGI(TAG, "Door::FG: Unknown finger"); break;}
+                fg_user >>= 2;
                 fg_user &= 31;
                 if (fg_user == logged_in_user) // Current user touch FG - just open door
                 {
