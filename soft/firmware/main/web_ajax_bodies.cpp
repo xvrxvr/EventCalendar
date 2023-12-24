@@ -431,7 +431,7 @@ void AJAXDecoder_reset::run()
 // G(zap, P0)
 void AJAXDecoder_zap::run()
 {
-    zap_configs();
+    if (current_user.options & UO_CanSetup) zap_configs();
     reboot();
     *this << UTF8 << "System restarts in 5 seconds";
 }

@@ -340,7 +340,7 @@ class TextSegment {
         for(let idx=0; idx<splited.length; ++idx)
         {
             const s = splited[idx];
-            if (let_width*(part.length + s.length) > width) // Split here
+            if (let_width*(part.length + s.length + 1) > width) // Split here
             {
                 if (!idx) return;
                 this.text = splited.slice(idx).join(' ').trimStart();
@@ -500,7 +500,7 @@ class TextLine {
 
     clone(new_line)
     {
-        result = new TextLine();
+        let result = new TextLine();
         result.line = new_line;
         result.align_segments = this.align_segments;
         return result;

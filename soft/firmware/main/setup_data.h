@@ -159,13 +159,7 @@ extern uint8_t passwd[64];
 void init_or_load_setup();
 void zap_configs();
 
-inline void login_user(int usr_index) 
-{
-    logged_in_user = usr_index;
-    if (usr_index == -1) {current_user.clear(); current_user_name[0] = 0; return;}
-    assert(usr_index >= 0 && usr_index < max_users);
-    current_user.load(usr_index, current_user_name);
-}
+bool login_user(int usr_index);
 
 inline void login_superuser()
 {
@@ -190,8 +184,20 @@ public:
     const char* dos() {return buf.c_str();}
 };
 
+class FPLib {
+    uint8_t buf[32];
+public:
+    FPLib();
+
+    uint8_t operator[](int);
+    void sanitize();
+};
+
 // Return bit scale of filled templates for this user
-uint8_t fge_get_filled_tpls(int usr_index);
+inline uint8_t fge_get_filled_tpls(int usr_index) {return FPLib()[usr_index];}
+
+// Delete FG. index is <User-index>*4 + <FG-index-in-lib>
+void do_fg_del(int index, uint8_t count=1);
 
 // November 1, 2023 0:00:00
 static constexpr time_t timestamp_shift = 1698796800ull;

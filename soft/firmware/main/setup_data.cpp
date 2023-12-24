@@ -5,6 +5,9 @@
 #include "activity.h"
 #include "web_gadgets.h"
 
+
+static const char TAG[] = "setup";
+
 int logged_in_user = -1;
 
 UserSetup current_user;
@@ -36,7 +39,7 @@ static void init_eeprom_data()
         .users_layout_tag = USERS_LAYOUT_TAG,
         .reserved_tag = 0xFF,
             
-        .round_time = 60, // Time between Play Rounds (In minutes)
+        .round_time = 24*60, // Time between Play Rounds (In minutes)
         .options = 0,   // Bitset of GlobalOptions
 
         .tz_shift = 0, // TZ is 0 (GMT)
@@ -251,15 +254,11 @@ const char* EEPROMUserName::utf8()
 
 }
 
-// Return bit scale of filled templates for this user
-uint8_t fge_get_filled_tpls(int usr_index)
+// Delete FG. index is <User-index>*4 + <FG-index-in-lib>
+void do_fg_del(int index, uint8_t count)
 {
-    uint8_t buf[32];
-    int err = Activity::FPAccess(NULL).access().readIndexTable(buf);
-    if (err) return 0;// this is error, what to do?
-    uint8_t result = buf[(usr_index>>1)&31];
-    if (usr_index&1) result >>= 4;
-    return result & 15;
+    assert(index < 33*4);
+    Activity::FPAccess(NULL).access().deleteTemplate(index, count);
 }
 
 void start_game()
@@ -271,4 +270,54 @@ void start_game()
     working_state.state = WS_Active;
     working_state.last_round_time = utc2ts(time(NULL));
     working_state.sync();
+}
+
+bool login_user(int usr_index) 
+{
+    logged_in_user = usr_index;
+    assert(usr_index == -1 || (usr_index >= 0 && usr_index < max_users));
+    if (usr_index == -1 || !current_user.load(usr_index, current_user_name))
+    {
+        current_user.clear(); 
+        current_user_name[0] = 0; 
+        logged_in_user = -1;
+        if (usr_index != -1)
+        {
+            do_fg_del(usr_index*4, 4);
+            ESP_LOGE(TAG, "Stray User #%d - Tpl erased", usr_index);
+        }
+        return false;
+    }
+    return true;
+}
+
+FPLib::FPLib()
+{
+    int err = Activity::FPAccess(NULL).access().readIndexTable(buf);
+    if (err)
+    {
+        ESP_LOGE(TAG, "FP Library read error: %d", err);
+    }
+}
+
+uint8_t FPLib::operator[](int usr_index)
+{
+    uint8_t result = buf[(usr_index>>1)&31];
+    if (usr_index&1) result >>= 4;
+    return result & 15;
+}
+
+void FPLib::sanitize()
+{
+    uint32_t users = get_eeprom_users();
+    for(int i=0; i<32; ++i)
+    {
+        if ((*this)[i] != 0 && !(users&bit(i)))
+        {
+            ESP_LOGE(TAG, "Stray User #%d - Tpl erased", i);
+            do_fg_del(i*4, 4);
+            uint8_t mask = i & 1 ? 0x0F : 0xF0;
+            buf[(i>>1)&31] &= mask;
+        }
+    }
 }

@@ -23,6 +23,12 @@ static int fge_allocate_user()
     return __builtin_ctz(sc);
 }
 
+inline void do_fg_del(int index, uint8_t count=1)
+{
+    if (current_user.options & UO_CanEditFG) ::do_fg_del(index, count);
+    // else - send error via AJAX
+}
+
 // Activate (create) new user. 'name' in DOS
 static void fge_activate_user(int user_index, const char* name, int age)
 {
@@ -104,13 +110,6 @@ inline void set_web_message(const char* title, const char* message)
     set_web_root("/web/message.html");
 }
 
-// Delete FG. index is <User-index>*4 + <FG-index-in-lib>
-inline void do_fg_del(int index, uint8_t count=1)
-{
-    if (current_user.options & UO_CanEditFG) Activity::FPAccess(NULL).access().deleteTemplate(index, count);
-    // else - send error as AJAX result
-}
-
 static bool game();
 static void no_game();
 static void challenge();
@@ -185,7 +184,7 @@ static void web_event_process(const Action& act)
 
 static Action no_game_internal()
 {
-    bool enable_web_events = false;
+    bool enable_web_events = logged_in_user != -1 && current_user.options;
     MsgActivity act(AT_WatchDog|AT_Fingerprint0|(working_state.state == WS_Pending ? AT_Alarm : 0)|AT_WEBEvent);
     if (working_state.state == WS_Pending) act.setup_alarm_action(ts2utc(working_state.last_round_time));
     act.setup_watchdog(SC_TurnoffDelay);
@@ -350,7 +349,7 @@ static void fg_edit(int user_index)
             restart_web_page("/web/admin.html");
             return;
         }
-        do_fg_del(user_index, 4);
+        do_fg_del(user_index*4, 4);
         filled_tpls = 0;
     }
     else
@@ -514,7 +513,7 @@ static void fg_edit(int user_index)
                     ])", box_idx, box_idx*SC_MAX_CH, box_idx*SC_MAX_CH+1, box_idx*SC_MAX_CH+2, box_idx*SC_MAX_CH+3, box_idx*SC_MAX_CH+4, box_idx*SC_MAX_CH+5);
                     break;
                 }
-                case WE_Logout: ESP_LOGI(TAG, "FG Editor - returns (no usr update)"); return;
+                case WE_Logout: if (!new_user) {ESP_LOGI(TAG, "FG Editor - returns (no usr update)"); return;} break;
                 case WE_FGE_Done: 
                     if (new_user && filled_tpls && a.web.p2) {fge_activate_user(user_index, a.web.p2, a.web.p1); free((char*)a.web.p2);}
                     ESP_LOGI(TAG, "FG Editor - FGE_Done");
@@ -529,20 +528,17 @@ static void fg_view()
 {
     if (!(current_user.options & UO_CanViewFG)) return;
 
-    uint8_t buf[32];
+    FPLib fp_lib;
     uint32_t users = get_eeprom_users();
     Prn prn;
 
     MsgActivity act(AT_Fingerprint1|AT_WEBEvent);
     act.setup_watchdog(SC_TurnoffDelay);
     act.setup_web_ping_type("ping-fgview");
+    fp_lib.sanitize();
 
     {
-        Activity::FPAccess fpa(&act);
-        auto& fp = fpa.access();
-        int err = fp.readIndexTable(buf);
-        if (err) return;// this is error, what to do?
-        fp.active_page = 1;
+        Activity::FPAccess(&act).access().active_page = 1;
     }
 
     lcd_message("Просмотр отпечатков пальцев.\nЗавершение через WEB страницу");
@@ -563,23 +559,15 @@ static void fg_view()
             }
             Activity::FPAccess fpa(&act);
             auto& fp = fpa.access();
-            for(int outer_idx = 0; outer_idx < 16; ++outer_idx)
+            for(int usr_index=0; usr_index<32; ++usr_index)
             {
-                uint8_t fps = buf[outer_idx];
-                if (!fps) continue;
-                int from, to;
-                switch((users >> (outer_idx*2)) & 3)
+                if (!(users & bit(usr_index))) continue;
+                uint8_t tpl_sc = fp_lib[usr_index];
+                for(int tpl_subidx=0; tpl_subidx<4; ++tpl_subidx, tpl_sc >>= 1)
                 {
-                    case 0: continue;
-                    case 1: from = 0; to = 4; break;
-                    case 2: from = 4; to = 8; break;
-                    default: from = 0; to = 8; break;
-                }
-                for(int i=from; i<to; ++i)
-                {
-                    if ((fps >> i) & 1)
+                    if (tpl_sc & 1)
                     {
-                        int tpl_index = outer_idx * 8 + i;
+                        int tpl_index = usr_index * 4 + tpl_subidx;
                         if (fp.loadTemplate(2, tpl_index))
                         {
                             p().cat_printf("{'cmd':'fgview-box-msg','msg':'Error','dst':'%d-%d'}", tpl_index>>2, tpl_index & 3);
@@ -594,7 +582,7 @@ static void fg_view()
                                 int(pc*100+0.5), pc);
                         }
                     }
-                }                
+                }
             }
             if (add_comma)
             {
