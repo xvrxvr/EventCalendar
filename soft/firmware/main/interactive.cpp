@@ -244,23 +244,25 @@ static void no_game()
     }
 }
 
+#define GREET "\\#Добро пожаловать \\2\377%s\377!\n"
+
 const char* test_user_login(const UserSetup& current_user, int logged_in_user)
 {
     if ((current_user.status & (US_Enabled|US_Paricipated)) != (US_Enabled|US_Paricipated))
     {
-        return "Вы не принимаете участия в раздаче подарков";
+        return GREET "Вы не принимаете участия в раздаче подарков";
     }
     if (current_user.status & US_Done)
     {
-        return "Вам уже вручили все подарки";
+        return GREET "Вам уже вручили все подарки";
     }
     if (!(working_state.enabled_users & bit(logged_in_user)))
     {
-        return "Вы уже получили свой подарок\nПриходите %s за следующим";
+        return GREET "Вы уже получили свой подарок\nПриходите %s за следующим";
     }
     if (working_state.get_loaded_gift(logged_in_user) == -1)
     {
-        return "Для вас не загрузили подарка\nСрочно поэовите Админа";
+        return GREET "Для вас не загрузили подарка\nСрочно поэовите Админа";
     }
     return NULL;
 }
@@ -290,10 +292,10 @@ static bool game()
             const char* msg = test_user_login(current_user,logged_in_user);
             if (msg)
             {
-                lcd_message(msg, ts_to_string(working_state.last_round_time + round));
+                lcd_message(msg, current_user_name, ts_to_string(working_state.last_round_time + round));
                 continue;
             }
-            lcd_message("Вы готовы получить подарок?\nНо сначала загадка...");
+            lcd_message(GREET "Вы готовы получить подарок?\nНо сначала загадка...", current_user_name);
             MsgActivity act(AT_WatchDog|AT_Fingerprint2|AT_WEBEvent|AT_TouchDown|AF_Override);
             act.setup_watchdog(SC_TurnoffDelay);
             Action a = act.get_action();

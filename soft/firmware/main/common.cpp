@@ -52,6 +52,10 @@ int utf8_to_dos(char* sym, int length)
         if (*p < 0x80) *dst++ = *p++; else
         switch(*p++)
         {
+            case 0xFF: 
+                while(p < end && *p != 0xFF) {*dst++ = *p++;}
+                if (p < end) ++p;
+                break;
             case 0xD0:
                 if (*p >= 0x90 && *p <= 0xBF) *dst++ = *p++ - 0x10; else
                 switch(*p++) {S(81, F0); S(84, F2); S(87, F4); S(8E, F6); U;}
