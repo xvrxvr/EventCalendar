@@ -6,12 +6,19 @@
 class DV {
     const char* a;
     const char* b;
+    const size_t len_a;
+    std::unique_ptr<uint8_t[]> cache;
 
-    unsigned d(int i, int j) const
+    uint8_t& idx(int i, int j) {return cache[i+j*len_a];}
+
+    unsigned d(int i, int j)
     {
         unsigned min_val = -1u;
         
         if (i == 0 && j == 0) return 0;
+
+        uint8_t &c = idx(i, j);
+        if (c != 0xFF) return c;
 
         const auto m = [&](unsigned score) {min_val = std::min(min_val, score);};
 
@@ -19,13 +26,21 @@ class DV {
         if (j > 0) m(d(i, j-1) + 1);
         if (i > 0 && j > 0) m(d(i-1, j-1) + (a[i] != b[j]));
         if (i > 1 && j > 1 && a[i] == b[j-1] && a[i-1] == b[j]) m(d(i-2, j-2) + (a[i] != b[j]));
+        c = std::min(254u, min_val);
         return min_val;
     }
 
 public:
-    DV(const char* a, const char* b) : a(a), b(b) {}
+    DV(const char* a, const char* b) : a(a), b(b), len_a(strlen(a)) {}
 
-    unsigned score() const {return d(strlen(a)-1, strlen(b)-1);}
+    unsigned score()
+    {
+        size_t len_b = strlen(b);
+        size_t total = len_a * len_b;
+        cache.reset(new uint8_t[total]);
+        memset(cache.get(), 0xFF, total);
+        return d(len_a-1, len_b-1);
+    }
 };
 
 

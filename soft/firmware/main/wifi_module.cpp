@@ -77,6 +77,8 @@ static void sync_time_1(timeval *tv)
     rtc.write();
 }
 
+uint32_t my_ip;
+
 static void event_handler_ip(void* arg, esp_event_base_t, int32_t event_id, void* event_data)
 {
     switch(event_id)
@@ -84,8 +86,8 @@ static void event_handler_ip(void* arg, esp_event_base_t, int32_t event_id, void
         case IP_EVENT_STA_GOT_IP: 
         {
             sta_connected=true; s_retry_num = 0;
-            
-//            ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+            ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+            my_ip = event->ip_info.ip.addr;
 
 //            lcd.text("STA IP: ", 0, 60);
 //            lcd.text(inet_ntoa(event->ip_info.ip.addr), 8*8, 60);
@@ -115,9 +117,6 @@ void wifi_init()
         esp_netif_create_default_wifi_sta();
     }
     esp_netif_create_default_wifi_ap();
-    lcd.text("SSID: '" MASTER_WIFI_SSID "', Passwd: '" MASTER_WIFI_PASSWD "'", 0, 0);
-    lcd.text("AP: http://192.168.4.1:8080", 0, 20);
-    lcd.text("AP: http://event-calendar[.local]:8080", 0, 40);
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "setup_data.h"
+#include "wifi_module.h"
 #include "prnbuf.h"
 #include "text_draw.h"
 #include "bg_image.h"
@@ -9,6 +10,8 @@
 #include "icons.h"
 #include "interactive.h"
 #include "challenge_list.h"
+
+extern uint32_t my_ip;
 
 static const char TAG[] = "interactive";
 namespace Interactive {
@@ -182,10 +185,17 @@ static void web_event_process(const Action& act)
     bg_images.draw(Activity::LCDAccess(NULL).access());
 }
 
+
+#define AP_CRED "\\2\\#AP\nSSID: '" MASTER_WIFI_SSID "', Passwd: '" MASTER_WIFI_PASSWD "'\nhttp://192.168.4.1:8080\nhttp://event-calendar[.local]:8080"
+static void draw_login_credentials()
+{
+    lcd_message(my_ip ? "\\2\\#Station\nhttp://%s\nhttp://event-calendar[.local]\n" AP_CRED : AP_CRED, inet_ntoa(my_ip));
+}
+
 static Action no_game_internal()
 {
     bool enable_web_events = logged_in_user != -1 && current_user.options;
-    MsgActivity act(AT_WatchDog|AT_Fingerprint0|(working_state.state == WS_Pending ? AT_Alarm : 0)|AT_WEBEvent);
+    MsgActivity act(AT_WatchDog|AT_Fingerprint0|(working_state.state == WS_Pending ? AT_Alarm : 0)|AT_WEBEvent|AT_TouchDown);
     if (working_state.state == WS_Pending) act.setup_alarm_action(ts2utc(working_state.last_round_time));
     act.setup_watchdog(SC_TurnoffDelay);
 
@@ -195,6 +205,7 @@ static Action no_game_internal()
         switch(a.type)
         {
             case AT_WatchDog: passivate(); return {};
+            case AT_TouchDown: draw_login_credentials(); break;
             case AT_Fingerprint:
             {
                 if (a.fp_index == -1) continue;
@@ -256,7 +267,7 @@ const char* test_user_login(const UserSetup& current_user, int logged_in_user)
 
 static bool game()
 {
-    MsgActivity act(AT_WatchDog|AT_Fingerprint|AT_WEBEvent);
+    MsgActivity act(AT_WatchDog|AT_Fingerprint|AT_WEBEvent|AT_TouchDown);
     act.setup_watchdog(SC_TurnoffDelay);
     bool test_user = (logged_in_user >= 0);
 
@@ -315,6 +326,7 @@ static bool game()
                 if (a.web.event == WE_GameEnd) return false;
                 // web_event_process(a); - No any WEB editors in Game
                 break;
+            case AT_TouchDown: draw_login_credentials(); break;
             default: break;
         }
     }
