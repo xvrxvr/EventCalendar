@@ -10,13 +10,11 @@ menu "mDNS"
 
     config MDNS_MAX_SERVICES
         int "Max number of services"
-        range 1 64
         default 10
         help
             Services take up a certain amount of memory, and allowing fewer
             services to be open at the same time conserves memory. Specify
-            the maximum amount of services here. The valid value is from 1
-            to 64.
+            the maximum amount of services here.
 
     config MDNS_TASK_PRIORITY
         int "mDNS task priority"
@@ -101,6 +99,12 @@ menu "mDNS"
         default n
         help
             Enable for the library to log received and sent mDNS packets to stdout.
+
+    config MDNS_ENABLE_CONSOLE_CLI
+        bool "Enable Command Line Interface on device console"
+        default y
+        help
+            Enable for the console cli to be available on the device.
 
     config MDNS_RESPOND_REVERSE_QUERIES
         bool "Enable responding to IPv4 reverse queries"

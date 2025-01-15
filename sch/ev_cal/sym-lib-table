@@ -1,6 +1,9 @@
 (sym_lib_table
+  (version 7)
   (lib (name "esp")(type "KiCad")(uri "${KIPRJMOD}/symbols/ESP32.kicad_sym")(options "")(descr ""))
   (lib (name "local")(type "KiCad")(uri "${KIPRJMOD}/symbols/local.kicad_sym")(options "")(descr ""))
   (lib (name "irm")(type "KiCad")(uri "${KIPRJMOD}/symbols/IRM10.kicad_sym")(options "")(descr ""))
   (lib (name "adm1085")(type "KiCad")(uri "${KIPRJMOD}/symbols/ADM1085AKSZ.kicad_sym")(options "")(descr ""))
+  (lib (name "dc-dc")(type "KiCad")(uri "W:/home/roman/FPGA-HAT/sch/symlib/dc-dc.kicad_sym")(options "")(descr ""))
+  (lib (name "lcd")(type "KiCad")(uri "W:/home/roman/FPGA-HAT/test-bench/tb-sch/symbols/lcd.kicad_sym")(options "")(descr ""))
 )
