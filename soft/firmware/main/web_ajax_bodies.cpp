@@ -5,6 +5,7 @@
 #include "challenge_mgr.h"
 #include "activity.h"
 #include "bg_image.h"
+#include "zip/zip_streamer.h"
 
 #include "web_ajax_classes.h"
 
@@ -78,7 +79,7 @@ void AJAXDecoder_done_user::run()
     {
         if (working_state.total_loaded_gift(arg_user)) // We can't terminate this user - so send an erorr
         {
-            *this << UTF8 << "[\"<span class='error'>ÐÐµ Ð¼Ð¾Ð³Ñƒ Ð¾Ñ‚ÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ:<br>Ð£ Ð½ÐµÐ³Ð¾ ÐµÑÑ‚ÑŒ Ð·Ð°Ð³Ñ€ÑƒÐ¶ÐµÐ½Ð½Ñ‹Ðµ Ð¿Ð¾Ð´Ð°Ñ€ÐºÐ¸ - Ð¾Ð½ ÑÐ½Ð°Ñ‡Ð°Ð»Ð° Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¸Ñ… Ð·Ð°Ð±Ñ€Ð°Ñ‚ÑŒ</span>\", \"\"]";
+            *this << UTF8 << "[\"<span class='error'>Не могу отключить пользователя:<br>У него есть загруженные подарки - он сначала должен их забрать</span>\", \"\"]";
             return;
         }
         UserSetup usr; 
@@ -519,4 +520,96 @@ size_t AJAXDecoder_update_challenge::consume_stream(uint8_t* data, size_t size, 
     }
     fwrite(data, 1, out_size, opaque_1);
     return size - delta;
+}
+
+class BkpReader : public ZipStreamer::Reader {
+public:
+    virtual void write_file(const char* name, const void* data, size_t size) override
+    {
+        char path[128];
+        strcat(strcpy(path, "/data/"), name);
+        FILE* f =fopen(path, "wb");
+        if (!f) throw ZipStreamer::ZipError("File writing error");
+        fwrite(data, 1, size, f);
+        fclose(f);        
+    }
+
+};
+
+// S(bkp_restore)
+size_t AJAXDecoder_bkp_restore::consume_stream(uint8_t* data, size_t size, bool eof)
+{
+    if (!data)
+    {
+        if (eof) {delete (BkpReader*)opaque_1v; opaque_1v = NULL;}
+        else {opaque_1v = new BkpReader;}
+        return 0;
+    }
+    if (!opaque_1v) return size;
+    try {
+        BkpReader* rdr = (BkpReader*)opaque_1v;
+        rdr->push(data, size);
+        if (eof) {delete rdr; opaque_1v = NULL;}
+        return size;
+    } catch(ZipStreamer::ZipError& error) {
+        send_error(HTTPD_500_INTERNAL_SERVER_ERROR, error.what());
+    }
+    return size;
+}
+
+class BkpWriter : public ZipStreamer::Writer {
+    static constexpr int BSIZE = 1024;
+    Ans* ans;
+public:
+    BkpWriter(Ans* ans) : ans(ans) {}
+
+    void save_file(const char* fname)
+    {
+        open(fname);
+        char* buf = (char*)get_buffer(BSIZE);
+        strcat(strcpy(buf, "/data/"), fname);
+        FILE* f = fopen(buf, "rb");
+        if (!f) throw ZipStreamer::ZipError("File reading error");
+        while(auto sz = fread(buf, 1, BSIZE, f))
+        {
+            write(buf, sz);
+            if (sz < BSIZE) break;
+        }
+        fclose(f);
+        close();
+    }
+
+    virtual void send_data(const void* data, size_t size) override
+    {
+        ans->write_string_utf8((const char*)data, size);
+    }
+    virtual void send_close() override {}
+};
+
+
+// G(bkp_save, P0)
+void AJAXDecoder_bkp_save::run()
+{
+    set_ans_type("backup.zip");
+    set_hdr("Cache-Control", "no-store, no-cache, max-age=0, must-revalidate, proxy-revalidate");
+    DIR *dir = opendir("/data/");
+    if (!dir)
+    {
+        ESP_LOGE(TAG, "opendir('/data/') failed: %s", strerror(errno));
+        send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "opendir('/data/') failed");
+        return;
+    }
+    try {
+        BkpWriter bkp(this);
+        while (auto entry = readdir(dir))
+        {
+            if (entry->d_type == DT_REG)
+            {
+                bkp.save_file(entry->d_name);
+            }
+        }
+    } catch(ZipStreamer::ZipError& error) {
+        send_error(HTTPD_500_INTERNAL_SERVER_ERROR, error.what());
+    }
+    closedir(dir);
 }

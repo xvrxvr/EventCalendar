@@ -77,6 +77,7 @@ esp_err_t Ans::set_ans_type(const char* filename)
     FE(".json",	"application/json");
     FE(".svg",  "image/svg+xml");
     FE(".xml",  "application/xml");
+    FE(".zip",  "application/zip");
     return httpd_resp_set_type(req, "text/plain");
 }
 #undef FE

@@ -198,7 +198,10 @@ class AnsStream : public Ans {
 
     void skip_after_headers();
 protected:
-    FILE* opaque_1 = NULL;
+    union {
+        FILE* opaque_1 = NULL;
+        void* opaque_1v;
+    };
     int opaque_2 = -1;
 public:
     AnsStream(httpd_req_t *req) : Ans(req) {}

@@ -63,6 +63,9 @@ G(fg_edit, P1(OI, index))
 G(fg_viewer_done, P0)
 G(fg_editor_done, P2(OSD, name, OI, age))
 
+S(bkp_restore)
+G(bkp_save, P0)
+
 #undef G
 #undef P
 #undef S

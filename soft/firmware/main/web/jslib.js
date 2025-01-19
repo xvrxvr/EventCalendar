@@ -5,7 +5,7 @@ function I(name) {return document.getElementById(name);}
 function A(action, args='') 
 {
     if (args) args = '?' + args;
-    location.href =  `../action/${action}.html${args}`;
+    location.href =  `../action/bkp_restore.html${args}`;
 }
 
 function G(pos) 

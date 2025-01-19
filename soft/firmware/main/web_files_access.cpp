@@ -33,6 +33,8 @@ CDNDef decode_web_files_access_function(const char* key)
     extern const char styles_css_end[] asm("_binary_styles_css_end");
     extern const char text_lib_js_start[] asm("_binary_text_lib_js_start");
     extern const char text_lib_js_end[] asm("_binary_text_lib_js_end");
+    extern const char update_html_start[] asm("_binary_update_html_start");
+    extern const char update_html_end[] asm("_binary_update_html_end");
 
     switch(key[0])
     {
@@ -91,6 +93,7 @@ CDNDef decode_web_files_access_function(const char* key)
                 default: return CDNDef{};
             }
         case 't': if (strcmp(key+1, "ext_lib.js") == 0) {return CDNDef{text_lib_js_start, text_lib_js_end};} else {return CDNDef{};}
+        case 'u': if (strcmp(key+1, "pdate.html") == 0) {return CDNDef{update_html_start, update_html_end};} else {return CDNDef{};}
         default: return CDNDef{};
     }
 }
