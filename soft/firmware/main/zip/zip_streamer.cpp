@@ -3,6 +3,13 @@
 
 #include "zip_streamer.h"
 
+#include <esp_log.h>
+
+#undef MAX_WBITS
+#define MAX_WBITS 9
+
+static const char TAG[] = "ZIP";
+
 namespace ZipStreamer {
 
 using namespace ZipInternals;
@@ -16,7 +23,8 @@ inline int err_end(int err)
 
 int uncompress3(Bytef* dest, size_t& destLen, const Bytef* source, uLong len) 
 {
-    z_stream stream{};
+    z_stream stream;
+    memset(&stream, 0, sizeof(stream));
 
     int err = inflateInit2(&stream, -MAX_WBITS);
     if (err != Z_OK) return err;
@@ -35,9 +43,10 @@ int uncompress3(Bytef* dest, size_t& destLen, const Bytef* source, uLong len)
 
 int compress3(Bytef* dest, uLongf& destLen, const Bytef* source, uLong sourceLen, int level= Z_DEFAULT_COMPRESSION) 
 {
-    z_stream stream{};
+    z_stream stream;
+    memset(&stream, 0, sizeof(stream));
 
-    int err = deflateInit2(&stream, level, Z_DEFLATED, -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+    int err = deflateInit2(&stream, level, Z_DEFLATED, -MAX_WBITS, 1, Z_DEFAULT_STRATEGY);
     if (err != Z_OK) return err;
 
     stream.next_out = dest;
@@ -164,19 +173,24 @@ void Writer::write(const void* data, size_t size)
 // Finalize file currently writen
 void Writer::close()
 {
+    ESP_LOGE(TAG,"p1");
+
     uint8_t* to_save;
     size_t size;
     auto buf = file_buffer.get(size);
     uLong pck_size = compressBound(size);
     auto pck_buf = pck_file_buffer.get_buffer(pck_size);
+    ESP_LOGE(TAG,"p2");
 
     FileHdr fhdr;
     uint8_t* cdir_fhdr_img = cdir_buffer.get_buffer() + cdir_file_start;
     memcpy(&fhdr, cdir_fhdr_img, sizeof(FileHdr));
     fhdr.crc32 = crc;
     fhdr.uncomp_size = size;
+    ESP_LOGE(TAG,"p3");
 
     int err = compress3(pck_buf, pck_size, buf, size);
+    ESP_LOGE(TAG,"p4 (%d)", err);
     if (err !=  Z_OK) throw ZipError("zlib error on pack");
     if (pck_size >= size) // Do Store
     {
@@ -191,6 +205,7 @@ void Writer::close()
         to_save = pck_buf;
     }
     memcpy(cdir_fhdr_img, &fhdr, sizeof(FileHdr));
+    ESP_LOGE(TAG,"p5");
 
     LocalHdr lhdr {
         .sign           = Tag::Local,

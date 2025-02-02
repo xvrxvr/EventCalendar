@@ -2,6 +2,10 @@
     #define P G
 #endif
 
+#ifndef GZ
+    #define GZ P
+#endif    
+
 #ifndef S
     #define S(id) P(id, P0)
 #endif    
@@ -64,11 +68,12 @@ G(fg_viewer_done, P0)
 G(fg_editor_done, P2(OSD, name, OI, age))
 
 S(bkp_restore)
-G(bkp_save, P0)
+GZ(bkp_save, P0)
 
 #undef G
 #undef P
 #undef S
+#undef GZ
 
 #undef VP0
 #undef VP1
@@ -91,11 +96,11 @@ G(bkp_save, P0)
 
 /*
 Macros:
-G(<url>,<args>) - GET request to <url> wit parameters <args> (one of P<n> macro)
-P(<url>,<args>) - POST request to <url> wit parameters <args> (one of P<n> macro)
+G(<url>,<args>) - GET request to <url> with parameters <args> (one of P<n> macro)
+P(<url>,<args>) - POST request to <url> with parameters <args> (one of P<n> macro)
 S(<url>) - POST request with 1 file. Should be accepted in streaming manner
 
-P<n> - Params pack. <n> - number of arguments. Parameters - { <type>, <mame> }
+P<n> - Params pack. <n> - number of arguments. Parameters - { <type>, <name> }
 Types is:
     I   -integer
     OI  - Optional integer
@@ -107,5 +112,5 @@ Types is:
     U  - Series of u<n> parameters. All of them packed in one integer
     OV - Flag (Optional void). bool - set to true if parameter exists
 
-User P<n> - P0, P1, P2, P3, P5
+Used P<n> - P0, P1, P2, P3, P5
 */

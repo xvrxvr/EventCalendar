@@ -214,6 +214,7 @@ static esp_err_t start_http_data_server()
     config.ctrl_port++;
     config.max_uri_handlers = 32;
     config.max_open_sockets = 13;
+    config.max_uri_handlers += 3;
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different
@@ -277,6 +278,16 @@ static esp_err_t start_http_data_server()
     {                                               \
         httpd_uri_t index = {                       \
             .uri       = "/action/" #id ".html",    \
+            .method    = HTTP_GET,                  \
+            .handler   = send_ajax_##id,            \
+        };                                          \
+        httpd_register_uri_handler(server, &index); \
+    }
+
+#define GZ(id, args)                                \
+    {                                               \
+        httpd_uri_t index = {                       \
+            .uri       = "/action/" #id ".tar",     \
             .method    = HTTP_GET,                  \
             .handler   = send_ajax_##id,            \
         };                                          \

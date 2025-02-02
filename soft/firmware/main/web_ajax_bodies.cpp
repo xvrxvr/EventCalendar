@@ -1,11 +1,12 @@
 ﻿#include "common.h"
+#include <sys/stat.h>
 #include "hadrware.h"
 #include "setup_data.h"
 #include "web_vars.h"
 #include "challenge_mgr.h"
 #include "activity.h"
 #include "bg_image.h"
-#include "zip/zip_streamer.h"
+#include "tar_stream.h"
 
 #include "web_ajax_classes.h"
 
@@ -522,18 +523,33 @@ size_t AJAXDecoder_update_challenge::consume_stream(uint8_t* data, size_t size, 
     return size - delta;
 }
 
-class BkpReader : public ZipStreamer::Reader {
+class TarError: public std::runtime_error {
 public:
-    virtual void write_file(const char* name, const void* data, size_t size) override
+    using std::runtime_error::runtime_error;
+};
+
+class BkpReader : public TarReader {
+public:
+
+    virtual void* open(const char* fname, uint32_t) override
     {
         char path[128];
-        strcat(strcpy(path, "/data/"), name);
+        strcat(strcpy(path, "/data/"), fname);
         FILE* f =fopen(path, "wb");
-        if (!f) throw ZipStreamer::ZipError("File writing error");
-        fwrite(data, 1, size, f);
-        fclose(f);        
+        if (!f) throw TarError("File writing error");
+        return f;
     }
 
+    virtual void write(const void* data, uint32_t size, void* opaque) override
+    {
+        fwrite(data, 1, size, (FILE*)opaque);
+
+    }
+
+    virtual void close(void* opaque) override
+    {
+        fclose((FILE*)opaque);
+    }
 };
 
 // S(bkp_restore)
@@ -551,29 +567,29 @@ size_t AJAXDecoder_bkp_restore::consume_stream(uint8_t* data, size_t size, bool 
         rdr->push(data, size);
         if (eof) {delete rdr; opaque_1v = NULL;}
         return size;
-    } catch(ZipStreamer::ZipError& error) {
+    } catch(TarError& error) {
         send_error(HTTPD_500_INTERNAL_SERVER_ERROR, error.what());
     }
     return size;
 }
 
-class BkpWriter : public ZipStreamer::Writer {
-    static constexpr int BSIZE = 1024;
+class BkpWriter : public TarWriter {
     Ans* ans;
 public:
     BkpWriter(Ans* ans) : ans(ans) {}
 
     void save_file(const char* fname)
     {
-        open(fname);
-        char* buf = (char*)get_buffer(BSIZE);
+        char* buf = (char*)get_buffer();
         strcat(strcpy(buf, "/data/"), fname);
         FILE* f = fopen(buf, "rb");
-        if (!f) throw ZipStreamer::ZipError("File reading error");
-        while(auto sz = fread(buf, 1, BSIZE, f))
+        if (!f) throw TarError("File reading error");
+        struct stat st;
+        if (stat(buf, &st)) throw TarError("Stat failed");
+        open(fname, st.st_size);
+        while(auto sz = fread(buf, 1, BLOCKSIZE, f))
         {
-            write(buf, sz);
-            if (sz < BSIZE) break;
+            if (!write_block(sz)) break;
         }
         fclose(f);
         close();
@@ -587,10 +603,10 @@ public:
 };
 
 
-// G(bkp_save, P0)
+// GZ(bkp_save, P0)
 void AJAXDecoder_bkp_save::run()
 {
-    set_ans_type("backup.zip");
+    set_ans_type("backup.tar");
     set_hdr("Cache-Control", "no-store, no-cache, max-age=0, must-revalidate, proxy-revalidate");
     DIR *dir = opendir("/data/");
     if (!dir)
@@ -608,7 +624,8 @@ void AJAXDecoder_bkp_save::run()
                 bkp.save_file(entry->d_name);
             }
         }
-    } catch(ZipStreamer::ZipError& error) {
+        bkp.finish();
+    } catch(TarError& error) {
         send_error(HTTPD_500_INTERNAL_SERVER_ERROR, error.what());
     }
     closedir(dir);

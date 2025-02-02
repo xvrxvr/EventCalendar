@@ -158,7 +158,7 @@ def load_ajax_def(file_n):
     srcs = {}
     with open(file_n, "r", encoding='UTF8') as f:
         for line in f:
-            mtch = re.match(r'^[SGP]\(\s*(\w+)', line)
+            mtch = re.match(r'^[SGP]Z?\(\s*(\w+)', line)
             if mtch:
                 assert mtch.group(1) not in srcs
                 srcs[mtch.group(1)] = line.strip()
@@ -182,7 +182,7 @@ def load_ajax_imp_file(file_n):
     with open(file_n, "r", encoding='UTF8') as f:
         for line in f:
             line = line.strip()
-            mtch = re.match(r'^\s*//\s*([SGP]\((\w+).*)$', line)
+            mtch = re.match(r'^\s*//\s*([SGP]Z?\((\w+).*)$', line)
             if mtch:
                 sig = mtch.group(1)
                 sig_id = mtch.group(2)
