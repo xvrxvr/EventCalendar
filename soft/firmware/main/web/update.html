@@ -21,8 +21,9 @@
 </header>
 
 <div class="w3-container">
-<form id='bkp_restore' action="../action/bkp_restore.html" method="post" enctype="multipart/form-data">
-<input type="file" id="bkp-file" accept="application/zip" onchange="document.forms['bkp_restore'].submit();">
+<form id='bkp_restore'>
+<input type="file" id="bkp-file" accept="application/x-tar" onchange="send_ajax_file('bkp-file', 'bkp_restore')"><br>
+<canvas id="bkp-file-progress" style="width:100%; height:6px"></canvas>
 </form>
 </div>
 
@@ -49,8 +50,9 @@
 </header>
 <div class="w3-container">
 
-<form id='fw_update' action="../action/fw_update.html" method="post" enctype="multipart/form-data">
-Firmware file: <input type="file" id="fw-file" onchange="document.forms['fw_update'].submit();">
+<form id='fw_update'>
+Firmware file: <input type="file" id="fw-file" onchange="send_ajax_file('fw-file', 'fw_update')"><br>
+<canvas id="fw-file-progress" style="width:100%; height:6px"></canvas>
 </form>
 </div>
 

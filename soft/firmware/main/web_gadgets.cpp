@@ -394,14 +394,14 @@ size_t AnsStream::read(size_t shift, size_t rest)
 {
     int total, total_read = 0;
     do {
-        if (rest > BufSize - shift) rest = BufSize - shift;
+        if (rest > available_buf() - shift) rest = available_buf() - shift;
         do {total = httpd_req_recv(req, buf_start() + shift, rest);} while (total ==  HTTPD_SOCK_ERR_TIMEOUT);
         assert(total >= 0 && total <= rest);
 
         shift += total;
         rest -= total;
         total_read += total;
-    } while(rest && shift < BufSize);
+    } while(rest && shift < available_buf());
     return total_read;
 }
 
@@ -422,7 +422,7 @@ bool AnsStream::chop(int keep)
 {
     if (keep > processed()) keep = processed();
     ptr -= keep;
-    memcpy(buf_start(), ptr, size());
+    memmove(buf_start(), ptr, size());
     end -= ptr - buf_start();
     ptr = buf_start() + keep;
     return read_pack(size());
@@ -478,7 +478,7 @@ void AnsStream::run()
             chop();
             assert(processed < buf_size ? !eof : true);
         }
-    } while(remaining);
+    } while(remaining || size());
     
     consume_stream(NULL, 0, true); // End stream
 }

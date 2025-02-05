@@ -47,7 +47,7 @@ static void event_handler_ip(void* arg, esp_event_base_t, int32_t event_id, void
             lcd.set_fg(rgb(0, 0xFF, 0));
             lcd.print("IP: ");
             lcd.print(inet_ntoa(event->ip_info.ip.addr));
-            lcd.print("\nAKA: event-calendar[.local]");
+            lcd.print("\nAKA: event-calendar.local");
             lcd.set_fg(rgb(0xFF, 0xFF, 0xFF));
 
             break;

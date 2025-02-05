@@ -1,5 +1,6 @@
 ﻿#include "common.h"
 #include <sys/stat.h>
+#include <esp_ota_ops.h>
 #include "hadrware.h"
 #include "setup_data.h"
 #include "web_vars.h"
@@ -629,4 +630,57 @@ void AJAXDecoder_bkp_save::run()
         send_error(HTTPD_500_INTERNAL_SERVER_ERROR, error.what());
     }
     closedir(dir);
+}
+
+// S(fw_update)
+size_t AJAXDecoder_fw_update::consume_stream(uint8_t* data, size_t size, bool eof)
+{
+    static int total_size=0;
+
+    if (!data)
+    {
+        if (eof) 
+        {
+            if ( opaque_2 && esp_ota_end(opaque_2) == ESP_OK )
+            {
+                ESP_LOGI(TAG, "Upgrade successful");
+                esp_ota_set_boot_partition(( esp_partition_t*)opaque_1v);
+                opaque_2 = 0;
+                write_string_utf8("Ok");
+                reboot();
+                return 0;
+            }
+            ESP_LOGE(TAG, "Failed flash file verification (%d)", total_size);
+            send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "Failed flash file verification");
+        }
+        else 
+        {
+            const esp_partition_t* active_partition = esp_ota_get_running_partition();
+            const esp_partition_t* m_next_partition = esp_ota_get_next_update_partition(active_partition);
+            if (!m_next_partition)
+            {
+                ESP_LOGE(TAG, "failed to prepare partition");
+                send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "failed to prepare partition");
+                return 0;
+            }
+            esp_err_t err = esp_ota_begin(m_next_partition, OTA_SIZE_UNKNOWN, (esp_ota_handle_t*)&opaque_2);
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "failed to prepare partition 2");
+                send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "failed to prepare partition 2");
+                return 0;
+            }
+            opaque_1v = (void*)m_next_partition;
+            ESP_LOGI(TAG, "Upgrade started");
+            total_size=0;
+        }
+        return 0;
+    }
+    total_size+=size;
+    if ( opaque_2 && esp_ota_write(opaque_2, data, size) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "failed to write to partition (%d)", total_size);
+        opaque_2 = 0;
+    }
+    return size;
 }

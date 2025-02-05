@@ -5,7 +5,7 @@ function I(name) {return document.getElementById(name);}
 function A(action, args='') 
 {
     if (args) args = '?' + args;
-    location.href =  `../action/bkp_restore.html${args}`;
+    location.href =  `../action/${action}.html${args}`;
 }
 
 function G(pos) 
@@ -200,21 +200,47 @@ function send_ajax_request(url, callback = null, as_json = false)
 //    console.log('AJAX: ' + url);
 }
 
-function send_ajax_update_challenge(data, callback)
+function send_ajax_post(data, callback, action_url)
 {
     let req = new XMLHttpRequest();
     req.onload = () => {callback(req.responseText);};
-    req.open("POST", "../action/update_challenge.html");
+    req.open("POST", `../action/${action_url}.html`);
     req.send(data);
 }
 
+function send_ajax_update_challenge(data, callback) {send_ajax_post(data, callback, 'update_challenge');}
+function send_ajax_bg_add(data, callback)           {send_ajax_post(data, callback, 'bg_add');}
 
-function send_ajax_bg_add(data, callback)
+function send_ajax_file(file_name, action_url, callback= (text) => {if (text && text != 'Ok') alert(text);}) 
 {
+    let reader = new FileReader();
     let req = new XMLHttpRequest();
-    req.onload = () => {callback(req.responseText);};
-    req.open("POST", "../action/bg_add.html");
-    req.send(data);
+    let progress = document.getElementById(file_name + "-progress");
+    let ctx = progress.getContext("2d");
+    ctx.fillStyle = "orange";
+
+    const fill_pc = (pc) => {
+        ctx.fillRect(0, 0, Math.round(pc*progress.width/100), progress.height);
+    };
+
+    ctx.clearRect(0, 0, progress.width, progress.height);
+    req.onloadend = () => {
+        ctx.fillStyle = "green";
+        fill_pc(100);
+        callback(req.responseText);
+    };
+    req.upload.onprogress = (e) => {
+        if (e.lengthComputable) 
+        {
+            const percentage = Math.round((e.loaded * 100) / e.total);
+            fill_pc(percentage);
+        }
+    };
+    reader.onload = (evt) => {
+        req.open("POST", `../action/${action_url}.html`);
+        req.send(evt.target.result);
+    };
+    reader.readAsArrayBuffer(document.getElementById(file_name).files[0]);
 }
 
 // callback argument - new user name to put on door

@@ -70,6 +70,8 @@ G(fg_editor_done, P2(OSD, name, OI, age))
 S(bkp_restore)
 GZ(bkp_save, P0)
 
+S(fw_update)
+
 #undef G
 #undef P
 #undef S
