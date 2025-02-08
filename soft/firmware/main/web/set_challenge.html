@@ -41,6 +41,7 @@ $<!DOCTYPE html>
 
 <p><button type="button" onclick="update_current_challenge()">Сохранить загадку</button></p>
 <p><button type="button" onclick="new_challenge()">Добавить новую загадку</button></p>
+<p><button type="button" onclick="test_challenge()">Протестировать загадку</button></p>
 <p><button type="button" onclick="del_challenge()" class="red-button">Удалить загадку</button></p>
 <p><button type="button" onclick="G('setup')">Назад в setup</button></p>
 </td>
@@ -240,6 +241,14 @@ function upd_challenge()
         return;
     }
     send_get_challenge(opts[opts.selectedIndex].value, decode_challenge);
+}
+
+function test_challenge()
+{
+    let opts = I("index").options;
+    const idx = opts.selectedIndex;
+    if (idx == -1) return;
+    send_ajax_request('test_challenge.html?id='+opts[idx].value);
 }
 
 function update_current_challenge()

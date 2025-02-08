@@ -39,6 +39,7 @@ enum WebEvents {
     WE_FGDel,     // p1 - <User-index>*4 + <FG-index-in-lib> or p1 - <FG-index-in-lib> | 0x1000
     WE_FGEdit,    // p1 - User index (-1 - new user)
     WE_FGView,
+    WE_RiddleTest, // p1 - Challenge index to test
 
     // FG Editor only events
     WE_FGE_Done,  // Done editor. p1 - new user age (or -1), p2 - new user name (DOS) or NULL

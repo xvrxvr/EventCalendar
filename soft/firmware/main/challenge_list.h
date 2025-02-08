@@ -16,7 +16,7 @@ namespace EQuest {
 // Riddle challenge
 namespace Riddle {
     // Result - ChResults
-    int run_challenge();
+    int run_challenge(int ch_index=-1);
 }
 
 namespace Game15 {

@@ -53,7 +53,7 @@ class Riddle {
 public:
 
     // Full run
-    int run();
+    int run(int);
 };
 
 int Riddle::init()
@@ -166,11 +166,11 @@ int Riddle::get_selection()
     }
 }
 
-int Riddle::run()
+int Riddle::run(int index)
 {
     int err;
 
-    int ch_index = init();
+    int ch_index = index == -1 ? init() : index;
     if (ch_index < 0) return ch_index; // This is error
 
     err = ask_and_query(ch_index);
@@ -181,10 +181,10 @@ int Riddle::run()
     return err;
 }
 
-int run_challenge()
+int run_challenge(int index)
 {
     std::unique_ptr<Riddle> riddle(new Riddle); // Create riddle on heap, because it quite big and can not fit in stack
-    return riddle->run();
+    return riddle->run(index);
 }
 
 } // namespace Quest

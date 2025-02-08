@@ -287,7 +287,8 @@ Ans::ArgU AnsGet::decode_U(const char*)
     uint32_t result = 0;
     for(int i=0; i<32; ++i)
     {
-        char tag[3] = {'u', char('0'+i), 0};
+        char tag[4];
+        sprintf(tag, "u%d", i);
         if (httpd_query_key_value(request_string.get(), tag, dst, available_buf()) == ESP_OK) result |= 1 << i;
     }
     return result;

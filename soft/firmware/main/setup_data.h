@@ -143,6 +143,9 @@ struct WorkingState {
     // If requested slot is empty - emit nothing and return false
     // If 'add_quotes' is true writes JSON complaint representation (quotes around name and 'null' if slot is empty)
     bool write_user_name(class Ans&, int slot_index, bool add_quotes);
+
+    // Return true if 'guest' type of game active
+    static bool is_guest_type();
 };
 static_assert(sizeof(WorkingState) <= 56, "RTC RAM Overflow");
 ////////////////////////////////////////////////

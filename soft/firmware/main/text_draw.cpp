@@ -298,7 +298,7 @@ void TextLine::word_wrap(std::vector<TextLine> &target, int width, int default_l
                 {
                     if (new_line.empty()) 
                     {
-                        printf("%s (%d)\n", spl_item.text.data(), spl_item.text.size());
+                        //printf("%s (%d)\n", spl_item.text.data(), spl_item.text.size());
                         throw WordWrapError("Can't word wrap line - word inside is too long");
                     }
                     trim_back(new_line.back().text);
@@ -372,7 +372,11 @@ TextsParserSelected::TextsParserSelected(const TextGlobalDefinition& gd, const T
     obj.text_lines.push_back(tl);
     if (int w = obj.need_ww(width)) obj = obj.word_wrap(w);
     sz = obj.min_box_size();
-    if (sz.first > width || sz.second > height) throw OutOfBounds("Box doesn't fit");
+    if (sz.first > width || sz.second > height)
+    {
+        ESP_LOGE(TAG, "TextsParserSelected: Box not fit - text size is %dx%d, box size is %dx%d", sz.first, sz.second, width, height);
+        //throw OutOfBounds("Box doesn't fit");
+    }
 }
 
 void TextsParser::parse_line(const String& line)
@@ -411,7 +415,12 @@ void TextsParser::draw_one_box_centered_imp(LCD& lcd, int x, int y, int width, i
     const int mw = 2*global_definitions.marging_h;
     const int mh = 2*global_definitions.marging_v;
     auto sz = min_box_size();
-    if (sz.second > height - mh || sz.first > width - mw) throw OutOfBounds("Box doesn't fit");
+    if (sz.second > height - mh || sz.first > width - mw)
+    {
+        //throw OutOfBounds("Box doesn't fit");
+        ESP_LOGE(TAG, "draw_one_box_centered_imp: Box not fit - text size is %dx%d, box size is %dx%d, marging is %dx%d", 
+            sz.first, sz.second, width, height, mw, mh);
+    }
     x += ((width-sz.first-mw) >> 1) + global_definitions.marging_h;
     y += ((height-sz.second-mh) >> 1) + global_definitions.marging_v;
     eval_box(x, y);
@@ -422,7 +431,11 @@ void TextsParser::draw_one_box_centered_imp(LCD& lcd, int x, int y, int width, i
 void TextsParser::draw_one_box_imp(LCD& lcd, int x, int y, int width, int height)
 {
     auto sz = min_box_size();
-    if (sz.second > height || sz.first > width) throw OutOfBounds("Box doesn't fit");
+    if (sz.second > height || sz.first > width)
+    {
+        ESP_LOGE(TAG, "draw_one_box_imp: Box not fit - text size is %dx%d, box size is %dx%d", sz.first, sz.second, width, height);
+        // throw OutOfBounds("Box doesn't fit");
+    } 
     eval_box(x, y, width, height);
     draw_box_to_canvas(lcd, x, y, width, height);
     draw_to_canvas(lcd);
@@ -486,7 +499,11 @@ TextsParser TextsParser::word_wrap(int width)
 void TextsParser::eval_positions(int x, int y, int width, int height)
 {
     const auto sz = text_size();
-    if (sz.first > width || sz.second > height) throw OutOfBounds("Text do not fit in bounds");
+    if (sz.first > width || sz.second > height)
+    {
+        ESP_LOGE(TAG, "eval_positions: Box not fit - text size is %dx%d, box size is %dx%d", sz.first, sz.second, width, height);
+        // throw OutOfBounds("Text do not fit in bounds");  
+    } 
     auto y_extra = height - sz.second; // Insert this space between rows
     auto y_steps = text_lines.size();
     int row = 0;
@@ -530,7 +547,11 @@ Size TextsParser::eval_box(int x, int y, int width, int height)
     if (!width) width = sz.first;
     if (!height) height = sz.second;
 
-    if (width < sz.first || height < sz.second) throw OutOfBounds("Box doesn't fit");
+    if (width < sz.first || height < sz.second)
+    {
+        ESP_LOGE(TAG, "eval_box: Box not fit - text size is %dx%d, box size is %dx%d", sz.first, sz.second, width, height);
+        //throw OutOfBounds("Box doesn't fit");
+    } 
 
     const int gap = std::max<int>(global_definitions.border_width, global_definitions.corner_r ? global_definitions.corner_r + 1 : 0);
 
@@ -576,7 +597,15 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t s
     assert(sel_array_size <= text_lines.size());
     for(int i=0; i<sel_array_size; ++i) selected.emplace_back(global_definitions, text_lines[sel_array[i].index], width, height);
     if (selected.size() == 0) return;
-    if (selected.size() == 1) {draw_one_box_centered(lcd, x, y, width, height); return;}
+    if (selected.size() == 1) 
+    {
+        draw_one_box_centered(lcd, x, y, width, height); 
+        sel_array->x = x;
+        sel_array->y = y;
+        sel_array->width = width;
+        sel_array->height = height;
+        return;
+    }
     if (global_definitions.equal_size_horizontal() || global_definitions.equal_size_vertical())
     {
         auto sz = selected[header_line].sz;
@@ -663,7 +692,7 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t s
         }
     }
     ESP_LOGE(TAG, "Out of bounds: width=%d, reqested=%d; height=%d, requested=%d", width, xx, height, yy);
-    throw OutOfBounds("Box doesn't fit");
+    //throw OutOfBounds("Box doesn't fit");
 }
 
 } // namespace TextBoxDraw

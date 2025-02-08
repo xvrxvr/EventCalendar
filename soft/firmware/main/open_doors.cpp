@@ -236,7 +236,7 @@ void DoorGrid::open_door(LCD& lcd)
         draw_icon(lcd);
         door_not_opened_yet = false;
         working_state.unload_gift(door_index);
-        working_state.enabled_users &= ~bit(logged_in_user);
+        if (!working_state.is_guest_type()) working_state.enabled_users &= ~bit(logged_in_user);
         working_state.sync();
     }
 }

@@ -175,6 +175,13 @@ bool WorkingState::write_user_name(Ans& ans, int index, bool add_quotes)
     return true;
 }
 
+bool WorkingState::is_guest_type()
+{
+    UserSetup usr;
+    usr.load(31, NULL);
+    return (usr.status & US_Paricipated) != 0;
+}
+
 /////////////////////
 void TouchSetup::sync() const // Save me to EEPROM
 {
@@ -191,14 +198,24 @@ void WorkingState::sync() const // Save me to RTC
     RTC().write_ram(this, 0, sizeof(*this));
 }
 
+static const uint8_t guest[] = {0x83, 0xAE, 0xE1, 0xE2, 0xEC, 0}; // "Гость" in DOS encoding
+
 bool UserSetup::load(int usr_index, uint8_t name[33])
 {
     EEPROM::read(ES_User * EEPROM::page_size + sizeof(UserSetup)*usr_index, this, sizeof(UserSetup));
     if (name)
     {
-        EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, name, 32);
-        name[32]=0;
+        if (usr_index != 31)
+        {
+            EEPROM::read((ES_UName + usr_index) * EEPROM::page_size, name, 32);
+            name[32]=0;
+        }
+        else
+        {
+            strcpy((char*)name, (const char*)guest);
+        }
     }
+    if (usr_index == 31) return true;
     if (empty()) return false;
     if (name) return (name[0] != 0 && name[0] != 0xFF);
     uint8_t n;
@@ -235,7 +252,8 @@ EEPROMUserName::EEPROMUserName(int user_index)
 {
     user_index &= 31;
     buf.fill(0, 33);
-    EEPROM::read((ES_UName + user_index) * EEPROM::page_size, buf.c_str(), 32);
+    if (user_index == 31) strcpy(buf.c_str(), (const char*)guest);
+    else EEPROM::read((ES_UName + user_index) * EEPROM::page_size, buf.c_str(), 32);
 }
 
 const char* EEPROMUserName::utf8()
@@ -251,13 +269,13 @@ const char* EEPROMUserName::utf8()
         if (buf.length() == 33) buf.cat_fill(0, 1);
     }
     return buf.c_str() + 33;
-
 }
 
 // Delete FG. index is <User-index>*4 + <FG-index-in-lib>
 void do_fg_del(int index, uint8_t count)
 {
     assert(index < 33*4);
+    if (index >= 31*4) return; // This is Guest user - no FG
     Activity::FPAccess(NULL).access().deleteTemplate(index, count);
 }
 

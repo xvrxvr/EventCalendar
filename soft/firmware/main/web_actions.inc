@@ -72,6 +72,8 @@ GZ(bkp_save, P0)
 
 S(fw_update)
 
+G(test_challenge, P1(I, id))
+
 #undef G
 #undef P
 #undef S

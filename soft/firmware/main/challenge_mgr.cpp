@@ -216,7 +216,8 @@ bool ChallengeMgr::read_ch_file(ChFile& dst, int ch_index)
 
     // Valid answer - first line of Ans
     dst.valid_ans_ptr.first = buffer - org;
-    dst.valid_ans_ptr.second = strchr(buffer, '\n') - buffer;
+    if (auto end = strchr(buffer, '\n')) dst.valid_ans_ptr.second = end - buffer;
+    else dst.valid_ans_ptr.second = strlen(buffer);
 
     return true;
 }

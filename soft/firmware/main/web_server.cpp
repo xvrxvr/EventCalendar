@@ -214,7 +214,7 @@ static esp_err_t start_http_data_server()
     config.ctrl_port++;
     config.max_uri_handlers = 32;
     config.max_open_sockets = 13;
-    config.max_uri_handlers += 3;
+    config.max_uri_handlers += 5;
 
     /* Use the URI wildcard matching function in order to
      * allow the same handler to respond to multiple different

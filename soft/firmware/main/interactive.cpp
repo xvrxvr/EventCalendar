@@ -132,7 +132,7 @@ void entry()
     switch(working_state.state)
     {
         case WS_Pending:
-            if (working_state.last_round_time <= utc2ts(time(NULL)))
+            if (working_state.last_round_time <= utc2ts(time(NULL)) || working_state.is_guest_type())
             {
                 start_game();
                 if (game()) challenge();
@@ -175,11 +175,14 @@ static void passivate()
 
 static void web_event_process(const Action& act)
 {
+    if (logged_in_user == 31) return; // Guest have no FG - get out
     switch(act.web.event)
     {
         case WE_FGDel:  ESP_LOGI(TAG, "web_event_process: FG Del (%d)", act.web.p1); do_fg_del(act.web.p1); return;
         case WE_FGEdit: ESP_LOGI(TAG, "web_event_process: FG Edit (%d)", act.web.p1); fg_edit(act.web.p1); break;
         case WE_FGView: ESP_LOGI(TAG, "web_event_process: FG View"); fg_view(); break;
+        case WE_RiddleTest: Riddle::run_challenge(act.web.p1); break;
+
         default: return;
     }
     bg_images.draw(Activity::LCDAccess(NULL).access());
@@ -201,15 +204,24 @@ static Action no_game_internal()
 
     for(;;)
     {
+        //printf("NGI: Enter\n");
         Action a =  act.get_action();
+        //printf("NGI: Exit\n");
         switch(a.type)
         {
             case AT_WatchDog: passivate(); return {};
             case AT_TouchDown: draw_login_credentials(); break;
             case AT_Fingerprint:
             {
-                if (a.fp_index == -1) continue;
-                login_user(a.fp_index>>2);
+                if (a.fp_index == -1)
+                {
+                    if (!working_state.is_guest_type()) continue;
+                    login_user(31);
+                }
+                else
+                {
+                    login_user(a.fp_index>>2);
+                }
                 if (!current_user.options) {enable_web_events = false; continue;}
                 lcd_message("Настройка системы Админом");
                 set_web_root("/web/admin.html");        
@@ -219,12 +231,13 @@ static Action no_game_internal()
             }
             case AT_Alarm: start_game(); return {};
             case AT_WEBEvent:
+                //printf("WEB event: %d, %d\n", int(a.web.event), enable_web_events);
                 if (enable_web_events)
                 {
                     switch(a.web.event)
                     {
                         case WE_Logout: case WE_GameStart: return {};
-                        case WE_FGDel: case WE_FGEdit: case WE_FGView: return a;
+                        case WE_FGDel: case WE_FGEdit: case WE_FGView: case WE_RiddleTest: return a;
                         default: break;
                     }
                 }
@@ -295,7 +308,7 @@ static bool game()
                 lcd_message(msg, current_user_name, ts_to_string(working_state.last_round_time + round));
                 continue;
             }
-            lcd_message(GREET "Вы готовы получить подарок?\nНо сначала загадка...", current_user_name);
+            lcd_message(GREET "Вы готовы получить подарок?\nНо сначала загадка...", logged_in_user != 31 ? (const char*)current_user_name : "");
             MsgActivity act(AT_WatchDog|AT_Fingerprint2|AT_WEBEvent|AT_TouchDown|AF_Override);
             act.setup_watchdog(SC_TurnoffDelay);
             Action a = act.get_action();
@@ -303,8 +316,16 @@ static bool game()
             {
                 case AT_WatchDog: passivate(); return false;
                 case AT_Fingerprint: 
-                    if (a.fp_index == -1 || logged_in_user == (a.fp_index>>2)) break;
-                    login_user(a.fp_index>>2);
+                    if (a.fp_index == -1)
+                    {
+                        if (!working_state.is_guest_type() || logged_in_user == 31) break;
+                        login_user(31);
+                    }
+                    else
+                    {
+                        if (logged_in_user == (a.fp_index>>2)) break;
+                        login_user(a.fp_index>>2);
+                    }
                     test_user = true;
                     continue;
                 case AT_WEBEvent:
@@ -320,8 +341,15 @@ static bool game()
         {
             case AT_WatchDog: passivate(); return false;
             case AT_Fingerprint: 
-                if (a.fp_index == -1) break;
-                login_user(a.fp_index>>2);
+                if (a.fp_index == -1) 
+                {
+                    if (!working_state.is_guest_type()) break;
+                    login_user(31);
+                }
+                else
+                {
+                    login_user(a.fp_index>>2);
+                }
                 test_user = true;
                 break;
             case AT_WEBEvent:

@@ -69,7 +69,7 @@ function _msg_time_to_doors()
 
 function activate_doors(second_names, disabled_scale, usr_callback, reset_timeout = false)
 {
-    if (reset_timeout) _time_to_doors_enable = 10;
+    if (reset_timeout) _time_to_doors_enable = 15;
     let doors = I("doors");
     if (_time_to_doors_enable > 0)
     {
