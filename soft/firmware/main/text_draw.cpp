@@ -590,6 +590,12 @@ Size TextsParser::eval_box(int x, int y, int width, int height)
     return {width, height};
 }
 
+void TextsParser::draw_one_box_of_selection_of_boxes(LCD& lcd, CellDef& cell, int dx, int dy)
+{
+    TextsParserSelected selected(global_definitions, text_lines[cell.index], 400, 240);
+    selected.obj.draw_one_box(lcd, cell.x+dx, cell.y+dy, cell.width, cell.height);
+}
+
 void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int header_line, int x, int y, int width, int height)
 {
     std::vector<TextsParserSelected> selected;

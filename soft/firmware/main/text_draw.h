@@ -343,6 +343,7 @@ public:
     }
 
     void draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int header_line=0, int x=0, int y=0, int width=400, int height=240);
+    void draw_one_box_of_selection_of_boxes(LCD& lcd, CellDef& sel, int dx=0, int dy=0);
 };
 
 } // namespace TextBoxDraw

@@ -26,10 +26,10 @@ static ResultType select_one(int reserved_lines, TextBoxDraw::TextsParser& parse
     {
         Action a = act.get_action();
         if (a.type == AT_WatchDog) return RT_Timeout;
-        printf("T: x=%d, y=%d, RL=%d\n", a.touch.x, a.touch.y, reserved_lines);
+        //printf("T: x=%d, y=%d, RL=%d\n", a.touch.x, a.touch.y, reserved_lines);
         for(const auto& c: cdef)
         {
-            printf("Test: x=%d, y=%d, w=%d, h=%d\n", c.x, c.y, c.width, c.height);
+            //printf("Test: x=%d, y=%d, w=%d, h=%d\n", c.x, c.y, c.width, c.height);
             if (a.touch.x >=c.x && a.touch.x < c.x+c.width && a.touch.y >= c.y && a.touch.y < c.y+c.height)
             {
                 if (c.index < reserved_lines) break;
