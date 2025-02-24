@@ -306,7 +306,7 @@ public:
     {
         const auto sz = text_size();
         const auto res = reserved_space();
-
+        //printf("TS=%d/%d, Res=%d/%d\n", sz.first, sz.second, res.first, res.second);
         return {sz.first+res.first, sz.second+res.second};
     }
 

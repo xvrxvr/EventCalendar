@@ -11,6 +11,7 @@ void Buttons::draw(int x, int y, int w, int h)
     fill_cdefs_indexes();
 
     TextBoxDraw::TextsParser tp(bs.not_pressed);
+    tp.parse_text(buf.c_str());
     tp.draw_selection_of_boxes(GLCD, cdefs, total_boxes(), 0, x, y, w, h);
     draw_gray_border();
     int idx = index2screen(cur_pressed);
@@ -42,6 +43,7 @@ void Buttons::scroll_to(int start_index)
     cur_line = start_index;
     fill_cdefs_indexes();
     TextBoxDraw::TextsParser tp(bs.not_pressed);
+    tp.parse_text(buf.c_str());
     tp.draw_selection_of_boxes(GLCD, cdefs, total_boxes(), 0, box_x, box_y, box_w, box_h);
     idx = index2screen(cur_pressed);
     if (idx != -1) draw_one(idx, true);
@@ -70,10 +72,12 @@ void Buttons::draw_one(int screen_index, bool pressed)
     Activity::LCDAccess lcda(NULL);
     auto& C = cdefs[screen_index];
     auto& lcd = lcda.access();
-    TextBoxDraw::TextsParser tp(pressed ? get_pressed_setup() : bs.not_pressed);
+    TextBoxDraw::TextGlobalDefinition p_setup = get_pressed_setup();
+    TextBoxDraw::TextsParser tp(pressed ? p_setup : bs.not_pressed);
     int delta = pressed ? bs.press_shift : 0;
     const auto bcolor = bs.gray_area_color;
 
+    tp.parse_text(buf.c_str());
     tp.draw_one_box_of_selection_of_boxes(lcd, C, delta, delta);
     if (pressed) // Draw gray top left corner
     {
@@ -120,3 +124,10 @@ int Buttons::press_imp(int screen_row)
     cur_pressed = line_index;
     return get_currently_pressed();
 }
+///////////
+ButtonsSetup::ButtonsSetup()
+{
+    //not_pressed.setup("");
+}
+
+ButtonsSetup global_buttons_setup;

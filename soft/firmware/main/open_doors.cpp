@@ -153,8 +153,6 @@ void DoorGrid::setup_cell()
     }
 }
 
-inline bool is_close_icon(const Action& act) {return act.touch.y <= 32 && act.touch.x >= RES_X-32;}
-
 // Activity with downcounter (S_WaitForOpen and S_WaitForReopen)
 uint32_t DoorGrid::run_dc_activity()
 {

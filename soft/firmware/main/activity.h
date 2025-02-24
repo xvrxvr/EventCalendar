@@ -40,6 +40,7 @@ enum WebEvents {
     WE_FGEdit,    // p1 - User index (-1 - new user)
     WE_FGView,
     WE_RiddleTest, // p1 - Challenge index to test
+    WE_GiftLoad,  // Run Gift Load screen on LCD
 
     // FG Editor only events
     WE_FGE_Done,  // Done editor. p1 - new user age (or -1), p2 - new user name (DOS) or NULL
@@ -184,3 +185,5 @@ public:
 //    static void on_web_ping_echo(const char* tag); // Global entry - dispatched to all active WEB ping sources
     static void send_web_ping(); // Internal function - called by WEB ping thread in this module.
 };
+
+inline bool is_close_icon(const Action& act) {return act.touch.y <= 32 && act.touch.x >= RES_X-32;}

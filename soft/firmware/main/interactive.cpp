@@ -14,6 +14,9 @@
 extern uint32_t my_ip;
 
 static const char TAG[] = "interactive";
+
+void gift_load();
+
 namespace Interactive {
 
 // Preallocate new user, returns index. Returns -1 if no more users
@@ -113,7 +116,13 @@ inline void set_web_message(const char* title, const char* message)
     set_web_root("/web/message.html");
 }
 
-static bool game();
+enum GameResult {
+    GR_Abort,
+    GR_Run,
+    GR_GiftLoad
+};
+
+static GameResult game();
 static void no_game();
 static void challenge();
 
@@ -121,6 +130,15 @@ static void fg_edit(int user_index);
 static void fg_view();
 
 static void web_event_process(const Action& act);
+
+inline bool cmd_gift_load(const Action& act)
+{
+    if (!is_close_icon(act)) return false;
+    if (logged_in_user == -1) return false;
+    return (current_user.options & (UO_CanLoadGifts|UO_CanOpenDoors)) != 0;
+}
+#define CHK_GIFT_LOAD(act) do {if (cmd_gift_load(act)) return Action{.type = AT_WEBEvent, .web={.event=WE_GiftLoad}};} while(0)
+#define CHK_GIFT_LOAD2(act) do {if (cmd_gift_load(act)) return GR_GiftLoad;} while(0)
 
 void entry()
 {
@@ -135,7 +153,12 @@ void entry()
             if (working_state.last_round_time <= utc2ts(time(NULL)) || working_state.is_guest_type())
             {
                 start_game();
-                if (game()) challenge();
+                switch(game())
+                {
+                    case GR_Run: challenge(); break;
+                    case GR_GiftLoad: gift_load(); break;
+                    case GR_Abort: break;
+                } 
                 return;
             }
             lcd_message("Приходите в %s", ts_to_string(working_state.last_round_time)); 
@@ -182,6 +205,7 @@ static void web_event_process(const Action& act)
         case WE_FGEdit: ESP_LOGI(TAG, "web_event_process: FG Edit (%d)", act.web.p1); fg_edit(act.web.p1); break;
         case WE_FGView: ESP_LOGI(TAG, "web_event_process: FG View"); fg_view(); break;
         case WE_RiddleTest: Riddle::run_challenge(act.web.p1); break;
+        case WE_GiftLoad: gift_load(); break;
 
         default: return;
     }
@@ -204,13 +228,11 @@ static Action no_game_internal()
 
     for(;;)
     {
-        //printf("NGI: Enter\n");
-        Action a =  act.get_action();
-        //printf("NGI: Exit\n");
+        Action a = act.get_action();
         switch(a.type)
         {
             case AT_WatchDog: passivate(); return {};
-            case AT_TouchDown: draw_login_credentials(); break;
+            case AT_TouchDown: CHK_GIFT_LOAD(a); draw_login_credentials(); break;
             case AT_Fingerprint:
             {
                 if (a.fp_index == -1)
@@ -237,7 +259,7 @@ static Action no_game_internal()
                     switch(a.web.event)
                     {
                         case WE_Logout: case WE_GameStart: return {};
-                        case WE_FGDel: case WE_FGEdit: case WE_FGView: case WE_RiddleTest: return a;
+                        case WE_FGDel: case WE_FGEdit: case WE_FGView: case WE_RiddleTest: case WE_GiftLoad: return a;
                         default: break;
                     }
                 }
@@ -280,7 +302,7 @@ const char* test_user_login(const UserSetup& current_user, int logged_in_user)
     return NULL;
 }
 
-static bool game()
+static GameResult game()
 {
     MsgActivity act(AT_WatchDog|AT_Fingerprint|AT_WEBEvent|AT_TouchDown);
     act.setup_watchdog(SC_TurnoffDelay);
@@ -314,7 +336,7 @@ static bool game()
             Action a = act.get_action();
             switch(a.type)
             {
-                case AT_WatchDog: passivate(); return false;
+                case AT_WatchDog: passivate(); return GR_Abort;
                 case AT_Fingerprint: 
                     if (a.fp_index == -1)
                     {
@@ -329,17 +351,18 @@ static bool game()
                     test_user = true;
                     continue;
                 case AT_WEBEvent:
-                    if (a.web.event == WE_GameEnd) return false;
+                    if (a.web.event == WE_GameEnd) return GR_Abort;
                     // web_event_process(a); - No any WEB editors in Game
                     break;
+                case AT_TouchDown: CHK_GIFT_LOAD2(a); break;
                 default: break;
             }
-            return true;
+            return GR_Run;
         }
         Action a = act.get_action();
         switch(a.type)
         {
-            case AT_WatchDog: passivate(); return false;
+            case AT_WatchDog: passivate(); return GR_Abort;
             case AT_Fingerprint: 
                 if (a.fp_index == -1) 
                 {
@@ -353,10 +376,10 @@ static bool game()
                 test_user = true;
                 break;
             case AT_WEBEvent:
-                if (a.web.event == WE_GameEnd) return false;
+                if (a.web.event == WE_GameEnd) return GR_Abort;
                 // web_event_process(a); - No any WEB editors in Game
                 break;
-            case AT_TouchDown: draw_login_credentials(); break;
+            case AT_TouchDown: CHK_GIFT_LOAD2(a); draw_login_credentials(); break;
             default: break;
         }
     }

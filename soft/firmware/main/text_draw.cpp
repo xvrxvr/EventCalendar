@@ -444,6 +444,7 @@ void TextsParser::draw_one_box_imp(LCD& lcd, int x, int y, int width, int height
 int TextsParser::need_ww(int width)
 {
     auto sz = min_box_size();
+    //printf("sz.first=%d, width=%d\n", sz.first, width);
     if (sz.first > width)
     {
         int w = width-reserved_space().first;
@@ -528,6 +529,7 @@ Size TextsParser::reserved_space() const {return global_definitions.reserved_spa
 Size TextGlobalDefinition::reserved_space() const
 {
     int gap = shadow_width + 2 * std::max<int>(border_width, corner_r ? corner_r + 1 : 0);
+    //printf("shadow=%d, brd=%d, corner=%d, padding_h=%d\n",  shadow_width, border_width, corner_r, padding_h);
     return {2*padding_h + gap, 2*padding_v + gap};
 }
 
@@ -592,8 +594,8 @@ Size TextsParser::eval_box(int x, int y, int width, int height)
 
 void TextsParser::draw_one_box_of_selection_of_boxes(LCD& lcd, CellDef& cell, int dx, int dy)
 {
-    TextsParserSelected selected(global_definitions, text_lines[cell.index], 400, 240);
-    selected.obj.draw_one_box(lcd, cell.x+dx, cell.y+dy, cell.width, cell.height);
+    TextsParserSelected selected(global_definitions, text_lines.at(cell.index), RES_X, RES_Y);
+    selected.obj.draw_one_box(lcd, cell.x+dx, cell.y+dy, selected.sz.first, selected.sz.second);
 }
 
 void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int header_line, int x, int y, int width, int height)
