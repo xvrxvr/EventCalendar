@@ -87,6 +87,12 @@ public:
     // Clear buffer. Memory not returned to system!
     void clear() {size=0;}
 
+    void utf8_to_dos(int shift=0)
+    {
+        assert(shift<length());
+        size = shift + ::utf8_to_dos(buffer+shift) - 1;
+    }
+
     // Fill buffer with symbol 'sym' by 'len' length. Previous contents of buffer discarded
     Prn& fill(char sym, size_t len)
     {

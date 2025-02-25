@@ -263,6 +263,8 @@ class TextsParser {
     TextLine cur_text_line;
     TextSegment cur_text_segment;
     std::vector<TextLine> text_lines;
+    int mbox_width = 0;
+    int mbox_height = 0;
 
     void parse_line(const String& line);
 
@@ -279,6 +281,13 @@ public:
     void operator=(TextsParser && from) {text_lines = from.text_lines;}
 
     void parse_text(const String& lines);
+
+    enum {
+        MB_X=1,
+        MB_Y=2,
+        MB_ALL=MB_X|MB_Y
+    };
+    void eval_mbox_sizes(int who, int width, int height, int header_lines=0);
 
     size_t total_lines() const {return text_lines.size();}
 

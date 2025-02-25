@@ -4,15 +4,22 @@
 
 #define GLCD Activity::LCDAccess(NULL).access()
 
+TextBoxDraw::TextsParser& Buttons::pars_init(TextBoxDraw::TextsParser& tp)
+{
+    tp.parse_text(buf.c_str());
+    tp.eval_mbox_sizes(tp.MB_ALL, box_w, box_h);
+    return tp;
+}
+
+#define PARS(setup)  TextBoxDraw::TextsParser tp(setup); pars_init(tp)
+
 void Buttons::draw(int x, int y, int w, int h)
 {
     box_x = x; box_y = y; box_w = w; box_h = h;
     if (is_scroll_active()) options |= BO_ShowDnArrow;
     fill_cdefs_indexes();
 
-    TextBoxDraw::TextsParser tp(bs.not_pressed);
-    tp.parse_text(buf.c_str());
-    tp.draw_selection_of_boxes(GLCD, cdefs, total_boxes(), 0, x, y, w, h);
+    PARS(bs.not_pressed).draw_selection_of_boxes(GLCD, cdefs, total_boxes(), 0, x, y, w, h);
     draw_gray_border();
     int idx = index2screen(cur_pressed);
     if (idx != -1) draw_one(idx, true);
@@ -42,9 +49,7 @@ void Buttons::scroll_to(int start_index)
     if (idx != -1) draw_one(idx, false);
     cur_line = start_index;
     fill_cdefs_indexes();
-    TextBoxDraw::TextsParser tp(bs.not_pressed);
-    tp.parse_text(buf.c_str());
-    tp.draw_selection_of_boxes(GLCD, cdefs, total_boxes(), 0, box_x, box_y, box_w, box_h);
+    PARS(bs.not_pressed).draw_selection_of_boxes(GLCD, cdefs, total_boxes(), 0, box_x, box_y, box_w, box_h);
     idx = index2screen(cur_pressed);
     if (idx != -1) draw_one(idx, true);
 }
@@ -73,14 +78,12 @@ void Buttons::draw_one(int screen_index, bool pressed)
     auto& C = cdefs[screen_index];
     auto& lcd = lcda.access();
     TextBoxDraw::TextGlobalDefinition p_setup = get_pressed_setup();
-    TextBoxDraw::TextsParser tp(pressed ? p_setup : bs.not_pressed);
     int delta = pressed ? bs.press_shift : 0;
-    const auto bcolor = bs.gray_area_color;
+    PARS(pressed ? p_setup : bs.not_pressed).draw_one_box_of_selection_of_boxes(lcd, C, delta, delta);
 
-    tp.parse_text(buf.c_str());
-    tp.draw_one_box_of_selection_of_boxes(lcd, C, delta, delta);
     if (pressed) // Draw gray top left corner
     {
+        const auto bcolor = bs.gray_area_color;
         lcd.WRect(C.x, C.y, C.width, delta, bcolor); // Top bar
         lcd.WRect(C.x, C.y, delta, C.height, bcolor); // Left bar
     }
@@ -100,8 +103,9 @@ int Buttons::press(int x, int y)
 int Buttons::press_imp(int screen_row)
 {
     int delta = 0 ;
-    if (screen_row == 0 && (options & BO_ShowUpArrow)) delta = -1; else
-    if (screen_row == MAX_ROWS-1 && (options & BO_ShowDnArrow)) delta = 1;
+    // Move from/to 1st line (no Up Arrow) right to 3d to ensure visual move (skipping just 1 line will not move buttons - top selection will be just replaced by Up Arrow)
+    if (screen_row == 0 && (options & BO_ShowUpArrow)) delta = cur_line <= 2 ? -cur_line : -1; else
+    if (screen_row == MAX_ROWS-1 && (options & BO_ShowDnArrow)) delta = cur_line == 0 ? 2 : 1;
     if (delta)
     {
         visual_feedback(screen_row);

@@ -23,6 +23,10 @@
 #include <vector>
 #include <utility>
 
+// Converts to DOS encode. Returns encoded-size
+// Zero terminated encoded buffer if 'length' is -1
+int utf8_to_dos(char*, int length=-1);
+
 #include "prnbuf.h"
 
 #include <freertos/FreeRTOS.h>
@@ -130,9 +134,6 @@ enum SetupConsts {
 
 
 
-// Converts to DOS encode. Returns encoded-size
-// Zero terminated encoded buffer if 'length' is -1
-int utf8_to_dos(char*, int length=-1);
 void reboot(); // Delayed reboot
 void send_web_ping_to_ws(const char* tag);
 

@@ -595,7 +595,25 @@ Size TextsParser::eval_box(int x, int y, int width, int height)
 void TextsParser::draw_one_box_of_selection_of_boxes(LCD& lcd, CellDef& cell, int dx, int dy)
 {
     TextsParserSelected selected(global_definitions, text_lines.at(cell.index), RES_X, RES_Y);
+    if (mbox_width)  selected.sz.first = mbox_width;
+    if (mbox_height) selected.sz.second = mbox_height;
     selected.obj.draw_one_box(lcd, cell.x+dx, cell.y+dy, selected.sz.first, selected.sz.second);
+}
+
+void  TextsParser::eval_mbox_sizes(int who, int width, int height, int header_lines)
+{
+    if ((mbox_width || !(who&MB_X)) && (mbox_height || !(who&MB_Y)) ) return;
+    std::vector<TextsParserSelected> selected;
+    for(const auto& tl: text_lines) selected.emplace_back(global_definitions, tl, width, height);
+    auto sz = selected[header_lines].sz;
+    for(int idx=header_lines+1; idx<selected.size(); ++idx)
+    {
+        const auto &it = selected[idx];
+        sz.first = std::max(sz.first, it.sz.first);
+        sz.second = std::max(sz.second, it.sz.second);
+    }
+    if (who & MB_X) mbox_width = sz.first;
+    if (who & MB_Y) mbox_height = sz.second;
 }
 
 void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t sel_array_size, int header_line, int x, int y, int width, int height)
@@ -614,28 +632,14 @@ void TextsParser::draw_selection_of_boxes(LCD& lcd, CellDef* sel_array, size_t s
         sel_array->height = height;
         return;
     }
-    if (global_definitions.equal_size_horizontal() || global_definitions.equal_size_vertical())
+    if (global_definitions.equal_size_horizontal() || global_definitions.equal_size_vertical() || mbox_width || mbox_height)
     {
-        auto sz = selected[header_line].sz;
-        int idx=0;
-        for(const auto &it: selected)
+        eval_mbox_sizes( (global_definitions.equal_size_horizontal() ? MB_X : 0) | (global_definitions.equal_size_vertical() ? MB_Y : 0), header_line, width, height);
+        for(int idx=header_line; idx<selected.size(); ++idx) 
         {
-            if (idx >= header_line)
-            {
-                sz.first = std::max(sz.first, it.sz.first);
-                sz.second = std::max(sz.second, it.sz.second);
-            }
-            ++idx;
-        }
-        idx = 0;
-        for(auto& it: selected) 
-        {
-            if (idx >= header_line)
-            {
-                if (global_definitions.equal_size_horizontal()) it.sz.first = sz.first;
-                if (global_definitions.equal_size_vertical())   it.sz.second = sz.second;
-            }
-            ++idx;
+            auto& it = selected[idx];
+            if (mbox_width)  it.sz.first = mbox_width;
+            if (mbox_height) it.sz.second = mbox_height;
         }
     }
 

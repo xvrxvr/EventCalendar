@@ -4,8 +4,8 @@
 
 struct ButtonsSetup {
     const TextBoxDraw::TextGlobalDefinition not_pressed;  // Setup for not pressed button
-    uint16_t fg_color_pressed = 0;                        // FG color for pressed button (rgb565 hex string)
-    uint16_t bg_color_pressed = 0xAFD5;                   // BG color for pressed button (rgb565 hex string)
+    uint16_t fg_color_pressed = 0xFE78;                   // FG color for pressed button (rgb565 hex string)
+    uint16_t bg_color_pressed = 0x0BC1;                   // BG color for pressed button (rgb565 hex string)
     uint16_t gray_area_color = rgb(0x40, 0x40, 0x40);     // Color of circle area around button
     uint8_t gray_area_width = 2;                          // Width/Height (in pixel) or circle area around button
     uint8_t press_shift = 3;                              // Shift (x/y) of image of pressed button relative unpressed one
@@ -16,7 +16,7 @@ struct ButtonsSetup {
 extern ButtonsSetup global_buttons_setup;
 
 class Buttons {
-    static constexpr int MAX_ROWS = 4;
+    static constexpr int MAX_ROWS = 5;
 
     enum ButtonOption : uint8_t {
         BO_None,
@@ -47,6 +47,8 @@ class Buttons {
         result.shadow_width -= bs.press_shift;
         return result;
     }
+
+    TextBoxDraw::TextsParser& pars_init(TextBoxDraw::TextsParser&);
 
     void init(bool radiobuttons)
     {
@@ -87,14 +89,9 @@ public:
 
     Buttons& add_button(const char* text, int value, bool is_dos_text, bool pressed=false)
     {
-        Prn tmp;
-        if (!is_dos_text)
-        {
-            tmp.strcpy(text);
-            utf8_to_dos(tmp.c_str());
-            text = tmp.c_str();
-        }
+        int shift = buf.length();
         buf.cat_printf("%s\n", text);
+        if (!is_dos_text) buf.utf8_to_dos(shift);
         if (pressed) cur_pressed = buttons_indexes.size();
         buttons_indexes.push_back(value);
         return *this;
