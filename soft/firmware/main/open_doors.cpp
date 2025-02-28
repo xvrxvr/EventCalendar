@@ -7,6 +7,7 @@
 #include "icons.h"
 #include "interactive.h"
 
+#if 0
 using namespace GridManager;
 
 static const char TAG[]= "door";
@@ -238,13 +239,17 @@ void DoorGrid::open_door(LCD& lcd)
         working_state.sync();
     }
 }
+#endif
 
 uint32_t open_door(int door_index)
 {
+/*
     DoorGrid grid(door_index);
     grid.init();
     for(;;)
     {
         if (auto res = grid.run_activity()) return res;
     }
+*/
+    return 0;
 }

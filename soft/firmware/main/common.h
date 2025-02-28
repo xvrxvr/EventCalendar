@@ -168,10 +168,11 @@ inline constexpr uint32_t bit(int idx) {return 1 << idx;}
 
 // In file open_doors.cpp
 enum OpenDoorResult {
-    ODR_Opened      = 0x100,    // Door was opened
-    ODR_Finished    = 0x200,    // User exit by 'X' icon
-    ODR_Timeout     = 0x400,    // Exit by timeout
-    ODR_Login       = 0x800,    // New user logged in. User ID in low 5 bit
+    ODR_Opened      = 0x0100,    // Door was opened. Door index in low 3 bits or FF if door index not known
+    ODR_Finished    = 0x0200,    // User exit by 'X' icon
+    ODR_Timeout     = 0x0400,    // Exit by timeout
+    ODR_Login       = 0x0800,    // New user logged in. User ID in low 5 bit
+    ODR_Touch       = 0x1000     // y in low byte, x in high 9 bits
 };
 
 // Run interactive GUI for Door open.
