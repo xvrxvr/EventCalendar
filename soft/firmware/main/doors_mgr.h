@@ -51,7 +51,7 @@ public:
     virtual const char* get_user_text_dos(int door_index) = 0;
 
     void open_physical_door(int index);
-    void set_active_doors(uint8_t active_doors);
+    void set_active_doors(uint8_t active_doors, bool do_sync=true);
     void update_doors_texts(uint8_t doors);
 
     uint32_t activity_get_actions();

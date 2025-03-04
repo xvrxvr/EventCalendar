@@ -68,14 +68,14 @@ void DoorGrid::init(uint8_t active_doors_)
         set_cell_id(rc.row, rc.col, idx);
     }
 
-    set_active_doors(active_doors_);
+    set_active_doors(active_doors_, false);
 
     Activity::LCDAccess lcda(NULL);
     auto& lcd = lcda.access();
     set_coord(lcd, GridManager::Rect{0, 0, RES_X, RES_Y});
     lcd.set_bg(0);
 
-    if ((options & (DGO_CloseLabelTopRight|DGO_CloseLabelMiddle)) && !(options|DGO_CloseLabel2ndTry)) draw_icon(lcd);
+    if ((options & (DGO_CloseLabelTopRight|DGO_CloseLabelMiddle)) && !(options & DGO_CloseLabel2ndTry)) draw_icon(lcd);
 }
 
 void DoorGrid::sync()
@@ -113,16 +113,21 @@ void DoorGrid::open_physical_door(int door_index)
         stage = S_WaitForReopen;
         if (options & DGO_CloseLabel2ndTry) draw_icon(Lcd());
     }
+    else
+    {
+        stage = S_WaitForOpen;
+    }
     sync();
 }
 
-void DoorGrid::set_active_doors(uint8_t active_doors)
+void DoorGrid::set_active_doors(uint8_t active_doors, bool do_sync)
 {
     for(int idx=0; idx<8; ++idx, active_doors >>= 1)
     {
         auto rc = enc[idx];
         set_cell_box(rc.row, rc.col, active_doors&1);
     }
+    if (do_sync) sync();
 }
 
 void DoorGrid::update_doors_texts(uint8_t doors)
@@ -162,7 +167,7 @@ bool DoorGrid::is_close_icon(const Action& act)
 
 uint32_t DoorGrid::activity_process(Activity &activity)
 {
-    bool is_running = stage == S_WaitForOpen && stage == S_WaitForReopen;
+    bool is_running = stage == S_WaitForOpen || stage == S_WaitForReopen || time_to_reengage_sol;
     activity.setup_watchdog(is_running ? 1 : SC_TurnoffDelay);
     Action act = activity.get_action();
     switch(act.type)
@@ -173,13 +178,12 @@ uint32_t DoorGrid::activity_process(Activity &activity)
             sync();
             break;
         case AT_TouchDown:
-            if (is_close_icon(act)) return ODR_Finished;
-            if (!is_running)
             {
+                if (is_close_icon(act)) return ODR_Finished;
                 int door_idx = get_touch(act.touch.x, act.touch.y).id;
-                if (door_idx != -1) return ODR_Opened | (door_idx&7);
+                if (door_idx != -1) return is_running ? 0 : ODR_Opened | (door_idx&7);
+                return ODR_Touch|act.touch.y|(act.touch.x<<23);
             }
-            return ODR_Touch|act.touch.y|(act.touch.x<<23);
         case AT_Fingerprint:
             {
                 int fg_user = act.fp_index >> 2;
@@ -203,7 +207,7 @@ uint32_t DoorGrid::activity_process(Activity &activity)
 // Detect Stage and fill 'stage' member
 void DoorGrid::detect_stage()
 {
-    bool door_not_opened_yet = (stage == S_WaitForOpen || stage == S_Ready);
+    bool door_not_opened_yet = (stage == S_WaitForOpen || stage == S_Ready) || !(options & DGO_2Stage);
     if (time_to_reengage_sol) stage = door_not_opened_yet ? S_WaitForOpen : S_WaitForReopen;
     else stage = door_not_opened_yet ? S_Ready : S_ReadyToReopen;
 }

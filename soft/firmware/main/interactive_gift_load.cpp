@@ -24,7 +24,7 @@ class GiftsDoors : public DoorGrid {
     uint8_t get_active_doors();
 
 public:
-    GiftsDoors() : DoorGrid(DGOProfile_GiftLoad) {}
+    GiftsDoors(int utl) : DoorGrid(DGOProfile_GiftLoad), user_to_load(utl) {}
 
     void init() {DoorGrid::init(get_active_doors());}
 
@@ -37,6 +37,7 @@ public:
 uint8_t GiftsDoors::get_active_doors()
 {
     if (mode == M_Open) {active_doors=0xFF; return 0xFF;}
+    if (mode == M_Simple && user_to_load==-1) {active_doors=0; return 0;}
     active_doors = 0;
     for(int idx=0; idx<8; ++idx)
     {
@@ -78,6 +79,7 @@ void GiftsDoors::process_door_open(int door_index)
 
 void GiftsDoors::process_button_press(int btn_index)
 {
+    if (btn_index < 0) return;
     user_to_load = -1;
     switch(btn_index)
     {
@@ -104,39 +106,46 @@ const char* GiftsDoors::get_user_text_dos(int door_index)
 }
 
 
+#define Lcd() Activity::LCDAccess(NULL).access()
+
+inline const char* trim(const char* name) {if (strlen(name) > 7) ((char*)name)[7]=0; return name;}
+
 void gift_load()
 {
     bg_images.peek_next_bg_image();
     bg_images.draw(Activity::LCDAccess(NULL).access());
 
-    GiftsDoors doors;
+    uint32_t all_users = get_eeprom_users(US_Enabled|US_Paricipated, US_Enabled|US_Paricipated);
+    GiftsDoors doors(all_users == 0x80000000 ? 31 : -1);
     doors.init();
 
     Buttons b(true);
 
-    uint32_t all_users = get_eeprom_users(US_Enabled|US_Paricipated, US_Enabled|US_Paricipated);
     for(int i=0; i<32; ++i)
     {
         if (all_users & bit(i))
         {
-            b.add_button(EEPROMUserName(i).dos(), i, true, all_users == 0x80000000);
+            b.add_button(trim(EEPROMUserName(i).dos()), i, true, all_users == 0x80000000);
         }     
     }
     b.add_button("Открыть", DA_Open, false);
-    b.add_button("Выгрузить", DA_GiftUnload, false);
+    b.add_button("Выгр.", DA_GiftUnload, false);
 
-    auto rect = doors.get_reserved();
-    b.draw(rect.x, rect.y, rect.width, rect.height);
+//    auto rect = doors.get_reserved(false);
+//    printf("rect=%d,%d,%d,%d\n", rect.x, rect.y, rect.width, rect.height);
+//    b.draw(rect.x, rect.y, rect.width, rect.height);
+    b.draw(0, 0, 100, 240);
 
     for(;;)
     {
         Activity activity(doors.activity_get_actions());
         auto action = doors.activity_process(activity);
 
-        switch(action & 0xFFF00)
+        switch(action & 0xFF00)
         {
             case ODR_Opened: doors.process_door_open(action&0xFF); break;
-            case ODR_Touch:  doors.process_button_press(b.press((action>>23)&0xFF, action&0xFF)); break;
+            case ODR_Touch:  doors.process_button_press(b.press(action>>23, action&0xFF)); break;
+            case 0: break;
             default: return;
         }
     }

@@ -298,7 +298,7 @@ void TextLine::word_wrap(std::vector<TextLine> &target, int width, int default_l
                 {
                     if (new_line.empty()) 
                     {
-                        //printf("%s (%d)\n", spl_item.text.data(), spl_item.text.size());
+                        printf("%s (%d). Width=%d\n", spl_item.text.data(), spl_item.text.size(), rest_width);
                         throw WordWrapError("Can't word wrap line - word inside is too long");
                     }
                     trim_back(new_line.back().text);
