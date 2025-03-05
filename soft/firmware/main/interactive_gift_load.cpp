@@ -28,7 +28,7 @@ public:
 
     void init() {DoorGrid::init(get_active_doors());}
 
-    virtual const char* get_user_text_dos(int door_index) override;
+    virtual const char* get_text_dos(const GridManager::MiniCell& cell) override;
 
     void process_door_open(int door_index);
     void process_button_press(int btn_index);
@@ -90,17 +90,18 @@ void GiftsDoors::process_button_press(int btn_index)
     set_active_doors(get_active_doors());
 }
 
-const char* GiftsDoors::get_user_text_dos(int door_index)
+const char* GiftsDoors::get_text_dos(const GridManager::MiniCell& cell)
 {
+    int door_index = cell.id;
     if (door_index < 0 || door_index >= 8) return NULL;
     auto ws = working_state.load_state[door_index];
     if (ws == 0xFF) return NULL;
 
-    prn.strcpy(EEPROMUserName(ws&31).dos());
+    prn.printf("\\#%s",EEPROMUserName(ws&31).dos());
 
     if ((ws & 0xE0) || working_state.total_loaded_gift(ws & 31) > 1) // With counter
     {
-        prn.cat_printf("\n(%d)", (ws >> 5)+1);
+        prn.cat_printf("\n\\#(%d)", (ws >> 5)+1);
     }
     return prn.c_str();
 }

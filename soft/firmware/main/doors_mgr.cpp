@@ -16,10 +16,10 @@ static Geometry doors_geom( Rows()
     << Row()(0, 4)(0,4)(0,4)
 );
 
-#define SPACER_CELL_X 0
-#define SPACER_CELL_Y 4
+#define SPACER_CELL_X 4
+#define SPACER_CELL_Y 0
 
-#define SPACER_CELL SPACER_CELL_X,SPACER_CELL_Y
+#define SPACER_CELL SPACER_CELL_Y,SPACER_CELL_X
 
 static BoxDef doors_box{
     .box_defs = {
@@ -94,8 +94,8 @@ void DoorGrid::draw_icon(LCD& lcd)
         case DGO_CloseLabelTopRight: x=RES_X-32; y=0; break;
         case DGO_CloseLabelMiddle: 
         {
-            auto rect = get_cell_coord_int(SPACER_CELL);
-            x=rect.x+(32-rect.width)/2; y=rect.y;
+            auto rect = greed2screen(get_cell_coord_int(SPACER_CELL));
+            x=rect.x+(rect.width-32)/2; y=rect.y;
             break;
         }
         default: return;
@@ -118,6 +118,7 @@ void DoorGrid::open_physical_door(int door_index)
         stage = S_WaitForOpen;
     }
     sync();
+    draw_downcount();
 }
 
 void DoorGrid::set_active_doors(uint8_t active_doors, bool do_sync)
@@ -174,8 +175,8 @@ uint32_t DoorGrid::activity_process(Activity &activity)
     {
         case AT_WatchDog:
             if (!is_running) return ODR_Timeout;
-            invalidate(SPACER_CELL);
-            sync();
+            draw_downcount();
+            if (!time_to_reengage_sol) sync();
             break;
         case AT_TouchDown:
             {
@@ -225,11 +226,24 @@ void DoorGrid::setup_cell()
     change_box(1, s);
 }
 
-const char* DoorGrid::get_text_dos(const MiniCell& cell)
+void DoorGrid::draw_downcount()
 {
-    if (cell.id != -1) return get_user_text_dos(cell.id);
-    if (!time_to_reengage_sol) return "  ";
-    sprintf(txt, "%2d", time_to_reengage_sol&63);
-    return txt;
-}
+    auto rect = greed2screen(get_cell_coord_int(SPACER_CELL));
+    if (!time_to_reengage_sol) strcpy(txt, "   "); else
+    if (time_to_reengage_sol < 10) snprintf(txt, sizeof(txt), " %d ", time_to_reengage_sol);
+    else snprintf(txt, sizeof(txt), "%d", time_to_reengage_sol);
 
+    int len = strlen(txt);
+    int sym_unit = options & DGO_CloseLabelMiddle ? 8 : 16;
+
+    rect.x += (rect.width-len*sym_unit)/2;
+    if (options & DGO_CloseLabelMiddle) rect.y += rect.height-sym_unit*2;
+    else rect.y += (rect.height-sym_unit*2)/2;
+
+    Activity::LCDAccess lcda(NULL);
+    auto &lcd = lcda.access();
+    lcd.set_fg(0xFFFF);
+    lcd.set_bg(box_defs[0].bg_color);
+    if (options & DGO_CloseLabelMiddle) lcd.text(txt, rect.x, rect.y);
+    else lcd.text2(txt, rect.x, rect.y);
+}

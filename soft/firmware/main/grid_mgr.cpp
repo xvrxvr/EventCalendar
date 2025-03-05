@@ -1,6 +1,7 @@
 ﻿#include "common.h"
 
 #include "grid_mgr.h"
+#include "text_draw.h"
 
 namespace GridManager {
 
@@ -224,11 +225,15 @@ void Grid::draw_cell(LCD& lcd, const Cell& cell, int update, int dx, int dy)
     }
     if (text)
     {
-        auto box_reserved = box_defs[cell.box_index].reserved_space();
-        auto box_shift = box_defs[cell.box_index].min_dist_to_text();
-        bx += (cell.box.width - box_reserved.first - strlen(text)*8) / 2 + box_shift.first;
-        by += (cell.box.height - box_reserved.second - 16) / 2 + box_shift.second;
-        lcd.text(text, bx, by);
+        //auto box_reserved = box_defs[cell.box_index].reserved_space();
+        //auto box_shift = box_defs[cell.box_index].min_dist_to_text();
+        //bx += (cell.box.width - box_reserved.first - strlen(text)*8) / 2 + box_shift.first;
+        //by += (cell.box.height - box_reserved.second - 16) / 2 + box_shift.second;
+        //lcd.text(text, bx, by);
+        TextBoxDraw::TextsParser tp(box_defs[cell.box_index]);
+        tp.parse_text(text);
+        tp.eval_box(bx, by, cell.box.width, cell.box.height);
+        tp.draw_to_canvas(lcd);
     }
 }
 

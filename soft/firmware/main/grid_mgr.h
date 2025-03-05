@@ -137,11 +137,19 @@ public:
     // Return rectangle of cell outer part
     Rect get_cell_coord_ext(int row, int col) const {return cell(row, col).box;}
 
-    // Return rectangle of cell internals
+    // Return rectangle of cell internals (greed coordinates)
     Rect get_cell_coord_int(int row, int col) const 
     {
         const auto& c = cell(row, col) ;
         return shrink(c.box, box_defs[c.box_index]);
+    }
+
+    Rect greed2screen(const Rect& rect)
+    {
+        Rect result(rect);
+        result.x += grid_bounds.x;
+        result.y += grid_bounds.y;
+        return result;
     }
 
     // Return reserved space Rect

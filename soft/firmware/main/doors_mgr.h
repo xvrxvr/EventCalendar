@@ -25,7 +25,7 @@ class DoorGrid : public GridManager::Grid {
         S_ReadyToReopen // Door can be reopened
     } stage;
 
-    char txt[3]; // Downcounter. Up to 2 symbols possible
+    char txt[6]; // Downcounter. Up to 3 symbols possible (' N ')
     DoorGridOptions options;
     bool ico_active = false;
 
@@ -40,15 +40,13 @@ class DoorGrid : public GridManager::Grid {
 
     void draw_icon(LCD& lcd);
 
-    virtual const char* get_text_dos(const GridManager::MiniCell& cell) override;
-
     bool is_close_icon(const Action&);
+
+    void draw_downcount();
 
 public:
     DoorGrid(DoorGridOptions options);
     void init(uint8_t active_doors);
-
-    virtual const char* get_user_text_dos(int door_index) = 0;
 
     void open_physical_door(int index);
     void set_active_doors(uint8_t active_doors, bool do_sync=true);
@@ -56,6 +54,8 @@ public:
 
     uint32_t activity_get_actions();
     uint32_t activity_process(Activity&);
+
+    virtual const char* get_text_dos(const GridManager::MiniCell&) override {return NULL;}
 
 /*
     void init()
