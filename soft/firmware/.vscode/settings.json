@@ -3,6 +3,7 @@
     "cmake.configureOnOpen": true,
     "idf.portWin": "COM3",
     "idf.flashType": "UART",
+    "idf.customTask": "W:/home/roman/EventCalendar/soft/firmware/dload_html.bat",
     "files.associations": {
         "array": "cpp",
         "format": "cpp",

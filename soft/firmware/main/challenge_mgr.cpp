@@ -114,6 +114,8 @@ ChallengeMgr::ChUpd ChallengeMgr::update_challenge(uint8_t* first_pack, size_t f
 {
     int ch_index = -1;
     size_t delta = 0;
+    int usr_id = logged_in_user;
+
     if (first_pack[0] == 'i') // It should be
     {
         ch_index = strtol((char*)first_pack+1, NULL, 10);
@@ -149,10 +151,15 @@ ChallengeMgr::ChUpd ChallengeMgr::update_challenge(uint8_t* first_pack, size_t f
             files.push_back({ch_index, logged_in_user});
         }
     }
+    else
+    {
+        if (int uid = get_usr_id(ch_index); uid != -1) usr_id = uid;
+    }
+//printf("Ch update: User=%d, current-user=%d\n", usr_id, logged_in_user);
     FILE* f = fopen(ch_name(ch_index), "w");
     if (!f) return {NULL, -1, 0};
-    fprintf(f, "u%d\n", logged_in_user);
-    files[ch_index].second = logged_in_user;
+    fprintf(f, "u%d\n", usr_id);
+    files[ch_index].second = usr_id;
     return {f, ch_index, fwrite(first_pack,1,first_pack_size, f) + delta};
 }
 
