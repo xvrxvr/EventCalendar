@@ -111,7 +111,6 @@ void DoorGrid::open_physical_door(int door_index)
     if ((options & DGO_2Stage) && stage <= S_Ready) // Move to 2nd stage
     {
         stage = S_WaitForReopen;
-        if (options & DGO_CloseLabel2ndTry) draw_icon(Lcd());
     }
     else
     {
@@ -119,6 +118,7 @@ void DoorGrid::open_physical_door(int door_index)
     }
     sync();
     draw_downcount();
+    if (!ico_active) draw_icon(Lcd());
 }
 
 void DoorGrid::set_active_doors(uint8_t active_doors, bool do_sync)
