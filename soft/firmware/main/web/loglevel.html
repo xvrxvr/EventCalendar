@@ -1,0 +1,162 @@
+﻿$<!DOCTYPE html>
+
+<html><title>Logging system setup</title>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="styles.css">
+
+<style>
+
+input:invalid + span::after {
+  position: absolute;
+  content: "✖";
+  padding-left: 5px;
+}
+
+input:valid + span::after {
+  position: absolute;
+  content: "✓";
+  padding-left: 5px;
+}
+</style>
+
+<script src="jslib.js"></script>
+</head>
+
+<body>
+
+<form>
+
+<table border=0>
+<tr><td>Enable UART print:<td><input id="uart" type="checkbox" onchange="send_update()"></tr>
+<tr><td>Enable Remote (IP) print:<td><input id="remote" type="checkbox" onchange="send_update()"></tr>
+<tr><td>Remote IP:<td><input id="ip" type="text" value="" pattern="^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})?$" onchange="send_update()">
+    <span class="validity"></span>
+    <span id="ErrMsg" class="w3-red"></span>
+</tr>
+<tr><td>Default LOG level:<td>
+<select id="def_ll" onchange="send_update()">
+<option value="None">None</option>
+<option value="Error">Error</option>
+<option value="Warning">Warning</option>
+<option value="Info">Info</option>
+<option value="Debug">Debug</option>
+<option value="Verbose">Verbose</option>
+</select></tr>
+<tr><td>Custom Log levels<td>
+<table id="CustomLevelsTable" class="w3-table-all w3-stripped w3-card-4"></table>
+</table>
+
+</body>
+
+<script>
+
+var cur_table;
+
+function draw_table(table_json)
+{
+    cur_table = table_json;
+    var acc = "<tr><th>TAG<th>Level</tr>";
+    for(const idx in table_json)
+    {
+        const t = table_json[idx];
+        acc += `<tr><td>${t.tag}<td><select onchange="update_table()" id="CustomTableOption_${t.tag}">`;
+        for(const sel of ["None", "Error", "Warning", "Info", "Debug", "Verbose"])
+        {
+            acc += `<option value="${sel}"`;
+            if (t.level == sel) acc += ' selected';
+            acc += `>${sel}</option>`;
+        }
+        acc += `</select><td><i class="fa fa-trash w3-button w3-circle" onclick="remove_table(${idx})"></i></tr>`;
+    }
+    acc += '<tr><td> <i class="fa fa-plus w3-button w3-circle" onclick="add_table()"></i></tr>';
+    I('CustomLevelsTable').innerHTML = acc;
+}
+
+function remove_table(idx)
+{
+    cur_table.splice(idx, 1);
+    draw_table(cur_table);
+    send_update();
+}
+
+function add_table()
+{
+    const new_tag = prompt("New custom Tag", '');
+    if (!new_tag) return;
+    cur_table.push({tag: new_tag, level: 'None'});
+    draw_table(cur_table);
+    send_update();
+}
+
+function update_table()
+{
+    for(var item of cur_table)
+    {
+        const sel = I(`CustomTableOption_${item.tag}`).value;
+        item.level = sel;
+    }
+    send_update();
+}
+
+function get_json(input)
+{
+    I('ip').value = input.IP;
+    I('uart').checked = input.UART;
+    I('def_ll').value = input.DefLL;
+    I('remote').value = input.Remote;
+    draw_table(input.Custom);
+}
+
+
+function send_update()
+{
+    if (!I('ip').checkValidity())
+    {
+        I('ErrMsg').innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<<< Fix this !&nbsp;";
+        return;
+    }
+    else
+    {
+        I('ErrMsg').innerText = "";
+    }
+
+    const upd = {
+        'IP': I('ip').value,
+        'UART': I('uart').checked,
+        'Remote': I('remote').checked,
+        'DefLL': I('def_ll').value,
+        'Custom': cur_table
+    };
+
+//    alert(`New JSON: ${JSON.stringify(upd)}`);
+    send_ajax_request(`LogSystemSet.html?data=${JSON.stringify(upd)}`, (txt) => {
+        if (txt != 'Ok') alert(txt);
+    });
+}
+
+get_json(
+$[LogSystemSetup]
+);
+
+/*
+{
+    IP: '192.168.0.100',
+    UART: true,
+    Remote: true,
+    DefLL: 'Debug',
+    Custom: [
+    {tag: 'Tag1', level:'Error'},
+    {tag: 'Tag2', level:'None'},
+    {tag: 'Tag3', level:'Verbose'}
+]}
+*/
+
+
+</script>
+
+</html>
