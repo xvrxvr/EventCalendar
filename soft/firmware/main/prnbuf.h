@@ -4,6 +4,7 @@ class Prn {
     char* buffer  = NULL;   // Pointer to buffer in memory
     size_t size = 0;        // Filled size of buffer
     size_t allocated = 0;   // Allocated size of buffer (allocated >= size)
+    bool spliced = false;   // Front of buffer was removed
 
     // Round up requested buffer size. Use to avoid too often buffer reallocation
     static size_t new_size(size_t size) {return std::max<size_t>(32, size*3/2 + 8);}
@@ -22,9 +23,6 @@ class Prn {
         buffer = new_buf;
         allocated = new_allocated;
     }
-
-    // Clear buffer and returns memory to system
-    void zap() {delete[] buffer; size=allocated=0;}
 
     // Implementation of formatted print.
     //  shift - Where to print in buffer. Used to implement 2 versions of printf - just simple print and print with concatenation
@@ -85,7 +83,10 @@ public:
     int length() {return size;}
 
     // Clear buffer. Memory not returned to system!
-    void clear() {size=0;}
+    void clear() {size=0; spliced=false;}
+
+    // Clear buffer and returns memory to system
+    void zap() {delete[] buffer; size=allocated=0; spliced=false;}
 
     void utf8_to_dos(int shift=0)
     {
@@ -173,4 +174,27 @@ public:
         va_end(l);
         return *this;
     }
+
+    // Remove data in front of buffer to fit rest in 'req_size' bytes
+    void fit_in(size_t req_size)
+    {
+        if (req_size >= size) return;
+        spliced = true;
+        char* from = strchr(buffer + (size-req_size), '\n');
+        if (!from) {clear(); return;}
+        ++from;
+        ::strcpy(buffer, from);
+        size = strlen(buffer);
+    }
+
+    bool was_spliced() const {return spliced;}
+
+    void swap(Prn& other)
+    {
+        std::swap(buffer, other.buffer);
+        std::swap(size, other.size);
+        std::swap(allocated, other.allocated);
+        std::swap(spliced, other.spliced);
+    }
+
 };

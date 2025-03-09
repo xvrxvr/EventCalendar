@@ -79,6 +79,13 @@ static constexpr const uint8_t EEPROM_LAYOUT_TAG = 2;
 static constexpr const uint8_t RTC_RAM_LAYOUT_TAG = 2;
 static constexpr const uint8_t USERS_LAYOUT_TAG = 1;
 
+enum LogSetupOptions {
+    LSO_DefLogLevelMask = 0x07,
+    LSO_UseIP           = 0x08,
+    LSO_UseUART         = 0x10,
+    LSO_SoftLimit       = 0x20  // Soft limit to allocated memory in Log Print buffer (buffer has no limit
+};
+
 // Global setup (placed at begining of EEPROM)
 struct GolbalSetup {
     // These fields (*_tag) must be first
@@ -92,7 +99,16 @@ struct GolbalSetup {
     uint16_t options;   // Bitset of GlobalOptions
     
     int8_t tz_shift; // Timezone shift (in 15 minutes quantities)
-    uint8_t  guard; // We writes here 0xFF - if we extand this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
+//    uint8_t  guard; // We writes here 0xFF - if we extand this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
+
+    // *** New part - Log Setup ***
+    uint8_t  log_setup_options; // Bitset of LogSetupOptions (FF value is invalid)
+    uint8_t  log_memsize_limit; // In 256 bytes increments
+    uint8_t  log_reserved;
+    uint32_t log_ip;
+
+    uint8_t guard; // We writes here 0xFF - if we extend this structure later and seen 0xFF here after load it will meant that data after this field should be initialized
+
     
     void sync() const; // Save me to EEPROM
 };
@@ -143,6 +159,7 @@ struct WorkingState {
     // If requested slot is empty - emit nothing and return false
     // If 'add_quotes' is true writes JSON complaint representation (quotes around name and 'null' if slot is empty)
     bool write_user_name(class Ans&, int slot_index, bool add_quotes);
+
 
     // Return true if 'guest' type of game active
     static bool is_guest_type();

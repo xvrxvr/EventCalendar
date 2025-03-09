@@ -74,12 +74,14 @@ int utf8_to_dos(char*, int length=-1);
 // Priorities of various tasks
 enum TasksPriority {
     TP_Hardware = 5,    // Handling of HW input
-    TP_WEBPing  = 1     // WEB ping task
+    TP_WEBPing  = 1,    // WEB ping task
+    TP_LogSender= 5     // Log senter task
 };
 
 // task stack sizes
 enum TaskStackSize {
-    TSS_WEBPing = 8192 // WEB Ping task
+    TSS_WEBPing = 8192, // WEB Ping task
+    TSS_LogSender = 2048 // Remote Log sender
 };
 
 // Generic consts
@@ -103,6 +105,9 @@ enum SetupConsts {
     SC_AminPanelTitleGap = 8,// Gap between title line (in Animated panel) and body
     SC_KbMsgShow        = 3, // Time to show message in Keyboard manager (in seconds)
     SC_MultiSelectErr   = 1, // Time to show mesage 'Invalid - try egain" (in seconds)
+    SC_LogTaskWKUP      = 100, // Log task forced waikup time (in ms)
+    SC_ConnectTout      = 10,  // Timeout for reconnect attempt for Remote Logger (in seconds)
+    SC_LogPort          = 5429 // Port of Log server
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1
@@ -182,3 +187,6 @@ uint32_t open_door(int door_index);
 
 // Do upper case (latin & DOS)
 uint8_t upcase(uint8_t);
+
+// Read file into 'dst', return true. If file not exists (or read error) - return false
+bool read_file(Prn& dst, const char* fname);

@@ -38,6 +38,9 @@ input:valid + span::after {
     <span class="validity"></span>
     <span id="ErrMsg" class="w3-red"></span>
 </tr>
+<tr><td>Memory limit (in KB)<td><input id="mem_lim" type="text" value="0.25" pattern="^\d+(\.\d+)?$" onchange="send_update()"></tr><span class="validity"></span>
+<tr><td>Use Soft Limit:<td><input id="soft_lim" type="checkbox" onchange="send_update()"></tr>
+
 <tr><td>Default LOG level:<td>
 <select id="def_ll" onchange="send_update()">
 <option value="None">None</option>
@@ -109,9 +112,10 @@ function get_json(input)
     I('uart').checked = input.UART;
     I('def_ll').value = input.DefLL;
     I('remote').value = input.Remote;
+    I('soft_lim').checked = input.SoftLim;
+    I('mem_lim').value = input.MemLim/4;
     draw_table(input.Custom);
 }
-
 
 function send_update()
 {
@@ -125,11 +129,15 @@ function send_update()
         I('ErrMsg').innerText = "";
     }
 
+    const mem = parseFloat(I('mem_lim').value)*4;
+
     const upd = {
         'IP': I('ip').value,
         'UART': I('uart').checked,
         'Remote': I('remote').checked,
         'DefLL': I('def_ll').value,
+        'SoftLim': I('soft_lim').checked,
+        'MemLim': isNaN(mem) ? 0 : Math.round(mem),
         'Custom': cur_table
     };
 
@@ -149,6 +157,8 @@ $[LogSystemSetup]
     UART: true,
     Remote: true,
     DefLL: 'Debug',
+    SoftLim: true,
+    MemLim: 1,
     Custom: [
     {tag: 'Tag1', level:'Error'},
     {tag: 'Tag2', level:'None'},

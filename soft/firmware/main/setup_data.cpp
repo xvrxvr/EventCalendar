@@ -44,6 +44,9 @@ static void init_eeprom_data()
 
         .tz_shift = 0, // TZ is 0 (GMT)
 
+        .log_setup_options = LSO_UseUART,
+        .log_memsize_limit = 1,
+
         .guard = 0xFF
     };
     global_setup.sync();
@@ -80,7 +83,16 @@ static void load_rtc_data()
 static void load_eeprom_data()
 {
     EEPROM::read(ES_Global, global_setup);
-    // Check for 'guard' field in a future
+    // 'guard' check (for previous version)
+    if (global_setup.log_setup_options == 0xFF)
+    {
+        global_setup.log_setup_options = LSO_UseUART;
+        global_setup.log_ip = 0;
+        global_setup.log_reserved = 0;
+        global_setup.log_memsize_limit = 1;
+        global_setup.sync();
+    }
+    // Check for future 'guard' fields
     EEPROM::read(ES_Touch, touch_setup);
     LOAD_STRING(ES_SSID, ssid);
     LOAD_STRING(ES_Passwd, passwd);

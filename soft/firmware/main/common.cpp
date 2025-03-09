@@ -126,3 +126,16 @@ uint8_t upcase(uint8_t sym)
     if (sym >= 0xE0 && sym <= 0xEF) return sym - (0xE0-0x90);
     return sym == 0xF1 ? 0xF0 : sym;
 }
+
+// Read file into 'dst', return true. If file not exists (or read error) - return false
+bool read_file(Prn& dst, const char* fname)
+{
+    struct stat st;
+    if (stat(fname, &st)) return false;
+    FILE* f = fopen(fname, "rb");
+    if (!f) return false;
+    dst.fill(0, st.st_size);
+    bool ok = st.st_size == fread(dst.c_str(), 1, st.st_size, f);
+    fclose(f);
+    return ok;
+}
