@@ -1,23 +1,25 @@
 # EventCalendar
-Event Calendar project
+Event Calendar Project
 
-This project coinsists of dedicated hardware device (with ESP32 mcu, LCD, fingerprint sensor and bunch of solenoids which used as control lockes for set of small doors)
-Each door closes separated box with some gift.
-User should solve some challenge to open door.
+This project is a custom hardware device (with an ESP32 microcontroller, an LCD, a fingerprint sensor, and a bunch of solenoids that are used as control locks for a set of small doors)
+Each door closes a separate box with some kind of gift.
+The user must solve some kind of puzzle to open the door.
 
-## Contents of project
+## Project Contents
 
-Directories content:
+Directory Contents:
 
-* 3D contains 3D model for panel around LCD
-* sch - Schema. For now PCB version is outdated (some schema modification was done after PCB was provided). Also 2 schems exists:
-  * **ev_cal** - Calendar itself
-  * **vboost** - Voltage boost for solenoids (it pluged in instead of L1)
-* soft - Software. 3 directory included:
-  * expr_quest - Prototype (in Python) for evaluation challenge
+* 3D contains a 3D model for the panel around the LCD
+* sch - Schematic. The PCB version is outdated at this point (some schematic changes were made after the PCB was provided). There are also 2 schematics:
+  * **ev_cal** - The calendar itself
+  * **vboost** - Voltage boost for the solenoids (it is connected instead of L1)
+* soft - Software. 6 directories included:
+  * expr_quest - Prototype (in Python) for benchmark testing
   * firmware - Firmware (VS Code + IDF plugin)
-  * sg - Sign generator scripts
+  * sg - Character generator scripts
   * tst - Hardware test (VS Code + IDF plugin)
-* spice - Spice mode for Voltage booster
+  * bloader - OTA loader (OTA is also supported in the main software)
+  * ext_logger - External logger client. The external logging system is currently under development. It allows forwarding all internal UART messages to a remote TCP server. This system (with OTA capability) allows creating and debugging new software versions without special software hardware.
+* spice - Spice mode for the voltage amplifier
 
 
