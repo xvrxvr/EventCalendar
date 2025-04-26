@@ -107,7 +107,8 @@ enum SetupConsts {
     SC_MultiSelectErr   = 1, // Time to show mesage 'Invalid - try egain" (in seconds)
     SC_LogTaskWKUP      = 100, // Log task forced waikup time (in ms)
     SC_ConnectTout      = 10,  // Timeout for reconnect attempt for Remote Logger (in seconds)
-    SC_LogPort          = 5429 // Port of Log server
+    SC_LogPort          = 5429, // Port of Log server
+    SC_LogStartLim      = 1024  // Start memory limit for Remote Log system (to prevent hang on memory overflow on startup)
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1

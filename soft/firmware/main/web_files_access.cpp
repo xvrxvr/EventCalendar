@@ -17,6 +17,8 @@ CDNDef decode_web_files_access_function(const char* key)
     extern const char jslib_js_end[] asm("_binary_jslib_js_end");
     extern const char load_gifts_html_start[] asm("_binary_load_gifts_html_start");
     extern const char load_gifts_html_end[] asm("_binary_load_gifts_html_end");
+    extern const char loglevel_html_start[] asm("_binary_loglevel_html_start");
+    extern const char loglevel_html_end[] asm("_binary_loglevel_html_end");
     extern const char message_html_start[] asm("_binary_message_html_start");
     extern const char message_html_end[] asm("_binary_message_html_end");
     extern const char open_door_html_start[] asm("_binary_open_door_html_start");
@@ -59,7 +61,18 @@ CDNDef decode_web_files_access_function(const char* key)
                       default: return CDNDef{};
                   }
         case 'j': if (strcmp(key+1, "slib.js") == 0) {return CDNDef{jslib_js_start, jslib_js_end};} else {return CDNDef{};}
-        case 'l': if (strcmp(key+1, "oad_gifts.html") == 0) {return CDNDef{load_gifts_html_start, load_gifts_html_end};} else {return CDNDef{};}
+        case 'l':
+            switch(key[1])
+            {
+                case 'o':
+                    switch(key[2])
+                    {
+                        case 'a': if (strcmp(key+3, "d_gifts.html") == 0) {return CDNDef{load_gifts_html_start, load_gifts_html_end};} else {return CDNDef{};}
+                        case 'g': if (strcmp(key+3, "level.html") == 0) {return CDNDef{loglevel_html_start, loglevel_html_end};} else {return CDNDef{};}
+                        default: return CDNDef{};
+                    }
+                default: return CDNDef{};
+            }
         case 'm': if (strcmp(key+1, "essage.html") == 0) {return CDNDef{message_html_start, message_html_end};} else {return CDNDef{};}
         case 'o': if (strcmp(key+1, "pen_door.html") == 0) {return CDNDef{open_door_html_start, open_door_html_end};} else {return CDNDef{};}
         case 's':

@@ -6,6 +6,7 @@
 #include "bg_image.h"
 #include "challenge_mgr.h"
 #include "activity.h"
+#include "log_control.h"
 
 static const char* TAG = "web-vars";
 
@@ -326,3 +327,9 @@ void WebOptions::set_fg_editor_user(int user_index)
   FGEditorFillingBox = -1;  // Index of filling now box (or -1)
   FGEditorFillingCirc = -1; // Index of circle filled rigth now
 }
+
+void WebOptions::LogSystemSetup(Ans& ans) // Ext Log setup data
+{
+  log_send_setup(ans);
+}
+

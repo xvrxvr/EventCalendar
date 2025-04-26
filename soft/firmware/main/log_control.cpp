@@ -5,6 +5,8 @@
 #include <cJSON.h>
 #include "lwip/sockets.h"
 
+#include "log_control.h"
+
 static const char* TAG = "LogMgr";
 
 static vprintf_like_t prev_logger;
@@ -18,6 +20,8 @@ static SemaphoreHandle_t log_sema;
 static Prn log_bufs[2];
 static int log_buf_idx=0;
 
+static bool locked = true; // Limit max Prn buffer size to 1K
+
 // JSON format (object):
 // {
 //    IP: '192.168.0.100',
@@ -26,6 +30,7 @@ static int log_buf_idx=0;
 //    DefLL: 'Debug',
 //    SoftLim: true,
 //    MemLim: 1,
+//    Locked: true,
 //    Custom: [
 //      {tag: 'Tag1', level:'Error'},
 //      {tag: 'Tag2', level:'None'},
@@ -78,6 +83,12 @@ public:
 #define GET_S(var, nm) GET(nm, String) const char* var = cJSON_GetStringValue(obj_item)
 #define GET_I(var, nm) GET(nm, Number) int var = obj_item->valueint
 
+inline uint32_t prn_buf_size()
+{
+    uint32_t size = global_setup.log_memsize_limit*256;
+    return (locked && size > SC_LogStartLim) ? SC_LogStartLim : size;
+}
+
 static void process_defaults_level()
 {
     esp_log_level_set("*", esp_log_level_t(global_setup.log_setup_options&LSO_DefLogLevelMask));
@@ -127,7 +138,7 @@ static void log_stop_ip_logger()
     remote_logger_active = false;
 }
 
-void log_task( void * )
+static void log_task( void * )
 {
     int sock = -1;
 
@@ -193,7 +204,7 @@ void log_task( void * )
         auto& P = log_bufs[log_buf_idx];
         if (P.was_spliced()) {++log_spliced; write("...\n", 4);}
         write(P.c_str(), P.length());
-        if (global_setup.log_memsize_limit && P.length() > global_setup.log_memsize_limit) P.zap();
+        if (prn_buf_size() && P.length() > prn_buf_size()) P.zap();
         else P.clear();
     }
 }
@@ -226,9 +237,9 @@ static int my_logger(const char *fmt, va_list lst)
             int ll = L.length();
             L.cat_vprintf(fmt, lst);
             result = L.length() - ll;
-            if (global_setup.log_memsize_limit && (!remote_logger_active || !(global_setup.log_setup_options&LSO_SoftLimit)))
+            if (prn_buf_size() && (!remote_logger_active || !(global_setup.log_setup_options&LSO_SoftLimit)))
             {
-                L.fit_in(global_setup.log_memsize_limit*256);
+                L.fit_in(prn_buf_size());
             }
             if (log_task_handle) xTaskNotify(log_task_handle, 1, eSetValueWithOverwrite);
             in_sender = false;
@@ -246,7 +257,7 @@ static int my_logger(const char *fmt, va_list lst)
 #define JSON_PARSER(str) std::unique_ptr<cJSON, void (*)(cJSON *item)> JJ(cJSON_Parse(str), cJSON_Delete); cJSON* J = JJ.get()
 
 // Extract info from EEPROM and file and setup Log
-void process_initial_log_setup()
+static bool process_initial_log_setup_imp()
 {
     log_sema = xSemaphoreCreateMutex();
     prev_logger = esp_log_set_vprintf(my_logger);
@@ -262,11 +273,19 @@ void process_initial_log_setup()
     {
         process_defaults_level();
     }
+    return true;
+}
+
+void process_initial_log_setup()
+{
+    static bool dummy = process_initial_log_setup_imp();
+    (void) dummy;
 }
 
 // Process JSON with Log setup from WEB
 void process_log_setup(const char* json)
 {
+    process_initial_log_setup();
     JSON_PARSER(json);
     if (!J)
     {
@@ -282,6 +301,8 @@ void process_log_setup(const char* json)
     GET_S(ip, "IP");
     GET_S(def_ll, "DefLL");
     GET_I(mem_lim, "MemLim");
+    GET_B(lck, "Locked");
+    locked = lck;
 
     bool upd_glob_setup = false;
     bool upd_ip_setup = false;
@@ -336,7 +357,8 @@ void process_log_setup(const char* json)
 
 void log_send_setup(Ans& ans)
 {
-    ans << UTF8 << "IP:'" << (global_setup.log_ip ? inet_ntoa(global_setup.log_ip) : "") << "',";
+    process_initial_log_setup();
+    ans << UTF8 << "{IP:'" << (global_setup.log_ip ? inet_ntoa(global_setup.log_ip) : "") << "',";
 #define BIT_VAL(json, fld) ans << UTF8 << #json ":" << (global_setup.log_setup_options & fld ? "true":"false") << ","
 #define INT_VAL(json, fld) ans << UTF8 << #json ":" << global_setup.fld << ","
     BIT_VAL(UART, LSO_UseUART);
@@ -345,18 +367,22 @@ void log_send_setup(Ans& ans)
     INT_VAL(MemLim, log_memsize_limit);
 #define LL(json, val) ans << UTF8 << #json ":'" << ll2str(esp_log_level_t(val)) << "',"
     LL(DefLL, global_setup.log_setup_options & LSO_DefLogLevelMask);
+    ans << UTF8 << "Locked:" << (locked ? "true,":"false,");
     ans << UTF8 << "Custom:";
     Prn dst;
     if (read_file(dst, log_file_name)) ans << UTF8 << dst.c_str();
     else ans << UTF8 << "[]";
+    ans << UTF8 << "}";
 }
 
 void log_send_status(Ans& ans, bool with_clear)
 {
+    process_initial_log_setup();
     LOCK;
     ans << UTF8 
         << "{"
             << "RemoteActive:" << (remote_logger_active ? "true," : "false,")
+            << "Locked:" << (locked ? "true,":"false,")
             << "DataSent:" << data_sent << ","
             << "MaxRemoteBuffer:" << max_remote_buffer << ","
             << "Sliced:" << log_spliced
@@ -372,6 +398,7 @@ void log_send_status(Ans& ans, bool with_clear)
 // Send accumulated so far Log
 void log_send_data(Ans& ans)
 {
+    process_initial_log_setup();
     Prn buf;
     {
         LOCK;

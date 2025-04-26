@@ -9,6 +9,7 @@
 #include "bg_image.h"
 #include "tar_stream.h"
 #include "challenge_list.h"
+#include "log_control.h"
 
 #include "web_ajax_classes.h"
 
@@ -692,4 +693,23 @@ void AJAXDecoder_test_challenge::run()
     //printf("send WE\n");
     Activity::/*queue_action*/push_action(Action{.type=AT_WEBEvent, .web={.event=WE_RiddleTest, .p1=int(arg_id)}});
     *this << UTF8 << "Ok";
+}
+
+// G(LogSystemStatus, P1(I, clear))
+void AJAXDecoder_LogSystemStatus::run()
+{
+    log_send_status(*this, arg_clear != 0);
+}
+
+// G(LogSystemSet, P1(SU, json))
+void AJAXDecoder_LogSystemSet::run()
+{
+    process_log_setup(arg_json);
+    *this << UTF8 << "Ok";
+}
+
+// G(LogSystemLogData, P0)
+void AJAXDecoder_LogSystemLogData::run()
+{
+    log_send_data(*this);
 }

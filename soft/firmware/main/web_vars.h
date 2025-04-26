@@ -67,6 +67,8 @@ struct WebOptions {
     uint8_t FGEditorFilledCircs; // Bitscale of filled circles  (index is <block-number>*2 + <circle-number>)
     int8_t FGEditorFillingCirc; // Index of circle filled rigth now
 
+    void LogSystemSetup(Ans&); // Ext Log setup data
+
     void decode_inline(const char* ptr, Ans&);
     uint32_t get_condition(const char* ptr, Ans&);
 

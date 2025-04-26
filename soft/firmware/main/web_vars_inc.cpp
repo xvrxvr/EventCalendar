@@ -62,7 +62,18 @@ void WebOptions::decode_inline(const char* key, Ans& ans)
                       default: err_novar(key); return;
                   }
         case 'I': if (strcmp(key+1, "nterRoundTime") == 0) {ans.write_int(InterRoundTime()); return;} else {err_novar(key); return;}
-        case 'L': if (strcmp(key+1, "oadedGiftDoors") == 0) {LoadedGiftDoors(ans); return;} else {err_novar(key); return;}
+        case 'L':
+            switch(key[1])
+            {
+                case 'o':
+                    switch(key[2])
+                    {
+                        case 'a': if (strcmp(key+3, "dedGiftDoors") == 0) {LoadedGiftDoors(ans); return;} else {err_novar(key); return;}
+                        case 'g': if (strcmp(key+3, "SystemSetup") == 0) {LogSystemSetup(ans); return;} else {err_novar(key); return;}
+                        default: err_novar(key); return;
+                    }
+                default: err_novar(key); return;
+            }
         case 'M':
             switch(key[1])
             {
@@ -145,7 +156,18 @@ uint32_t WebOptions::get_condition(const char* key, Ans& ans)
                       default: err_novar(key); return 0;
                   }
         case 'I': if (strcmp(key+1, "nterRoundTime") == 0) {return InterRoundTime();} else {err_novar(key); return 0;}
-        case 'L': if (strcmp(key+1, "oadedGiftDoors") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
+        case 'L':
+            switch(key[1])
+            {
+                case 'o':
+                    switch(key[2])
+                    {
+                        case 'a': if (strcmp(key+3, "dedGiftDoors") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
+                        case 'g': if (strcmp(key+3, "SystemSetup") == 0) {err_type_wrong(key); return 0;} else {err_novar(key); return 0;}
+                        default: err_novar(key); return 0;
+                    }
+                default: err_novar(key); return 0;
+            }
         case 'M':
             switch(key[1])
             {

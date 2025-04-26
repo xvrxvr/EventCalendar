@@ -32,6 +32,7 @@ input:valid + span::after {
 <form>
 
 <table border=0>
+<tr><td>Locked:<td><input id="lock" type="checkbox" onchange="send_update()"></tr>
 <tr><td>Enable UART print:<td><input id="uart" type="checkbox" onchange="send_update()"></tr>
 <tr><td>Enable Remote (IP) print:<td><input id="remote" type="checkbox" onchange="send_update()"></tr>
 <tr><td>Remote IP:<td><input id="ip" type="text" value="" pattern="^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})?$" onchange="send_update()">
@@ -111,6 +112,7 @@ function get_json(input)
     I('ip').value = input.IP;
     I('uart').checked = input.UART;
     I('def_ll').value = input.DefLL;
+    I('locked').checked = input.Locked;
     I('remote').value = input.Remote;
     I('soft_lim').checked = input.SoftLim;
     I('mem_lim').value = input.MemLim/4;
@@ -136,6 +138,7 @@ function send_update()
         'UART': I('uart').checked,
         'Remote': I('remote').checked,
         'DefLL': I('def_ll').value,
+        'Locked': I('locked').checked,
         'SoftLim': I('soft_lim').checked,
         'MemLim': isNaN(mem) ? 0 : Math.round(mem),
         'Custom': cur_table
@@ -159,6 +162,7 @@ $[LogSystemSetup]
     DefLL: 'Debug',
     SoftLim: true,
     MemLim: 1,
+    Locked: true,
     Custom: [
     {tag: 'Tag1', level:'Error'},
     {tag: 'Tag2', level:'None'},
