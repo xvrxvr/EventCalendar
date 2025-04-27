@@ -108,7 +108,8 @@ enum SetupConsts {
     SC_LogTaskWKUP      = 100, // Log task forced waikup time (in ms)
     SC_ConnectTout      = 10,  // Timeout for reconnect attempt for Remote Logger (in seconds)
     SC_LogPort          = 5429, // Port of Log server
-    SC_LogStartLim      = 1024  // Start memory limit for Remote Log system (to prevent hang on memory overflow on startup)
+    SC_LogStartLim      = 1024, // Start memory limit for Remote Log system (to prevent hang on memory overflow on startup)
+    SC_CoreFileChunk    = 4096, // Size of chunk of CoreFile when sending them over HTTP
 };
 
 #define FINGERPRINT_SENSOR_NORMAL_COLOR ALC_Breathing, ALC_Blue, 1

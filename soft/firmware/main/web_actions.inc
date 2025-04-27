@@ -77,6 +77,7 @@ G(test_challenge, P1(I, id))
 G(LogSystemSet, P1(SU, json))
 G(LogSystemStatus, P1(I, clear))
 G(LogSystemLogData, P0)
+G(LogSystemCoreDump, P0)
 
 #undef G
 #undef P

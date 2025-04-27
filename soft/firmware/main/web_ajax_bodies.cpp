@@ -1,6 +1,8 @@
 ﻿#include "common.h"
 #include <sys/stat.h>
 #include <esp_ota_ops.h>
+#include <esp_core_dump.h>
+
 #include "hadrware.h"
 #include "setup_data.h"
 #include "web_vars.h"
@@ -649,6 +651,7 @@ size_t AJAXDecoder_fw_update::consume_stream(uint8_t* data, size_t size, bool eo
                 esp_ota_set_boot_partition(( esp_partition_t*)opaque_1v);
                 opaque_2 = 0;
                 write_string_utf8("Ok");
+                esp_core_dump_image_erase(); // We have new image, so old CoreDump file no longer relevant
                 reboot();
                 return 0;
             }
@@ -712,4 +715,10 @@ void AJAXDecoder_LogSystemSet::run()
 void AJAXDecoder_LogSystemLogData::run()
 {
     log_send_data(*this);
+}
+
+// G(LogSystemCoreDump, P0)
+void AJAXDecoder_LogSystemCoreDump::run()
+{
+    log_send_coredump(*this, alloc_buf(SC_CoreFileChunk));
 }

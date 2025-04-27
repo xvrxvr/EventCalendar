@@ -212,7 +212,13 @@ static esp_err_t start_http_data_server()
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.ctrl_port++;
-    config.max_uri_handlers = 40;
+    config.max_uri_handlers = 7
+#define G(id, args)   +1
+#define GZ(id, args)  +1
+#define P(id, args)   +1
+#include "web_actions.inc"
+    ;
+
     config.max_open_sockets = 13;
 
     /* Use the URI wildcard matching function in order to

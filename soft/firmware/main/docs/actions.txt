@@ -225,7 +225,7 @@ $[FGEditorFilledBoxes] - Bitscale of filled boxes for current user in FG editor
 $[FGEditorFillingBox] - Index of filling now box (or -1)
 $[FGEditorFilledCircs] - Bitscale of filled circles  (index is <block-number>*2 + <circle-number>)
 $[FGEditorFillingCirc] - Index of circle filled rigth now
-
+$[LogSystemSetup] - Current state of Lopg System setup data (JSON, same format as in LogSystemSet action)
 ====================================================================================================
 
 WebSocket:  ws://.../notify
@@ -327,3 +327,69 @@ state: "state" - State to set:
     filling - Circle now is filling
     bad - Trying to enter invaid data (duplicate, finger lost, etc)
     quality - Data is eneterd have bad quality
+---------------------------------------------
+
+*** Other ***
+---------------
+
+bkp_restore - Restore all files from backup (tar file) [Stream type]
+------------------------------
+
+bkp_save - Save Backup.
+Produce tar file with all files in local file system
+
+------------------------------
+
+fw_update - OTA update [Stream].
+Takes binary file with new FW image
+On successfull update clear current CoreDump file (if any) and restart system
+------------------------------
+
+test_challenge - Run test of challenge on local LCD
+
+Fields:
+    id [int] - ID of challenge to test
+------------------------------
+
+LogSystemSet - Setup Log system.
+
+Fields:
+    json [string with JSON] - Setup data
+
+{
+   IP: '192.168.0.100',                  - IP of remote Log server
+   UART: true,                           - Duplicate TCP log data to local UART
+   Remote: true,                         - Send Log data to TCP remote server
+   DefLL: 'Debug',                       - Default Log Level
+   SoftLim: true,                        - Activate Soft limit. If true Log system will not trim log to MemLimit size if remote TCP server offline (memory overflow possible!)
+   MemLim: 1,                            - Memory limit for Logs to accumulate between send to remote TCP server (in 256 bytes chunks)
+   Locked: true,                         - If true then limit maximum size of Log buffer to 1K (to prevent memory overflow right after start - you need to manually unlock it in WEB). Set automatically at start.
+   Custom: [                             - Log levels for Loggers (by tags)
+     {tag: 'Tag1', level:'Error'},
+     {tag: 'Tag2', level:'None'},
+     {tag: 'Tag3', level:'Verbose'}
+   ]
+}
+------------------------------
+
+LogSystemStatus - Get status of Log system (JSON)
+
+Fields:
+    clear [int] - Set to 1 to clear accumulated status
+
+JSON:
+{
+ RemoteActive: true/false       - Is remote TCP server connected to
+ Locked: true/false             - If 'lock' mode is active
+ DataSent: <int>                - Total amount of Log data sent (in symbols)
+ MaxRemoteBuffer: <int>         - Maxiimum size of remote buffer (can be more that <setup>.MemLim if 'SoftLim' is active)
+ Sliced: <int>                  - How many times Log was truncated because of buffer overflow
+ CoreDump: true/false           - Is CoreDump file available
+}
+------------------------------
+
+LogSystemLogData - Get accumulated so far Log data as HTML snippets
+------------------------------
+
+LogSystemCoreDump - Get current CoreDump (as binary file). Return Error 404 if no active CoreDump available
+------------------------------

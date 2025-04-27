@@ -16,3 +16,7 @@ void log_send_status(Ans& ans, bool with_clear);
 
 // Accumulated log (as HTML piece). Action LogSystemLogData
 void log_send_data(Ans& ans);
+
+// Send content of CoreDump file (if any)
+// buf is a bufer to CoreDump read, Size is SC_CoreFileChunk
+void log_send_coredump(Ans& ans, char* buf);

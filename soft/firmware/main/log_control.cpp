@@ -4,8 +4,11 @@
 
 #include <cJSON.h>
 #include "lwip/sockets.h"
+#include "esp_core_dump.h"
 
 #include "log_control.h"
+
+#include <esp_core_dump.h>
 
 static const char* TAG = "LogMgr";
 
@@ -385,13 +388,43 @@ void log_send_status(Ans& ans, bool with_clear)
             << "Locked:" << (locked ? "true,":"false,")
             << "DataSent:" << data_sent << ","
             << "MaxRemoteBuffer:" << max_remote_buffer << ","
-            << "Sliced:" << log_spliced
+            << "Sliced:" << log_spliced << ","
+            << "CoreDump:" << (esp_core_dump_image_check() == ESP_OK ? "true" : "false")
         << "}";
     if (with_clear)
     {
         data_sent = 0;
         max_remote_buffer = 0;
         log_spliced = 0;
+    }
+}
+
+extern "C" esp_err_t esp_core_dump_partition_and_size_get(const esp_partition_t **partition, uint32_t* size);
+
+void log_send_coredump(Ans& ans, char* buf)
+{
+    const esp_partition_t *pt;
+    uint32_t size;
+    if (ESP_OK != esp_core_dump_image_check() || ESP_OK != esp_core_dump_partition_and_size_get(&pt, &size))
+    {
+        ans.send_error(HTTPD_404_NOT_FOUND, "No core file");
+        return;
+    }
+    size_t shift = 24; // Header is 6 4byte words
+    ans.set_ans_type("code.elf");
+    sprintf(buf, "%lu", size);
+    ans.set_hdr("content-length", buf);
+    while(size)
+    {
+        uint32_t rest = std::min<uint32_t>(size, SC_CoreFileChunk);
+        if (ESP_OK != esp_partition_read(pt, shift, buf, rest))
+        {
+            ans.send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "Error reading Core partition");
+            return;
+        }
+        ans.write_string_utf8(buf, rest);
+        shift += rest;
+        size -= rest;
     }
 }
 

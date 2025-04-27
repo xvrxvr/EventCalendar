@@ -78,6 +78,7 @@ esp_err_t Ans::set_ans_type(const char* filename)
     FE(".svg",  "image/svg+xml");
     FE(".xml",  "application/xml");
     FE(".tar",  "application/x-tar");
+    FE(".elf",  "application/octet-stream");
     return httpd_resp_set_type(req, "text/plain");
 }
 #undef FE
